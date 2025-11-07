@@ -14,8 +14,6 @@ springdoc:
   show-actuator: true
 
 management:
-  server:
-    port: 9002
   endpoints:
     web:
       exposure:
