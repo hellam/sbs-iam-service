@@ -30,6 +30,16 @@
         <java.version>17</java.version>
         <spring-cloud.version>2025.0.0</spring-cloud.version>
     </properties>
+    <repositories>
+        <repository>
+            <id>github</id>
+            <name>Shiva Spring Core Starter</name>
+            <url>https://maven.pkg.github.com/hellam/shiva-spring-core-starter</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -112,5 +122,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

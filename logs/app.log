@@ -1,5 +1,0 @@
-2025-11-03 06:39:36.847 WARN  [http-nio-9001-exec-4] [2b54dc51-808f-4a70-8d5d-2e4e051ec65d] k.s.s.e.GlobalExceptionHandler - Resource not found: No static resource swagger-ui.
-2025-11-03 06:39:50.327 INFO  [http-nio-9001-exec-2] [8190b308-fb5b-42a8-8f1c-a8115a67eab5] o.s.api.AbstractOpenApiResource - Init duration for springdoc-openapi is: 303 ms
-2025-11-03 08:18:55.061 WARN  [NotificationSvcHikariCP:housekeeper] [] com.zaxxer.hikari.pool.HikariPool - NotificationSvcHikariCP - Thread starvation or clock leap detected (housekeeper delta=13m50s175ms).
-2025-11-03 09:03:58.233 WARN  [NotificationSvcHikariCP:housekeeper] [] com.zaxxer.hikari.pool.HikariPool - NotificationSvcHikariCP - Thread starvation or clock leap detected (housekeeper delta=13m32s899ms).
-2025-11-03 10:13:24.055 WARN  [NotificationSvcHikariCP:housekeeper] [] com.zaxxer.hikari.pool.HikariPool - NotificationSvcHikariCP - Thread starvation or clock leap detected (housekeeper delta=15m55s394ms).
