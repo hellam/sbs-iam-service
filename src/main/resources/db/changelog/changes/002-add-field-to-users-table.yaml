@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+        id: 2
+        author: shiva
+        changes:
+          - addColumn:
+              tableName: users
+              columns:
+                - column:
+                    name: id_number
+                    type: VARCHAR(20)
+                    afterColumn: email
+                    constraints:
+                      nullable: true
+                      unique: true
+        rollback:
+          - dropColumn:
+              columnName: id_number
+              tableName: users

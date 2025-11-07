@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: notification-service
+  profiles:
+    active: dev
+  mvc:
+    servlet:
+      path: /api/v1
+  #Temporal exclusion of DataSourceAutoConfiguration to avoid startup failure due to missing DB configuration
+  #  autoconfigure:
+  #    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:sb_sentinel} # Default to local DB for development
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+    hikari: # HikariCP settings for connection pooling, it helps managing DB connections efficiently
+      pool-name: NotificationSvcHikariCP
+      maximum-pool-size: 10 # max connections in pool, adjust based on app load
+      minimum-idle: 5 # keep at least this many idle connections
+      idle-timeout: 30000 # 30 seconds before an idle connection is closed
+      max-lifetime: 600000 # recycle connections every 10 minutes
+      connection-timeout: 30000 # 30 seconds max wait for a connection
+  config:
+    import: optional:file:.env
+
+  #Tell Hibernate to validate the schema against the entities. ddl-auto can be set to 'update', 'create', 'create-drop', 'validate', 'none'
+  jpa:
+    hibernate:
+      ddl-auto: validate # Ensure DB schema matches entities, don't auto-change
+    #The open-in-view setting controls whether the Hibernate session is kept open during the entire request. This is useful for lazy loading.
+    #$user = User::first();
+    #$user->posts;
+    open-in-view: false # Don't keep DB session open across the whole request
+
+  messages:
+    basename: messages,ValidationMessages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+
+  web:
+    resources:
+      add-mappings: true # Enable static resource handling for Swagger UI
+
+encryption:
+  key: ${APP_KEY}
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,loggers
+#  endpoint:
+#    health:
+#      show-details: always
+  health:
+    livenessstate.enabled: true
+    readinessstate.enabled: true
+
+liquibase:
+  enabled: true
+  change-log: classpath:db/changelog/db.changelog-master.yaml
+
+

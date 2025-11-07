@@ -1,0 +1,29 @@
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  redoc:
+    enabled: true
+    path: /redoc
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+  show-actuator: true
+
+management:
+  server:
+    port: 9002
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,loggers
+  endpoint:
+    health:
+      show-details: always
+
+
+server:
+  port: 9001
