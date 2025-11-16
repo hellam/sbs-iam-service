@@ -1,4 +1,4 @@
-package ke.shiva.sbs_iam.modules.payment.dto.users.response;
+package ke.shiva.sbs_iam.users.response;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import ke.shiva.shivacorestarter.dto.Views;

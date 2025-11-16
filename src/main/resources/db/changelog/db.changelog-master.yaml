@@ -4,4 +4,10 @@ databaseChangeLog:
           type: postgresql
     onFail: HALT
   - include:
-      file: db/changelog/changes/001-create-users-table.xml
+      file: db/changelog/changes/00-core/000-countries.xml
+  - include:
+      file: db/changelog/changes/00-core/001-branches.xml
+  - include:
+      file: db/changelog/changes/00-core/003-transaction-type.xml
+  - include:
+      file: db/changelog/changes/00-core/004-features.xml

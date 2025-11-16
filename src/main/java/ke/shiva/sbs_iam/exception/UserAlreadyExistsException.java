@@ -1,4 +1,4 @@
-package ke.shiva.sbs_iam.modules.payment.exception;
+package ke.shiva.sbs_iam.exception;
 
 import ke.shiva.shivacorestarter.constants.ErrorCodes;
 import ke.shiva.shivacorestarter.exception.BaseException;
