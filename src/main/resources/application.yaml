@@ -1,6 +1,6 @@
 spring:
   application:
-    name: notification-service
+    name: iam-service
   profiles:
     active: dev
   mvc:
@@ -33,6 +33,10 @@ spring:
     #$user = User::first();
     #$user->posts;
     open-in-view: false # Don't keep DB session open across the whole request
+    properties:
+      hibernate:
+        jdbc:
+          timezone: Africa/Nairobi # Set JDBC timezone to Africa/Nairobi
 
   messages:
     basename: messages,ValidationMessages
@@ -61,6 +65,4 @@ management:
 
 liquibase:
   enabled: true
-  change-log: classpath:db/changelog/db.changelog-master.yaml
-
-
+  change-log: classpath:db/changelog/db.changelog-master.xml

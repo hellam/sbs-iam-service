@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 111 - REFRESH TOKENS -->
+
+    <changeSet id="pg-iam-111-refresh-tokens" author="hellamimbosa">
+
+        <createTable tableName="refresh_tokens">
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"
+                             primaryKeyName="pk_refresh_tokens"/>
+            </column>
+
+            <column name="session_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Store HASH of refresh token, never raw -->
+            <column name="token_hash" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="issued_at" type="TIMESTAMPTZ"
+                    defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="expires_at" type="TIMESTAMPTZ"/>
+
+            <column name="revoked_at" type="TIMESTAMPTZ"/>
+            <column name="revoked_reason" type="TEXT"/>
+
+            <!-- For rotation & replay detection -->
+            <column name="replaced_by_token_id" type="BIGINT"/>
+            <column name="last_used_at" type="TIMESTAMPTZ"/>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="refresh_tokens" baseColumnNames="session_id"
+                referencedTableName="sessions" referencedColumnNames="id"
+                constraintName="fk_refresh_tokens_session"/>
+
+        <addForeignKeyConstraint
+                baseTableName="refresh_tokens" baseColumnNames="replaced_by_token_id"
+                referencedTableName="refresh_tokens" referencedColumnNames="id"
+                constraintName="fk_refresh_tokens_replaced_by"
+                deferrable="true" initiallyDeferred="true"/>
+
+        <createIndex tableName="refresh_tokens" indexName="idx_refresh_tokens_session">
+            <column name="session_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

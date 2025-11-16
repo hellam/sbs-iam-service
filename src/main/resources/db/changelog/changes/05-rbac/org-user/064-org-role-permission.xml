@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 064 - ORG ROLE → FEATURES -->
+
+    <changeSet id="pg-rbac-064-org-role-permission" author="hellamimbosa">
+
+        <createTable tableName="org_role_permission">
+
+            <column name="org_role_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="feature_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <addPrimaryKey tableName="org_role_permission"
+                       columnNames="org_role_id,feature_id"
+                       constraintName="pk_org_role_permission"/>
+
+        <addForeignKeyConstraint
+                baseTableName="org_role_permission"
+                baseColumnNames="org_role_id"
+                referencedTableName="org_role"
+                referencedColumnNames="id"
+                constraintName="fk_org_role_perm_role"/>
+
+        <addForeignKeyConstraint
+                baseTableName="org_role_permission"
+                baseColumnNames="feature_id"
+                referencedTableName="features"
+                referencedColumnNames="id"
+                constraintName="fk_org_role_perm_feature"/>
+
+        <createIndex tableName="org_role_permission"
+                     indexName="idx_org_role_permission_role">
+            <column name="org_role_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

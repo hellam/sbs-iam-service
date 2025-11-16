@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 140 - TRANSACTION TYPE -->
+
+    <changeSet id="pg-iam-140-transaction-type" author="hellamimbosa">
+
+        <createTable tableName="transaction_type">
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"
+                             primaryKeyName="pk_transaction_type"/>
+            </column>
+
+            <!-- e.g. TRANSFER, RTGS, BULK_PAY, SWIFT, AIRTIME -->
+            <column name="code" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="description" type="TEXT"/>
+
+            <!-- PAYMENT, TRANSFER, CARDLESS, BILL_PAY, etc -->
+            <column name="category" type="VARCHAR(50)"/>
+
+            <!-- Channel availability flags -->
+            <column name="available_in_ib" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="available_in_mb" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="available_in_backoffice" type="BOOLEAN" defaultValueBoolean="true"/>
+
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+
+            <column name="created_at" type="TIMESTAMPTZ"
+                    defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ"
+                    defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <createIndex tableName="transaction_type" indexName="idx_transaction_type_code">
+            <column name="code"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

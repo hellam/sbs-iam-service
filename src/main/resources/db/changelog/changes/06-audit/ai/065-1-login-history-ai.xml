@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 132 - LOGIN HISTORY: AI & MASKING SUPPORT -->
+
+    <changeSet id="pg-iam-065-1-login-history-ai" author="hellamimbosa">
+
+        <!-- Hash of identifier (username/email/phone) for AI/Risk without exposing PII -->
+        <addColumn tableName="login_history">
+            <column name="identifier_hash" type="VARCHAR(128)">
+                <!-- store SHA-256 or similar of identifier_used -->
+            </column>
+        </addColumn>
+
+        <!-- Risk score from rule engine / ML (0–100 or similar) -->
+        <addColumn tableName="login_history">
+            <column name="risk_score" type="SMALLINT" defaultValueNumeric="0"/>
+        </addColumn>
+
+        <!-- JSON of triggered rules/features, e.g. ["NEW_DEVICE","IP_COUNTRY_MISMATCH"] -->
+        <addColumn tableName="login_history">
+            <column name="risk_flags" type="JSONB"/>
+        </addColumn>
+
+        <!-- Optional model info if using ML -->
+        <addColumn tableName="login_history">
+            <column name="risk_model_version" type="VARCHAR(50)"/>
+        </addColumn>
+
+        <createIndex tableName="login_history" indexName="idx_login_history_risk">
+            <column name="risk_score"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

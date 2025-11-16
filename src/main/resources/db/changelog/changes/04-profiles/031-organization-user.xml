@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ============================================================= -->
+    <!-- ORGANIZATION USER                                             -->
+    <!-- Membership of an IAM_USER inside an ORGANIZATION (SME/CORP)   -->
+    <!-- Corporate access, not retail profile                          -->
+    <!-- ============================================================= -->
+
+    <changeSet id="pg-iam-031-organization-user" author="hellamimbosa">
+
+        <comment>
+            ORGANIZATION_USER links a human IAM_USER (corporate user)
+            to an ORGANIZATION (SME or Corporate).
+
+            This is used for:
+            - corporate internet banking access,
+            - maker/checker roles,
+            - signatory definitions,
+            - organization-level limits.
+
+            Corporate users DO NOT require a customer_profile to exist,
+            unless they also hold a separate retail customer relationship.
+
+            Authentication used for login (IB password, MFA) is stored in
+            customer_auth for the IAM_USER, while additional approval
+            secrets (approval PIN/password) may live in organization_user_auth.
+        </comment>
+
+        <createTable tableName="organization_user">
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_organization_user"/>
+            </column>
+
+            <!-- IAM_USER representing the human (director, accountant, etc.) -->
+            <column name="iam_user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- ORGANIZATION they belong to (via party.id for type ORGANIZATION) -->
+            <column name="organization_party_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- High-level role within the organization (e.g. MAKER, CHECKER, APPROVER, ADMIN, VIEW_ONLY) -->
+            <column name="org_role" type="org_user_role_enum" defaultValue="VIEW_ONLY">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Monetary approval limit specific to this user in this organization -->
+            <column name="approval_limit" type="DECIMAL(18,2)"/>
+
+            <!-- Indicates if this is a primary/lead signatory (optional) -->
+            <column name="is_primary" type="BOOLEAN" defaultValueBoolean="false"/>
+
+            <!-- ACTIVE, BLOCKED, PENDING, etc. -->
+            <column name="status" type="org_user_status_enum" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Audit fields -->
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <!-- FK to IAM_USER -->
+        <addForeignKeyConstraint
+                baseTableName="organization_user" baseColumnNames="iam_user_id"
+                referencedTableName="iam_user" referencedColumnNames="id"
+                constraintName="fk_org_user_iam_user"/>
+
+        <!-- FK to ORGANIZATION (via PARTY) -->
+        <addForeignKeyConstraint
+                baseTableName="organization_user" baseColumnNames="organization_party_id"
+                referencedTableName="party" referencedColumnNames="id"
+                constraintName="fk_org_user_org_party"/>
+
+        <createIndex tableName="organization_user" indexName="idx_org_user_user">
+            <column name="iam_user_id"/>
+        </createIndex>
+
+        <createIndex tableName="organization_user" indexName="idx_org_user_org">
+            <column name="organization_party_id"/>
+        </createIndex>
+
+        <!-- Ensure same user is not duplicated for the same organization -->
+        <addUniqueConstraint
+                tableName="organization_user"
+                constraintName="ux_org_user_unique_pair"
+                columnNames="iam_user_id, organization_party_id"/>
+
+    </changeSet>
+
+</databaseChangeLog>

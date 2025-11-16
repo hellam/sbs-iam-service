@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ============================= -->
+    <!-- COUNTRIES                     -->
+    <!-- ISO country + currency data   -->
+    <!-- ============================= -->
+
+    <changeSet id="pg-core-000-countries" author="hellamimbosa">
+
+        <comment>
+            Master list of countries used by customers, employees,
+            branches, organisations, and regulatory reporting.
+        </comment>
+
+        <createTable tableName="countries">
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_countries"/>
+            </column>
+
+            <!-- ISO alpha-3 country code -->
+            <column name="country_code" type="VARCHAR(3)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <!-- e.g. 254 for Kenya, 252 for Somalia -->
+            <column name="phone_code" type="VARCHAR(5)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="country_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- ISO currency codes -->
+            <column name="currency_code" type="VARCHAR(3)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="currency_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <createIndex tableName="countries" indexName="idx_countries_country">
+            <column name="country_code"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

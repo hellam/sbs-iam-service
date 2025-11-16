@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ================================================================= -->
+    <!-- LOGIN IDENTIFIER                                                  -->
+    <!-- Stores the mapping between IAM USER and channel login values.     -->
+    <!-- (username, phone, email, staff_no, etc.)                          -->
+    <!-- ================================================================= -->
+
+    <changeSet id="pg-iam-021-login-identifier" author="hellamimbosa">
+
+        <comment>
+            LOGIN_IDENTIFIER maps IAM users to their login credentials
+            for each channel.
+
+            For example:
+            - INTERNET_BANKING: username or email
+            - MOBILE_BANKING: phone number
+            - BACKOFFICE: staff_no or staff_email
+
+            This table does NOT store passwords or PINs.
+            Only the identifying login keys.
+        </comment>
+
+        <createTable tableName="login_identifier">
+
+            <!-- Internal primary key -->
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_login_identifier"/>
+            </column>
+
+            <!-- Link to IAM_USER -->
+            <column name="iam_user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- INTERNET_BANKING, MOBILE_BANKING, BACKOFFICE -->
+            <column name="channel" type="channel_enum">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- USERNAME, PHONE -->
+            <column name="identifier_type" type="identifier_type_enum">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Actual value: e.g. john.doe, 254712345678 -->
+            <column name="identifier" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Whether identifier is verified (for email/phone) -->
+            <column name="verified_at" type="TIMESTAMPTZ"/>
+
+            <!-- Whether this is the primary identifier for the channel -->
+            <column name="is_primary" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Audit fields -->
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <!-- FK to IAM_USER -->
+        <addForeignKeyConstraint
+                baseTableName="login_identifier" baseColumnNames="iam_user_id"
+                referencedTableName="iam_user" referencedColumnNames="id"
+                constraintName="fk_login_identifier_iam_user"/>
+
+        <!-- Unique per channel + identifier -->
+        <addUniqueConstraint
+                tableName="login_identifier"
+                constraintName="ux_login_identifier_channel_identifier"
+                columnNames="channel, identifier"/>
+
+        <createIndex tableName="login_identifier" indexName="idx_login_identifier_user">
+            <column name="iam_user_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

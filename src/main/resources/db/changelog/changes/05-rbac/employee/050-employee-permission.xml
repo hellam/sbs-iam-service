@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 050 - EMPLOYEE PERMISSIONS -->
+
+    <changeSet id="pg-rbac-050-employee-permission" author="hellamimbosa">
+
+        <createTable tableName="employee_permission">
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"
+                             primaryKeyName="pk_employee_permission"/>
+            </column>
+
+            <!-- Unique code used in code/config, e.g. EMP_USER_MANAGE, EMP_AUDIT_VIEW -->
+            <column name="code" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="description" type="TEXT"/>
+
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+
+            <column name="created_at" type="TIMESTAMPTZ"
+                    defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ"
+                    defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <createIndex tableName="employee_permission"
+                     indexName="idx_employee_permission_code">
+            <column name="code"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

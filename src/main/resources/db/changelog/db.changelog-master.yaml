@@ -1,8 +1,7 @@
 databaseChangeLog:
+  - preConditions:
+      - dbms:
+          type: postgresql
+    onFail: HALT
   - include:
-        file: db/changelog/changes/001-create-users-table.yaml
-  - include:
-      file: db/changelog/changes/002-add-field-to-users-table.yaml
-  - include:
-      file: db/changelog/changes/003-create-trx-ref-no-table.yaml
-
+      file: db/changelog/changes/001-create-users-table.xml

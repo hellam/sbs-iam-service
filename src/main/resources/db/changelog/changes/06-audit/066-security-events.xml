@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 131 - SECURITY EVENTS -->
+
+    <changeSet id="pg-iam-066-security-events" author="hellamimbosa">
+
+        <createTable tableName="security_events">
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"
+                             primaryKeyName="pk_security_events"/>
+            </column>
+
+            <column name="iam_user_id" type="BIGINT"/>
+
+            <!-- e.g. NEW_DEVICE, NEW_LOCATION, BRUTE_FORCE_SUSPECTED -->
+            <column name="event_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- INFO, WARN, CRITICAL -->
+            <column name="severity" type="VARCHAR(20)" defaultValue="INFO"/>
+
+            <column name="description" type="TEXT"/>
+
+            <column name="related_session_id" type="BIGINT"/>
+
+            <column name="ip_address" type="VARCHAR(50)"/>
+            <column name="device_id" type="VARCHAR(255)"/>
+            <column name="location_country" type="VARCHAR(2)"/>
+            <column name="location_city" type="VARCHAR(100)"/>
+
+            <column name="metadata" type="JSONB"/>
+
+            <column name="created_at" type="TIMESTAMPTZ"
+                    defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="security_events" baseColumnNames="iam_user_id"
+                referencedTableName="iam_user" referencedColumnNames="id"
+                constraintName="fk_security_events_user"/>
+
+        <addForeignKeyConstraint
+                baseTableName="security_events" baseColumnNames="related_session_id"
+                referencedTableName="sessions" referencedColumnNames="id"
+                constraintName="fk_security_events_session"/>
+
+        <createIndex tableName="security_events" indexName="idx_security_events_user">
+            <column name="iam_user_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

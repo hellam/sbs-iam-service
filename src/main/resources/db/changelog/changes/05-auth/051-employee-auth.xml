@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ============================================================= -->
+    <!-- EMPLOYEE AUTH                                                 -->
+    <!-- Authentication for Backoffice Staff Only                      -->
+    <!-- ============================================================= -->
+
+    <changeSet id="pg-iam-051-employee-auth" author="hellamimbosa">
+
+        <comment>
+            EMPLOYEE_AUTH stores authentication data for backoffice staff:
+            - Strong staff password
+            - MFA (TOTP)
+            - Lockout counters
+            Backoffice staff MUST NOT reuse customer credentials.
+        </comment>
+
+        <createTable tableName="employee_auth">
+
+            <!-- PK -->
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_employee_auth"/>
+            </column>
+
+            <!-- FK to IAM_USER -->
+            <column name="iam_user_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <!-- ========================= -->
+            <!-- BACKOFFICE PASSWORD       -->
+            <!-- ========================= -->
+            <column name="staff_password_hash" type="VARCHAR(255)"/>
+            <column name="staff_password_algo" type="VARCHAR(50)" defaultValue="bcrypt"/>
+            <column name="staff_password_expiry" type="TIMESTAMPTZ"/>
+
+            <column name="staff_failed_attempts" type="SMALLINT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="staff_locked" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="staff_last_login_at" type="TIMESTAMPTZ"/>
+
+            <!-- ========================= -->
+            <!-- MFA                       -->
+            <!-- ========================= -->
+            <column name="mfa_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="mfa_secret" type="VARCHAR(255)"/>
+            <column name="mfa_last_verified_at" type="TIMESTAMPTZ"/>
+
+            <!-- Audit -->
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="employee_auth" baseColumnNames="iam_user_id"
+                referencedTableName="iam_user" referencedColumnNames="id"
+                constraintName="fk_employee_auth_iam_user"/>
+
+        <createIndex tableName="employee_auth" indexName="idx_employee_auth_user">
+            <column name="iam_user_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

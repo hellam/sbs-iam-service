@@ -1,0 +1,3013 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-1">
+        <createTable tableName="account_mapping">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="account_number" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="account_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="control" name="account_type" type="ENUM('control', 'charge')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trx_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-2">
+        <createTable tableName="account_opening">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="activity_code" type="VARCHAR(100)"/>
+            <column name="first_name" type="VARCHAR(100)"/>
+            <column name="middle_name" type="VARCHAR(100)"/>
+            <column name="last_name" type="VARCHAR(100)"/>
+            <column name="gender" type="VARCHAR(10)"/>
+            <column name="address1" type="VARCHAR(255)"/>
+            <column name="address2" type="VARCHAR(255)"/>
+            <column name="address3" type="VARCHAR(255)"/>
+            <column name="address4" type="VARCHAR(255)"/>
+            <column name="country" type="VARCHAR(100)"/>
+            <column name="email" type="VARCHAR(100)"/>
+            <column name="phone" type="VARCHAR(15)"/>
+            <column name="agent_officer" type="VARCHAR(50)"/>
+            <column name="birth_bloc" type="VARCHAR(50)"/>
+            <column name="birth_sloc" type="VARCHAR(50)"/>
+            <column name="branch_code" type="VARCHAR(50)"/>
+            <column defaultValueComputed="NULL" name="business_income" type="DOUBLE"/>
+            <column name="civil_id" type="VARCHAR(50)"/>
+            <column name="customer_type" type="VARCHAR(50)"/>
+            <column name="dob" type="VARCHAR(50)"/>
+            <column name="father_name" type="VARCHAR(100)"/>
+            <column name="mother_name" type="VARCHAR(100)"/>
+            <column name="image" type="VARCHAR(255)"/>
+            <column name="signature" type="VARCHAR(255)"/>
+            <column name="cnat_code" type="VARCHAR(50)"/>
+            <column name="ivr" type="VARCHAR(50)"/>
+            <column name="image_pass" type="VARCHAR(255)"/>
+            <column name="image_photo" type="VARCHAR(255)"/>
+            <column name="nationality" type="VARCHAR(50)"/>
+            <column name="occupation" type="VARCHAR(50)"/>
+            <column name="online_banking" type="VARCHAR(50)"/>
+            <column name="passport" type="VARCHAR(255)"/>
+            <column name="salary" type="VARCHAR(50)"/>
+            <column name="sms" type="VARCHAR(50)"/>
+            <column name="account_product_type" type="VARCHAR(50)"/>
+            <column name="currency_code" type="VARCHAR(50)"/>
+            <column name="customer_id" type="VARCHAR(50)"/>
+            <column name="physical_id" type="VARCHAR(50)"/>
+            <column name="referral_code" type="VARCHAR(50)"/>
+            <column name="created_by" type="VARCHAR(50)"/>
+            <column name="reviewed_by" type="VARCHAR(50)"/>
+            <column name="reviewed_by2" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="reviewed_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="reviewed_at2" type="TIMESTAMP(0)"/>
+            <column name="approved_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="approved_at" type="TIMESTAMP(0)"/>
+            <column defaultValueNumeric="0" name="require_compliance" remarks="0=No, 1=Yes" type="TINYINT"/>
+            <column defaultValue="admin" name="channel" remarks="admin, web, api" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="pending" name="status" remarks="pending, approved, rejected" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="remarks" type="VARCHAR(255)"/>
+            <column name="remarks2" type="TEXT"/>
+            <column name="approval_remarks" type="VARCHAR(255)"/>
+            <column name="account_number" type="VARCHAR(30)"/>
+            <column name="iban" type="VARCHAR(30)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-3">
+        <createTable tableName="account_products">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column defaultValue="personal" name="customer_type" type="ENUM('corporate', 'personal')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_id" type="VARCHAR(10)"/>
+            <column name="product_name" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="allow_ib" type="TINYINT"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-4">
+        <createTable tableName="admin_audit_trail">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="type" remarks="eg Auth etc" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="trans_no" type="BIGINT"/>
+            <column defaultValue="''''web''''" name="channel" remarks="web,api" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="model" type="TEXT"/>
+            <column name="request_details" remarks="Request details" type="TEXT"/>
+            <column name="ip_address" remarks="ip address" type="VARCHAR(45)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="admin_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-5">
+        <createTable tableName="admin_maker_checker_rules">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="permission_code" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="maker_validator_function" type="VARCHAR(255)"/>
+            <column defaultValueNumeric="0" name="maker_type" remarks="0-Single,1-Double" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueNumeric="0" name="inactive" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-6">
+        <createTable tableName="admin_maker_checker_trx">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column defaultValueNumeric="0" name="mc_type" remarks="0-Single,1-Double" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trx_type" type="VARCHAR(255)"/>
+            <column defaultValue="pending" name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="txt_data" type="LONGTEXT"/>
+            <column name="method" type="VARCHAR(10)"/>
+            <column name="module" type="VARCHAR(255)"/>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="url" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="maker" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="checker1" type="BIGINT"/>
+            <column defaultValueComputed="NULL" name="checker2" type="BIGINT"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-7">
+        <createTable tableName="admin_otp">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="email" type="VARCHAR(100)"/>
+            <column name="phone" type="VARCHAR(100)"/>
+            <column name="otp" type="VARCHAR(250)"/>
+            <column name="otp_type" remarks="login,reset_password,change_password,transactional" type="VARCHAR(20)"/>
+            <column defaultValueComputed="current_timestamp()" name="otp_sent_at" type="TIMESTAMP(0)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="otp_verified_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="otp_expired_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-8">
+        <createTable tableName="admin_password_history">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="password" type="VARCHAR(250)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="created_by" type="BIGINT"/>
+            <column defaultValueNumeric="0" name="last_updated_by" type="BIGINT"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="admin_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-9">
+        <createTable tableName="admin_permission">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(250)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(250)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column defaultValueNumeric="0" name="requires_maker_checker" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="requires_admin" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="maker_validator_function" type="VARCHAR(250)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="admin_permission_group_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-10">
+        <createTable tableName="admin_permission_groups">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(250)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-11">
+        <createTable tableName="admin_roles">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="is_branch" remarks="Indicates if the role is specific to branch" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permissions" type="LONGTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column defaultValueNumeric="0" name="update_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-12">
+        <createTable tableName="admin_security_configs">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="general_security" type="LONGTEXT"/>
+            <column name="password_policy" type="LONGTEXT"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-13">
+        <createTable tableName="admins">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column defaultValueComputed="NULL" name="branch_id" type="BIGINT UNSIGNED"/>
+            <column name="agent_officer_id" type="VARCHAR(100)"/>
+            <column name="username" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password" type="VARCHAR(250)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="password_expiry_date" type="TIMESTAMP(0)"/>
+            <column name="two_fa_secret" type="VARCHAR(255)"/>
+            <column defaultValueNumeric="0" name="two_fa_enabled" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="full_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="phone" type="VARCHAR(30)"/>
+            <column name="email" type="VARCHAR(100)"/>
+            <column name="image" type="TEXT"/>
+            <column defaultValueNumeric="0" name="failed_login_attempts" type="TINYINT"/>
+            <column defaultValueNumeric="0" name="account_locked" type="BIT"/>
+            <column defaultValueNumeric="1" name="first_time" type="BIT"/>
+            <column defaultValue="en" name="language" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="DDMMYYYY" name="date_format" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="/" name="date_sep" type="VARCHAR(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="," name="tho_sep" type="VARCHAR(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="." name="dec_sep" type="VARCHAR(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="light" name="theme" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="/" name="startup_tab" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="30" name="transaction_days" type="SMALLINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="def_print_destination" type="VARCHAR(255)"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column defaultValueNumeric="0" name="update_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueNumeric="0" name="inactive" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="role_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="1" name="task_role" remarks="1: Normal User, 2: Supervisor" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-14">
+        <createTable tableName="app_logs">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="event_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_id" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="method" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="endpoint" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_ip" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="user_id" type="BIGINT UNSIGNED"/>
+            <column name="request_data" type="LONGTEXT"/>
+            <column name="response_data" type="LONGTEXT"/>
+            <column name="status_code" type="SMALLINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="duration" type="DOUBLE(8, 2)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-15">
+        <createTable tableName="bill_payment_accounts">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="account_number" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="account_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="account_type" type="VARCHAR(100)"/>
+            <column name="provider_name" type="VARCHAR(200)"/>
+            <column name="provider_logo" type="VARCHAR(200)"/>
+            <column name="bill_payment_category_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column defaultValueNumeric="0" name="update_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-16">
+        <createTable tableName="bill_payment_categories">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="icon" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="order" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column defaultValueNumeric="0" name="update_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="place_holder" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-17">
+        <createTable tableName="branches">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="branch_name" type="VARCHAR(255)"/>
+            <column name="branch_code" type="VARCHAR(255)"/>
+            <column defaultValue="branch" name="branch_type" type="ENUM('atm', 'branch')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="branch_address" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="longitude" type="DOUBLE"/>
+            <column defaultValueComputed="NULL" name="latitude" type="DOUBLE"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-18">
+        <createTable tableName="bulk_payment_details">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="client_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bulk_payment_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="account" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="receiver_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bank" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="branch" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="phone" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="country" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="DOUBLE(15, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="narration" type="VARCHAR(255)"/>
+            <column name="trx_status" remarks="Tracks transaction status: pending, success, failed" type="VARCHAR(255)"/>
+            <column name="trx_ref_no" remarks="Transaction reference number for the individual payment" type="VARCHAR(255)"/>
+            <column name="created_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="VARCHAR(255)"/>
+            <column name="supervised_by" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="date"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-19">
+        <createTable tableName="bulk_payments">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="client_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="from_account" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="ST_406" name="type" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trx_id" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="trx_ref_no" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="trx_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="DOUBLE(15, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="narration" type="VARCHAR(255)"/>
+            <column name="attachment" type="VARCHAR(50)"/>
+            <column defaultValue="pending" name="trx_status" type="VARCHAR(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="maker_transaction_status" remarks="Tracks maker-checker status: pending_maker_checker, approved, rejected" type="VARCHAR(255)"/>
+            <column name="created_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_by" type="VARCHAR(255)"/>
+            <column name="supervised_by" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="date"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-20">
+        <createTable tableName="card_products">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="product_code" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-21">
+        <createTable tableName="chats">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="phone" type="VARCHAR(255)"/>
+            <column name="message" type="LONGTEXT"/>
+            <column name="message_id" type="VARCHAR(255)"/>
+            <column name="customer_name" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="received_at" type="TIMESTAMP(0)"/>
+            <column name="sender_id" type="VARCHAR(20)"/>
+            <column name="receiver_id" type="VARCHAR(20)"/>
+            <column defaultValueNumeric="1" name="unread" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column defaultValueNumeric="0" name="update_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-22">
+        <createTable tableName="chequebook_requests">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="qty" remarks="Quantity" type="INT"/>
+            <column defaultValueComputed="NULL" name="leaves" remarks="Number of leaves" type="INT"/>
+            <column name="status" type="VARCHAR(20)"/>
+            <column name="trx_id" type="VARCHAR(50)"/>
+            <column name="trx_ref_no" type="VARCHAR(50)"/>
+            <column name="trx_date" type="VARCHAR(50)"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="client_account_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="branch_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-23">
+        <createTable tableName="client_accounts">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="account_number" type="VARCHAR(45)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="iban" type="VARCHAR(255)"/>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="account_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="branch_id" type="VARCHAR(20)"/>
+            <column name="branch_name" type="VARCHAR(100)"/>
+            <column name="phone" type="VARCHAR(20)"/>
+            <column name="product_id" type="VARCHAR(45)"/>
+            <column defaultValueNumeric="1" name="allow_withdrawal" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="1" name="allow_deposit" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="1" name="allow_cr_transfer" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="1" name="allow_dr_transfer" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="product_name" type="VARCHAR(250)"/>
+            <column name="email" type="VARCHAR(200)"/>
+            <column name="created_by" type="VARCHAR(255)"/>
+            <column name="updated_by" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="update_count" type="BIGINT"/>
+            <column name="supervised_by" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-24">
+        <createTable tableName="client_beneficiaries">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="client_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="beneficiary_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="beneficiary_account_number" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bank_id" type="VARCHAR(10)"/>
+            <column name="bank_name" type="VARCHAR(100)"/>
+            <column name="tx_type" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-25">
+        <createTable tableName="client_request_types">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="created_by" type="VARCHAR(255)"/>
+            <column name="updated_by" type="VARCHAR(255)"/>
+            <column name="supervised_by" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-26">
+        <createTable tableName="client_requests">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="data" type="VARCHAR(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="pending" name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="response" type="VARCHAR(1000)"/>
+            <column name="trx_id" type="VARCHAR(20)"/>
+            <column name="trx_ref_no" type="VARCHAR(20)"/>
+            <column name="request_date" type="VARCHAR(20)"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-27">
+        <createTable tableName="client_transactions">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trx_id" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="save_beneficiary" remarks="Indicates whether the beneficiary should be saved for future transactions" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trx_ref_no" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trx_date" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="batch_id" type="VARCHAR(255)"/>
+            <column name="serial_id" type="VARCHAR(255)"/>
+            <column name="from_account" type="VARCHAR(50)"/>
+            <column name="to_account" type="VARCHAR(50)"/>
+            <column name="to_account_name" type="VARCHAR(255)"/>
+            <column name="from_branch" type="VARCHAR(20)"/>
+            <column name="to_branch" type="VARCHAR(20)"/>
+            <column name="from_currency" type="VARCHAR(20)"/>
+            <column name="to_currency" type="VARCHAR(20)"/>
+            <column defaultValueComputed="NULL" name="amount" type="DOUBLE"/>
+            <column name="narration" type="LONGTEXT"/>
+            <column defaultValueComputed="NULL" name="execution_date" type="date"/>
+            <column defaultValueNumeric="0" name="frequency" remarks="0 = once, 1 = daily, 2 = weekly, 3 = monthly, 5 = yearly" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="infinite" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="expiry_date" type="date"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column defaultValue="pending" name="trx_status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="draft" name="maker_transaction_status" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="sto_retries" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="web" name="channel" remarks="web,mobile" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="transaction_type_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-28">
+        <createTable tableName="devices">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="device_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="device_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="device_serial" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="android" name="os_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="os_version" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="device_description" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="device_condition" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="device_image" type="VARCHAR(255)"/>
+            <column defaultValue="active" name="device_status" type="ENUM('active', 'inactive')">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="agent" name="merchant_type" type="ENUM('merchant', 'agent')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(255)"/>
+            <column name="updated_by" type="VARCHAR(255)"/>
+            <column defaultValueNumeric="0" name="update_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="supervised_by" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-29">
+        <createTable tableName="documents">
+            <column name="id" type="CHAR(36)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="title" type="VARCHAR(255)"/>
+            <column name="storage_dir" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="original.pdf" name="pdf_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="page_count" type="INT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="current_timestamp() on update current_timestamp() on update current_timestamp()" name="expires_at" type="TIMESTAMP(0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="mime" type="VARCHAR(64)"/>
+            <column defaultValueNumeric="0" name="size_bytes" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="allowed_roles" type="LONGTEXT"/>
+            <column defaultValueNumeric="0" name="is_encrypted" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sha256" type="VARCHAR(64)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column defaultValue="processing" name="status" type="ENUM('processing', 'ready', 'failed')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="error_message" type="TEXT"/>
+            <column defaultValueComputed="NULL" name="processed_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="notified_at" type="TIMESTAMP(0)"/>
+            <column name="created_by" type="VARCHAR(255)"/>
+            <column name="updated_by" type="VARCHAR(255)"/>
+            <column defaultValueNumeric="0" name="update_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-30">
+        <createTable tableName="emails_out">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subject" type="VARCHAR(255)"/>
+            <column name="body" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="pending" name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="attempts" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="priority" remarks="0:low, 1:medium, 2:high" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-31">
+        <createTable tableName="evc_ebesa_transaction_logs">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="sender_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sender_phone" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="beneficiary_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="beneficiary_phone" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="merchant_transaction_id" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="channel" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="current_timestamp() on update current_timestamp()" name="transaction_datetime" type="TIMESTAMP(0)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="pending" name="trx_status" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="transaction_id" type="VARCHAR(255)"/>
+            <column name="remote_transaction_id" type="VARCHAR(255)"/>
+            <column name="remote_status_code" type="VARCHAR(255)"/>
+            <column name="remote_status_desc" type="TEXT"/>
+            <column name="raw_response" type="LONGTEXT"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-32">
+        <createTable tableName="ext_payment_banks">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="country_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ssp_bank_code" type="VARCHAR(10)">
+                <constraints unique="true"/>
+            </column>
+            <column name="swl_bank_code" type="VARCHAR(10)">
+                <constraints unique="true"/>
+            </column>
+            <column name="oth_bank_code" type="VARCHAR(10)">
+                <constraints unique="true"/>
+            </column>
+            <column name="bank_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="logo" type="VARCHAR(250)"/>
+            <column name="acc_validation_regex" type="VARCHAR(100)"/>
+            <column name="swift" type="VARCHAR(11)"/>
+            <column name="bank_address" type="VARCHAR(255)"/>
+            <column name="bank_phone" type="VARCHAR(20)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-33">
+        <createTable tableName="ext_payment_carriers">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="country_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ssp_carrier_code" type="VARCHAR(100)">
+                <constraints unique="true"/>
+            </column>
+            <column name="swl_carrier_code" type="VARCHAR(100)">
+                <constraints unique="true"/>
+            </column>
+            <column name="oth_carrier_code" type="VARCHAR(100)">
+                <constraints unique="true"/>
+            </column>
+            <column name="carrier_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="logo" type="VARCHAR(250)"/>
+            <column name="currency_code" type="VARCHAR(3)"/>
+            <column name="acc_validation_regex" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-34">
+        <createTable tableName="ext_payment_countries">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="country_code" type="VARCHAR(3)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="country_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency_code" type="VARCHAR(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-35">
+        <createTable tableName="failed_jobs">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="uuid" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="connection" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="queue" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payload" type="LONGTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exception" type="LONGTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="current_timestamp()" name="failed_at" type="TIMESTAMP(0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-36">
+        <createTable tableName="faqs">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="question" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="answer" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="active" name="status" type="ENUM('active', 'inactive')">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="user" name="type" remarks="wallet or user faq type" type="ENUM('wallet', 'user')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(255)"/>
+            <column name="updated_by" type="VARCHAR(255)"/>
+            <column defaultValueNumeric="0" name="update_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="supervised_by" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-37">
+        <createTable tableName="fx_rates">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="from_currency" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="to_currency" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="buy_rate" type="DOUBLE"/>
+            <column defaultValueComputed="NULL" name="sell_rate" type="DOUBLE"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-38">
+        <createTable tableName="identitymind_api_logs">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="first_name" type="VARCHAR(100)"/>
+            <column name="last_name" type="VARCHAR(100)"/>
+            <column name="dob" type="VARCHAR(100)"/>
+            <column name="assn" type="VARCHAR(100)"/>
+            <column defaultValue="admin" name="channel" remarks="admin, web, api" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="request_by" type="VARCHAR(100)"/>
+            <column name="data_json" type="LONGTEXT"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-39">
+        <createTable tableName="instant_trf_banks">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="bank_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bank_short_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bank_code" type="VARCHAR(50)"/>
+            <column name="bank_id" type="VARCHAR(10)"/>
+            <column name="bank_logo" type="VARCHAR(100)"/>
+            <column name="bank_address" type="VARCHAR(255)"/>
+            <column name="bank_phone" type="VARCHAR(255)"/>
+            <column name="bank_email" type="VARCHAR(255)"/>
+            <column name="bank_website" type="VARCHAR(255)"/>
+            <column defaultValue="active" name="status" type="ENUM('active', 'inactive')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-40">
+        <createTable tableName="ips_transactions">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="tx_id" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tx_status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(5)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="from_institution" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="to_institution" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fp_institution" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="biz_msg_idr1" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="biz_msg_idr2" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="credt1" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="credt2" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="MsgDefIdr" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cred_tm" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_to_end_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="TxSts" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="prtry" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="AccptncDtTm" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="false" name="txReturnSts" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sttlm_mtd" type="VARCHAR(200)"/>
+            <column name="ip" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="deleted_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="dbtr_name" type="VARCHAR(200)"/>
+            <column name="dbtr_address" type="VARCHAR(200)"/>
+            <column name="dbtr_acc_id" type="VARCHAR(200)"/>
+            <column name="bdtr_prtry" type="VARCHAR(200)"/>
+            <column name="cdtr_name" type="VARCHAR(200)"/>
+            <column name="cdtr_acc_id" type="VARCHAR(200)"/>
+            <column name="cdtr_prtry" type="VARCHAR(200)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-41">
+        <createTable tableName="jobs">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="queue" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payload" type="LONGTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attempts" type="TINYINT(3) UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="reserved_at" type="INT UNSIGNED"/>
+            <column name="available_at" type="INT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="INT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-42">
+        <createTable tableName="loan_requests">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="client_id" remarks="Client ID" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="loan_amount" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trx_no" remarks="transaction number" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="trx_ref_no" type="VARCHAR(50)"/>
+            <column defaultValue="pending" name="trx_status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trx_date" remarks="date of transaction" type="datetime(0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attachment" remarks="supporting documents" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="approved_amount" type="DOUBLE"/>
+            <column name="loan_type_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="narration" remarks="reason for loan" type="VARCHAR(300)"/>
+            <column name="response" type="VARCHAR(300)"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column defaultValueNumeric="0" name="update_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-43">
+        <createTable tableName="loan_types">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="loan_type" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0.0" name="min_amount" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0.0" name="max_amount" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0.0" name="interest_rate" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0.0" name="processing_fee" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0.0" name="penalty_rate" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column defaultValueNumeric="0" name="update_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-44">
+        <createTable tableName="maker_checkers">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="entity_type" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="step" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="comments" type="TEXT"/>
+            <column name="status" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permission_code" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="client_id" type="BIGINT UNSIGNED"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-45">
+        <createTable tableName="merchant_audit_trail">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="type" remarks="eg Auth,Transfer etc" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="trans_no" type="BIGINT"/>
+            <column defaultValue="web" name="channel" remarks="web,api" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="model" type="TEXT"/>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="request_details" remarks="Request details" type="TEXT"/>
+            <column name="ip_address" remarks="ip address" type="VARCHAR(45)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="merchant_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-46">
+        <createTable tableName="merchant_otp">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="email" type="VARCHAR(100)"/>
+            <column name="phone" type="VARCHAR(100)"/>
+            <column name="otp" type="VARCHAR(250)"/>
+            <column name="otp_type" remarks="login,reset_password,change_password,transactional" type="VARCHAR(20)"/>
+            <column defaultValueComputed="current_timestamp()" name="otp_sent_at" type="TIMESTAMP(0)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="otp_verified_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="otp_expiry" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-47">
+        <createTable tableName="merchant_password_history">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="password" type="VARCHAR(250)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="created_by" type="BIGINT"/>
+            <column defaultValueNumeric="0" name="last_updated_by" type="BIGINT"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="merchant_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-48">
+        <createTable tableName="merchant_security_configs">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="general_security" type="LONGTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password_policy" type="LONGTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-49">
+        <createTable tableName="merchants">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="full_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints unique="true"/>
+            </column>
+            <column name="phone" type="VARCHAR(255)">
+                <constraints unique="true"/>
+            </column>
+            <column name="store_no" remarks="Customer Id in CBS" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="business_name" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="business_no" remarks="Generated by the system" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="business_address" type="VARCHAR(255)"/>
+            <column name="bank_account" remarks="Customer account number in CBS" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="agent" name="entity_type" remarks="agent, merchant" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="super" name="user_type" type="ENUM('super', 'sub')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column defaultValueNumeric="0" name="update_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="image" type="TEXT"/>
+            <column name="pin" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="password_expiry_date" type="TIMESTAMP(0)"/>
+            <column defaultValueNumeric="0" name="failed_login_attempts" type="TINYINT"/>
+            <column defaultValueNumeric="1" name="mobile_first_time" type="TINYINT"/>
+            <column defaultValueNumeric="0" name="account_locked" type="BIT"/>
+            <column defaultValue="en" name="language" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="DDMMYYYY" name="date_format" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="/" name="date_sep" type="VARCHAR(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="," name="tho_sep" type="VARCHAR(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="." name="dec_sep" type="VARCHAR(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="light" name="theme" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="/" name="startup_tab" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="30" name="transaction_days" type="SMALLINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="def_print_destination" type="VARCHAR(255)"/>
+            <column defaultValueNumeric="0" name="two_factor" remarks="0: Disabled, 1: Enabled" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="first_time" remarks="0: No, 1: Yes" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="sec_qns_set" remarks="0: No, 1: Yes" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="inactive" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="device_id" type="BIGINT UNSIGNED"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-50">
+        <createTable tableName="migrations">
+            <column autoIncrement="true" name="id" type="INT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="migration" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="batch" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-51">
+        <createTable tableName="nira_api_logs">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="customer_id" type="VARCHAR(100)"/>
+            <column defaultValue="admin" name="channel" remarks="admin, web, api" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="request_by" type="VARCHAR(100)"/>
+            <column name="status" type="VARCHAR(20)"/>
+            <column name="message" type="VARCHAR(100)"/>
+            <column name="data_json" type="LONGTEXT"/>
+            <column name="photo_path" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-52">
+        <createTable tableName="notification_templates">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="template_id" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="template_description" type="VARCHAR(50)"/>
+            <column defaultValue="all" name="system_type" type="ENUM('admin', 'client', 'all')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subject" type="VARCHAR(100)"/>
+            <column name="greeting" type="VARCHAR(50)"/>
+            <column name="message" type="LONGTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action_text" type="VARCHAR(255)"/>
+            <column defaultValue="email" name="type" type="ENUM('email', 'sms')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="variables" type="LONGTEXT"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-53">
+        <createTable tableName="oauth_access_tokens">
+            <column name="id" type="VARCHAR(100)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column defaultValueComputed="NULL" name="user_id" type="BIGINT UNSIGNED"/>
+            <column name="client_id" type="CHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)"/>
+            <column name="scopes" type="TEXT"/>
+            <column name="revoked" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="expires_at" type="datetime(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-54">
+        <createTable tableName="oauth_access_tokens_fingerprint">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="access_token" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="refresh_token" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="device_fingerprint" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ip_address" type="VARCHAR(30)"/>
+            <column name="user_agent" type="VARCHAR(255)"/>
+            <column name="active" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="current_timestamp() on update current_timestamp()" name="expires_at" type="TIMESTAMP(0)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-55">
+        <createTable tableName="oauth_auth_codes">
+            <column name="id" type="VARCHAR(100)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="client_id" type="CHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="scopes" type="TEXT"/>
+            <column name="revoked" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="expires_at" type="datetime(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-56">
+        <createTable tableName="oauth_clients">
+            <column name="id" type="CHAR(36)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column defaultValueComputed="NULL" name="user_id" type="BIGINT UNSIGNED"/>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="secret" type="VARCHAR(100)"/>
+            <column name="provider" type="VARCHAR(255)"/>
+            <column name="redirect" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="personal_access_client" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password_client" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revoked" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-57">
+        <createTable tableName="oauth_personal_access_clients">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="client_id" type="CHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-58">
+        <createTable tableName="oauth_refresh_tokens">
+            <column name="id" type="VARCHAR(100)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="access_token_id" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revoked" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="expires_at" type="datetime(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-59">
+        <createTable tableName="password_reset_tokens">
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="token" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-60">
+        <createTable tableName="personal_access_tokens">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="tokenable_type" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tokenable_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="token" type="VARCHAR(64)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="abilities" type="TEXT"/>
+            <column defaultValueComputed="NULL" name="last_used_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="expires_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-61">
+        <createTable tableName="sasapay_trx">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="status" type="VARCHAR(255)"/>
+            <column name="merchant_code" type="VARCHAR(255)"/>
+            <column name="merchant_transaction_reference" type="VARCHAR(255)"/>
+            <column name="destination_channel_code" type="VARCHAR(255)"/>
+            <column name="destination_channel_name" type="VARCHAR(255)"/>
+            <column name="currency" type="VARCHAR(255)"/>
+            <column name="amount" type="VARCHAR(255)"/>
+            <column name="receiver_phone_number" type="VARCHAR(255)"/>
+            <column name="receiver_account_number" type="VARCHAR(255)"/>
+            <column name="receiver_account_name" type="VARCHAR(255)"/>
+            <column name="foreign_currency" type="VARCHAR(255)"/>
+            <column name="sender_phone_number" type="VARCHAR(255)"/>
+            <column name="sender_name" type="VARCHAR(255)"/>
+            <column name="sender_country_iso" type="VARCHAR(255)"/>
+            <column name="sender_nationality" type="VARCHAR(255)"/>
+            <column name="sender_id_type" type="VARCHAR(255)"/>
+            <column name="sender_id_number" type="VARCHAR(255)"/>
+            <column name="sender_service_provider_name" type="VARCHAR(255)"/>
+            <column name="remittance_purpose" type="VARCHAR(255)"/>
+            <column name="callback_url" type="VARCHAR(255)"/>
+            <column name="remarks" type="VARCHAR(255)"/>
+            <column name="trx_date" type="VARCHAR(255)"/>
+            <column name="trx_status" type="VARCHAR(255)"/>
+            <column name="detail" type="VARCHAR(255)"/>
+            <column name="response_code" type="VARCHAR(255)"/>
+            <column name="request_id" type="VARCHAR(255)"/>
+            <column name="merchant_request_id" type="VARCHAR(255)"/>
+            <column name="transaction_charges" type="VARCHAR(255)"/>
+            <column name="b2c_request_id" remarks="For Bank payment" type="VARCHAR(255)"/>
+            <column name="conversation_id" remarks="For Bank payment" type="VARCHAR(255)"/>
+            <column name="original_conversation_id" remarks="For Bank payment" type="VARCHAR(255)"/>
+            <column name="response_description" remarks="For Bank payment" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-62">
+        <createTable tableName="security_questions">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="question" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-63">
+        <createTable tableName="sessions">
+            <column name="id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column defaultValueComputed="NULL" name="user_id" type="BIGINT UNSIGNED"/>
+            <column name="ip_address" type="VARCHAR(45)"/>
+            <column name="user_agent" type="TEXT"/>
+            <column name="payload" type="LONGTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_activity" type="INT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-64">
+        <createTable tableName="sips_tx_logs">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="tx_id" type="VARCHAR(100)"/>
+            <column name="tx_type" type="VARCHAR(50)"/>
+            <column name="tx_ref_no" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column defaultValue="pending" name="tx_status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="tx_date" type="date"/>
+            <column name="batch_id" type="VARCHAR(100)"/>
+            <column name="serial_id" type="VARCHAR(100)"/>
+            <column name="from_account" type="VARCHAR(50)"/>
+            <column name="from_account_name" type="VARCHAR(255)"/>
+            <column name="to_account" type="VARCHAR(50)"/>
+            <column name="to_account_name" type="VARCHAR(255)"/>
+            <column name="to_bank_bic" type="VARCHAR(11)"/>
+            <column name="to_bank_name" type="VARCHAR(255)"/>
+            <column name="from_currency" type="VARCHAR(10)"/>
+            <column name="to_currency" type="VARCHAR(10)"/>
+            <column defaultValueComputed="NULL" name="amount" type="DOUBLE(8, 2)"/>
+            <column name="charges" type="VARCHAR(50)"/>
+            <column name="narration" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="execution_date" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="frequency" type="INT"/>
+            <column defaultValueNumeric="0" name="infinite" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="expiry_date" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-65">
+        <createTable tableName="sms_out">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="sender" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="receiver" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message" type="VARCHAR(400)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="pending" name="status" type="VARCHAR(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message_id" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="length" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="priority" remarks="0=low,1=medium,2=high" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-66">
+        <createTable tableName="somaair_api_logs">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="request_data" type="LONGTEXT"/>
+            <column name="response_data" type="LONGTEXT"/>
+            <column name="reference" type="VARCHAR(255)"/>
+            <column name="tx_id" type="VARCHAR(255)"/>
+            <column defaultValue="recharge" name="type" type="ENUM('recharge', 'bundle_details')">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="success" name="status" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-67">
+        <createTable tableName="spay_api_logs">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="type" remarks="login, transfer" type="VARCHAR(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="request" type="LONGTEXT"/>
+            <column name="response" type="LONGTEXT"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-68">
+        <createTable tableName="spay_queue">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="data" type="LONGTEXT"/>
+            <column defaultValue="pending" name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trx_id" type="VARCHAR(20)"/>
+            <column name="trx_ref_no" type="VARCHAR(20)"/>
+            <column defaultValue="web" name="channel" remarks="web,mobile" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-69">
+        <createTable tableName="swiftrtgs_trx">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="client_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="from_account" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trx_id" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trx_ref_no" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="trx_date" type="date"/>
+            <column defaultValue="rtgs" name="trx_type" remarks="rtgs, swift" type="VARCHAR(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="pending" name="trx_status" type="VARCHAR(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount_words" type="VARCHAR(400)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="beneficiary_name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="beneficiary_account" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="beneficiary_bank" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="beneficiary_bank_branch" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="country_code" type="VARCHAR(10)"/>
+            <column name="city_code" type="VARCHAR(10)"/>
+            <column name="address" type="VARCHAR(100)"/>
+            <column name="identity_type" type="VARCHAR(50)"/>
+            <column name="identity_number" type="VARCHAR(50)"/>
+            <column name="fed_wire" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="purpose" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="1" name="charges" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attachments" type="VARCHAR(200)"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-70">
+        <createTable tableName="tarrifs">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column defaultValueNumeric="0.0" name="min_amount" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0.0" name="max_amount" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0.0" name="m_charge" remarks="Merchant Charge" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0.0" name="a_charge" remarks="Agent Charge" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0.0" name="m_commission" remarks="Merchant Commission" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0.0" name="m_bank_commission" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0.0" name="a_commission" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0.0" name="a_bank_commission" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="charge_type" remarks="0=Fixed, 1=Percentage" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column defaultValueNumeric="0" name="update_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-71">
+        <createTable tableName="transaction_categories">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-72">
+        <createTable tableName="transaction_daytime_limits">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="tx_type" remarks="Transaction type, e.g., &quot;RTGS&quot;, &quot;SWIFT&quot;" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="day" remarks="Day of the week, 0 for Sunday, 1 for Monday, etc." type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="not_allowed" remarks="Flag to indicate if transactions are not allowed on this day" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="start_time" remarks="Start time for the transaction limit" type="time"/>
+            <column defaultValueComputed="NULL" name="end_time" remarks="End time for the transaction limit" type="time"/>
+            <column name="created_by" remarks="User who created the record" type="VARCHAR(100)"/>
+            <column name="updated_by" remarks="User who last updated the record" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-73">
+        <createTable tableName="transaction_limits">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="client_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="user_id" type="BIGINT UNSIGNED"/>
+            <column name="transaction_type_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="single_limit" type="DECIMAL(15, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="daily_limit" type="DECIMAL(15, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="transaction_category_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-74">
+        <createTable tableName="transaction_templates">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="client_id" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="template_name" type="VARCHAR(100)"/>
+            <column name="tx_type" type="VARCHAR(50)"/>
+            <column name="template_data" type="LONGTEXT"/>
+            <column name="created_by" type="VARCHAR(50)"/>
+            <column name="updated_by" type="VARCHAR(50)"/>
+            <column name="supervised_by" type="VARCHAR(50)"/>
+            <column name="supervised_at" type="VARCHAR(50)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-75">
+        <createTable tableName="transaction_types">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="transaction_category_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column defaultValueNumeric="0.00" name="default_single_limit" type="DECIMAL(15, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0.00" name="default_daily_limit" type="DECIMAL(15, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="payment_processor" type="VARCHAR(50)"/>
+            <column name="updated_by" type="VARCHAR(255)"/>
+            <column name="created_by" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-76">
+        <createTable tableName="trx_charges">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="trx_type" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="fixed" name="charge_type" type="ENUM('fixed', 'percentage')">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="from_value" type="DOUBLE"/>
+            <column defaultValueComputed="NULL" name="to_value" type="DOUBLE"/>
+            <column name="charge_value" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-77">
+        <createTable tableName="trx_ref_no">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="trx_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trx_ref_no" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trx_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-78">
+        <createTable tableName="user_audit_trail">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="type" remarks="eg Auth,Transfer etc" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="trans_no" type="BIGINT"/>
+            <column defaultValue="''''web''''" name="channel" remarks="web,api" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="model" type="TEXT"/>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="request_details" remarks="Request details" type="TEXT"/>
+            <column name="ip_address" remarks="ip address" type="VARCHAR(45)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="user_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-79">
+        <createTable tableName="user_devices">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="device_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="device_name" type="VARCHAR(255)"/>
+            <column defaultValue="android" name="device_type" type="VARCHAR(255)"/>
+            <column name="device_token" type="VARCHAR(255)"/>
+            <column name="device_os" type="VARCHAR(255)"/>
+            <column name="device_os_version" type="VARCHAR(255)"/>
+            <column name="device_app_version" type="VARCHAR(255)"/>
+            <column name="device_app_version_code" type="VARCHAR(255)"/>
+            <column name="device_app_version_name" type="VARCHAR(255)"/>
+            <column name="device_ip" type="VARCHAR(255)"/>
+            <column name="device_mac" type="VARCHAR(255)"/>
+            <column name="device_imei" type="VARCHAR(255)"/>
+            <column name="device_serial" type="VARCHAR(255)"/>
+            <column name="device_sim_serial" type="VARCHAR(255)"/>
+            <column name="device_sim_operator" type="VARCHAR(255)"/>
+            <column name="device_sim_country" type="VARCHAR(255)"/>
+            <column name="device_sim_network" type="VARCHAR(255)"/>
+            <column name="device_sim_state" type="VARCHAR(255)"/>
+            <column name="device_sim_roaming" type="VARCHAR(255)"/>
+            <column name="device_sim_operator_name" type="VARCHAR(255)"/>
+            <column name="device_sim_operator_info" type="VARCHAR(255)"/>
+            <column name="device_sim_operator_iso" type="VARCHAR(255)"/>
+            <column name="device_location" type="VARCHAR(255)"/>
+            <column name="device_location_latitude" type="VARCHAR(255)"/>
+            <column name="device_location_longitude" type="VARCHAR(255)"/>
+            <column name="device_battery" type="VARCHAR(255)"/>
+            <column name="device_battery_status" type="VARCHAR(255)"/>
+            <column name="device_network" type="VARCHAR(255)"/>
+            <column name="device_wifi" type="VARCHAR(255)"/>
+            <column name="device_wifi_ssid" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-80">
+        <createTable tableName="user_maker_checker_rules">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permission_code" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="maker_validator_function" type="VARCHAR(255)"/>
+            <column defaultValueNumeric="0" name="maker_type" remarks="0-Single,1-Double" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="maker_level" type="INT"/>
+            <column defaultValueComputed="NULL" name="amount" type="DOUBLE"/>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueNumeric="0" name="inactive" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-81">
+        <createTable tableName="user_maker_checker_trx">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column defaultValueNumeric="0" name="mc_type" remarks="0-Single,1-Double" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trx_type" type="VARCHAR(255)"/>
+            <column defaultValue="pending" name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="txt_data" type="LONGTEXT"/>
+            <column name="method" type="VARCHAR(10)"/>
+            <column name="module" type="VARCHAR(45)"/>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="url" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="maker" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="checker1" type="BIGINT"/>
+            <column defaultValueComputed="NULL" name="checker2" type="BIGINT"/>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-82">
+        <createTable tableName="user_otp">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="email" type="VARCHAR(100)"/>
+            <column name="phone" type="VARCHAR(100)"/>
+            <column name="otp" type="VARCHAR(250)"/>
+            <column name="otp_type" remarks="login,reset_password,change_password,transactional" type="VARCHAR(20)"/>
+            <column defaultValueComputed="current_timestamp()" name="otp_sent_at" type="TIMESTAMP(0)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="otp_verified_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="otp_expiry" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="device_fingerprint" type="VARCHAR(255)"/>
+            <column name="ip" type="VARCHAR(255)"/>
+            <column name="user_agent" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-83">
+        <createTable tableName="user_password_history">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="password" type="VARCHAR(250)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="created_by" type="BIGINT"/>
+            <column defaultValueNumeric="0" name="last_updated_by" type="BIGINT"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="user_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-84">
+        <createTable tableName="user_permission">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(250)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(250)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column defaultValueNumeric="0" name="is_tx" remarks="Indicates if the permission is for transaction purposes" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="requires_maker_checker" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="requires_hq" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="maker_validator_function" type="VARCHAR(250)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="user_permission_group_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-85">
+        <createTable tableName="user_permission_groups">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(250)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-86">
+        <createTable tableName="user_roles">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="1" name="task_role" remarks="1 = Maker, 2 = Checker, 3 = Approver" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="permissions" type="LONGTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column defaultValueNumeric="0" name="update_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-87">
+        <createTable tableName="user_secure_messages">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="client_id" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subject" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="pending" name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="response" type="VARCHAR(255)"/>
+            <column name="created_by" type="VARCHAR(50)"/>
+            <column name="response_by" type="VARCHAR(50)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-88">
+        <createTable tableName="user_security_configs">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="general_security" type="LONGTEXT"/>
+            <column name="password_policy" type="LONGTEXT"/>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-89">
+        <createTable tableName="user_security_questions">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="security_question_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column name="answer" type="VARCHAR(250)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-90">
+        <createTable tableName="users">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="client_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="username" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="username_alias" type="VARCHAR(50)"/>
+            <column defaultValueNumeric="1" name="client_type_id" remarks="1: Individual, 2: Corporate" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="individual" name="client_type" remarks="Individual, Corporate" type="VARCHAR(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="full_name" type="VARCHAR(250)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="user" name="user_type" remarks="user, admin" type="VARCHAR(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="relation_manager" type="BIGINT"/>
+            <column defaultValueNumeric="0" name="allow_mb" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="allow_ib" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password" type="VARCHAR(250)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pin" type="VARCHAR(255)"/>
+            <column name="country_code" type="VARCHAR(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="country" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address" type="VARCHAR(250)"/>
+            <column name="city" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="phone" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="password_expiry_date" type="TIMESTAMP(0)"/>
+            <column name="image" type="TEXT"/>
+            <column defaultValueNumeric="0" name="failed_login_attempts" type="TINYINT"/>
+            <column defaultValueNumeric="0" name="account_locked" type="BIT"/>
+            <column defaultValue="en" name="language" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="DDMMYYYY" name="date_format" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="/" name="date_sep" type="VARCHAR(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="," name="tho_sep" type="VARCHAR(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="." name="dec_sep" type="VARCHAR(1)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="light" name="theme" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValue="/" name="startup_tab" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="30" name="transaction_days" type="SMALLINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="def_print_destination" type="VARCHAR(255)"/>
+            <column defaultValueNumeric="0" name="two_factor" remarks="0: Disabled, 1: Enabled" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="two_fa_secret" type="VARCHAR(255)"/>
+            <column defaultValueNumeric="0" name="sec_qns_set" type="TINYINT"/>
+            <column defaultValueNumeric="0" name="first_time" remarks="0: No, 1: Yes" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="1" name="mobile_first_time" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column defaultValueNumeric="0" name="update_count" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column defaultValueComputed="NULL" name="supervised_at" type="TIMESTAMP(0)"/>
+            <column defaultValueNumeric="0" name="require_supervision" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="1" name="branch_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="inactive" type="TINYINT">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+            <column name="role_id" type="BIGINT UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="maker_type" type="INT"/>
+            <column name="token_ind" type="VARCHAR(255)"/>
+            <column name="cust_category" type="VARCHAR(255)"/>
+            <column name="level_of_validation" type="VARCHAR(255)"/>
+            <column name="credit_limit" type="BIT"/>
+            <column name="accounts" type="VARCHAR(300)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-91">
+        <createTable tableName="westminister_trx">
+            <column autoIncrement="true" name="id" type="BIGINT UNSIGNED">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="merchant_code" type="VARCHAR(255)"/>
+            <column name="account_number" type="VARCHAR(255)"/>
+            <column name="account_name" type="VARCHAR(255)"/>
+            <column name="account_type" type="VARCHAR(255)"/>
+            <column name="tran_type" type="VARCHAR(255)"/>
+            <column name="tran_amount" type="VARCHAR(255)"/>
+            <column name="currency" type="VARCHAR(255)"/>
+            <column name="country" type="VARCHAR(255)"/>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="merchant_reference" type="VARCHAR(255)"/>
+            <column name="webhook_url" type="VARCHAR(255)"/>
+            <column name="success_url" type="VARCHAR(255)"/>
+            <column name="failed_url" type="VARCHAR(255)"/>
+            <column name="payment_date" type="VARCHAR(255)"/>
+            <column name="payment_type" type="VARCHAR(255)"/>
+            <column name="addendum1" type="VARCHAR(255)"/>
+            <column name="addendum2" type="VARCHAR(255)"/>
+            <column name="status" type="VARCHAR(255)"/>
+            <column name="response_code" type="VARCHAR(255)"/>
+            <column name="response_message" type="VARCHAR(255)"/>
+            <column name="response_data" type="VARCHAR(255)"/>
+            <column name="response_time" type="VARCHAR(255)"/>
+            <column name="status_code" type="VARCHAR(255)"/>
+            <column name="status_description" type="VARCHAR(255)"/>
+            <column name="gateway_reference" type="VARCHAR(255)"/>
+            <column name="tran_charge" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="TIMESTAMP(0)"/>
+            <column defaultValueComputed="NULL" name="updated_at" type="TIMESTAMP(0)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-92">
+        <addUniqueConstraint columnNames="client_id, username" constraintName="client_id_username_unique" tableName="users"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-93">
+        <addUniqueConstraint columnNames="trx_id, type" constraintName="client_transactions_trx_id_unique" tableName="client_transactions"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-94">
+        <addUniqueConstraint columnNames="trx_ref_no, type" constraintName="client_transactions_trx_ref_no_unique" tableName="client_transactions"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-95">
+        <addUniqueConstraint columnNames="email, user_type, client_type, client_id" constraintName="email_user_type_client_type_client_id_unique" tableName="users"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-96">
+        <addUniqueConstraint columnNames="phone, user_type, client_type, client_id" constraintName="phone_user_type_client_type_client_id_unique" tableName="users"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-97">
+        <addUniqueConstraint columnNames="trx_id, trx_type" constraintName="swiftrtgs_trx_trx_id_unique" tableName="swiftrtgs_trx"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-98">
+        <addUniqueConstraint columnNames="trx_ref_no, trx_type" constraintName="swiftrtgs_trx_trx_ref_no_unique" tableName="swiftrtgs_trx"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-99">
+        <addUniqueConstraint columnNames="business_no, store_no" constraintName="unique_merchant" tableName="merchants"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-100">
+        <createIndex associatedWith="" indexName="admin_audit_trail_admin_id_foreign" tableName="admin_audit_trail">
+            <column name="admin_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-101">
+        <createIndex associatedWith="" indexName="admin_maker_checker_rules_permission_code_foreign" tableName="admin_maker_checker_rules">
+            <column name="permission_code"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-102">
+        <createIndex associatedWith="" indexName="admin_password_history_admin_id_foreign" tableName="admin_password_history">
+            <column name="admin_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-103">
+        <createIndex associatedWith="" indexName="admin_permission_admin_permission_group_id_fk" tableName="admin_permission">
+            <column name="admin_permission_group_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-104">
+        <createIndex associatedWith="" indexName="admin_roles_fk" tableName="admins">
+            <column name="role_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-105">
+        <createIndex associatedWith="" indexName="admins_branch_id_index" tableName="admins">
+            <column defaultValueComputed="NULL" name="branch_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-106">
+        <createIndex associatedWith="" indexName="bill_payment_accounts_bill_payment_category_id_foreign" tableName="bill_payment_accounts">
+            <column name="bill_payment_category_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-107">
+        <createIndex associatedWith="" indexName="bulk_payment_details_bulk_payment_id_foreign" tableName="bulk_payment_details">
+            <column name="bulk_payment_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-108">
+        <createIndex associatedWith="" indexName="chequebook_requests_branch_id_foreign" tableName="chequebook_requests">
+            <column name="branch_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-109">
+        <createIndex associatedWith="" indexName="chequebook_requests_client_account_id_foreign" tableName="chequebook_requests">
+            <column name="client_account_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-110">
+        <createIndex associatedWith="" indexName="client_accounts_client_id_index" tableName="client_accounts">
+            <column name="client_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-111">
+        <createIndex associatedWith="" indexName="documents_created_at_index" tableName="documents">
+            <column defaultValueComputed="NULL" name="created_at"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-112">
+        <createIndex associatedWith="" indexName="documents_expires_at_index" tableName="documents">
+            <column defaultValueComputed="current_timestamp() on update current_timestamp() on update current_timestamp()" name="expires_at"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-113">
+        <createIndex associatedWith="" indexName="documents_notified_at_index" tableName="documents">
+            <column defaultValueComputed="NULL" name="notified_at"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-114">
+        <createIndex associatedWith="" indexName="documents_status_index" tableName="documents">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-115">
+        <createIndex associatedWith="" indexName="ext_payment_banks_country_id_foreign" tableName="ext_payment_banks">
+            <column name="country_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-116">
+        <createIndex associatedWith="" indexName="ext_payment_carriers_country_id_foreign" tableName="ext_payment_carriers">
+            <column name="country_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-117">
+        <createIndex associatedWith="" indexName="jobs_queue_index" tableName="jobs">
+            <column name="queue"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-118">
+        <createIndex associatedWith="" indexName="loan_requests_loan_type_id_foreign" tableName="loan_requests">
+            <column name="loan_type_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-119">
+        <createIndex associatedWith="" indexName="maker_checkers_entity_type_entity_id_index" tableName="maker_checkers">
+            <column name="entity_type"/>
+            <column name="entity_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-120">
+        <createIndex associatedWith="" indexName="maker_checkers_user_id_foreign" tableName="maker_checkers">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-121">
+        <createIndex associatedWith="" indexName="merchant_audit_trail_merchant_id_foreign" tableName="merchant_audit_trail">
+            <column name="merchant_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-122">
+        <createIndex associatedWith="" indexName="merchant_password_history_user_id_foreign" tableName="merchant_password_history">
+            <column name="merchant_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-123">
+        <createIndex associatedWith="" indexName="merchants_device_id_foreign" tableName="merchants">
+            <column defaultValueComputed="NULL" name="device_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-124">
+        <createIndex associatedWith="" indexName="oauth_access_tokens_fingerprint_user_id_foreign" tableName="oauth_access_tokens_fingerprint">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-125">
+        <createIndex associatedWith="" indexName="oauth_access_tokens_user_id_index" tableName="oauth_access_tokens">
+            <column defaultValueComputed="NULL" name="user_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-126">
+        <createIndex associatedWith="" indexName="oauth_auth_codes_user_id_index" tableName="oauth_auth_codes">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-127">
+        <createIndex associatedWith="" indexName="oauth_clients_user_id_index" tableName="oauth_clients">
+            <column defaultValueComputed="NULL" name="user_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-128">
+        <createIndex associatedWith="" indexName="oauth_refresh_tokens_access_token_id_index" tableName="oauth_refresh_tokens">
+            <column name="access_token_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-129">
+        <createIndex associatedWith="" indexName="personal_access_tokens_tokenable_type_tokenable_id_index" tableName="personal_access_tokens">
+            <column name="tokenable_type"/>
+            <column name="tokenable_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-130">
+        <createIndex associatedWith="" indexName="sessions_last_activity_index" tableName="sessions">
+            <column name="last_activity"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-131">
+        <createIndex associatedWith="" indexName="sessions_user_id_index" tableName="sessions">
+            <column defaultValueComputed="NULL" name="user_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-132">
+        <createIndex associatedWith="" indexName="transaction_limits_client_id_foreign" tableName="transaction_limits">
+            <column name="client_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-133">
+        <createIndex associatedWith="" indexName="transaction_limits_transaction_category_id_foreign" tableName="transaction_limits">
+            <column name="transaction_category_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-134">
+        <createIndex associatedWith="" indexName="transaction_limits_transaction_type_id_foreign" tableName="transaction_limits">
+            <column name="transaction_type_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-135">
+        <createIndex associatedWith="" indexName="transaction_limits_user_id_foreign" tableName="transaction_limits">
+            <column defaultValueComputed="NULL" name="user_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-136">
+        <createIndex associatedWith="" indexName="transaction_types_transaction_category_id_foreign" tableName="transaction_types">
+            <column name="transaction_category_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-137">
+        <createIndex associatedWith="" indexName="user_audit_trail_user_id_foreign" tableName="user_audit_trail">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-138">
+        <createIndex associatedWith="" indexName="user_devices_user_id_foreign" tableName="user_devices">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-139">
+        <createIndex associatedWith="" indexName="user_maker_checker_rules_permission_code_foreign" tableName="user_maker_checker_rules">
+            <column name="permission_code"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-140">
+        <createIndex associatedWith="" indexName="user_password_history_user_id_foreign" tableName="user_password_history">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-141">
+        <createIndex associatedWith="" indexName="user_permission_user_permission_group_id_fk" tableName="user_permission">
+            <column name="user_permission_group_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-142">
+        <createIndex associatedWith="" indexName="user_roles_fk" tableName="users">
+            <column name="role_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-143">
+        <createIndex associatedWith="" indexName="user_security_questions_security_question_id_foreign" tableName="user_security_questions">
+            <column name="security_question_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-144">
+        <createIndex associatedWith="" indexName="user_security_questions_user_id_foreign" tableName="user_security_questions">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-145">
+        <createIndex associatedWith="" indexName="users_client_id_index" tableName="users">
+            <column name="client_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-146">
+        <addForeignKeyConstraint baseColumnNames="admin_id" baseTableName="admin_audit_trail" constraintName="admin_audit_trail_admin_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="admins" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-147">
+        <addForeignKeyConstraint baseColumnNames="permission_code" baseTableName="admin_maker_checker_rules" constraintName="admin_maker_checker_rules_permission_code_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="code" referencedTableName="admin_permission" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-148">
+        <addForeignKeyConstraint baseColumnNames="admin_id" baseTableName="admin_password_history" constraintName="admin_password_history_admin_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="admins" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-149">
+        <addForeignKeyConstraint baseColumnNames="admin_permission_group_id" baseTableName="admin_permission" constraintName="admin_permission_admin_permission_group_id_fk" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="admin_permission_groups" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-150">
+        <addForeignKeyConstraint baseColumnNames="role_id" baseTableName="admins" constraintName="admin_roles_fk" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="admin_roles" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-151">
+        <addForeignKeyConstraint baseColumnNames="branch_id" baseTableName="admins" constraintName="admins_branch_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="branches" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-152">
+        <addForeignKeyConstraint baseColumnNames="bill_payment_category_id" baseTableName="bill_payment_accounts" constraintName="bill_payment_accounts_bill_payment_category_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="bill_payment_categories" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-153">
+        <addForeignKeyConstraint baseColumnNames="bulk_payment_id" baseTableName="bulk_payment_details" constraintName="bulk_payment_details_bulk_payment_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="bulk_payments" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-154">
+        <addForeignKeyConstraint baseColumnNames="branch_id" baseTableName="chequebook_requests" constraintName="chequebook_requests_branch_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="branches" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-155">
+        <addForeignKeyConstraint baseColumnNames="client_account_id" baseTableName="chequebook_requests" constraintName="chequebook_requests_client_account_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="client_accounts" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-156">
+        <addForeignKeyConstraint baseColumnNames="country_id" baseTableName="ext_payment_banks" constraintName="ext_payment_banks_country_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="ext_payment_countries" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-157">
+        <addForeignKeyConstraint baseColumnNames="country_id" baseTableName="ext_payment_carriers" constraintName="ext_payment_carriers_country_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="ext_payment_countries" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-158">
+        <addForeignKeyConstraint baseColumnNames="loan_type_id" baseTableName="loan_requests" constraintName="loan_requests_loan_type_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="loan_types" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-159">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="maker_checkers" constraintName="maker_checkers_user_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="users" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-160">
+        <addForeignKeyConstraint baseColumnNames="merchant_id" baseTableName="merchant_audit_trail" constraintName="merchant_audit_trail_merchant_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="merchants" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-161">
+        <addForeignKeyConstraint baseColumnNames="merchant_id" baseTableName="merchant_password_history" constraintName="merchant_password_history_user_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="merchants" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-162">
+        <addForeignKeyConstraint baseColumnNames="device_id" baseTableName="merchants" constraintName="merchants_device_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="devices" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-163">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="oauth_access_tokens_fingerprint" constraintName="oauth_access_tokens_fingerprint_user_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="users" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-164">
+        <addForeignKeyConstraint baseColumnNames="transaction_category_id" baseTableName="transaction_limits" constraintName="transaction_limits_transaction_category_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="transaction_categories" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-165">
+        <addForeignKeyConstraint baseColumnNames="transaction_type_id" baseTableName="transaction_limits" constraintName="transaction_limits_transaction_type_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="transaction_types" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-166">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="transaction_limits" constraintName="transaction_limits_user_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="users" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-167">
+        <addForeignKeyConstraint baseColumnNames="transaction_category_id" baseTableName="transaction_types" constraintName="transaction_types_transaction_category_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="transaction_categories" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-168">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_audit_trail" constraintName="user_audit_trail_user_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="users" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-169">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_devices" constraintName="user_devices_user_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="users" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-170">
+        <addForeignKeyConstraint baseColumnNames="permission_code" baseTableName="user_maker_checker_rules" constraintName="user_maker_checker_rules_permission_code_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="code" referencedTableName="user_permission" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-171">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_password_history" constraintName="user_password_history_user_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="users" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-172">
+        <addForeignKeyConstraint baseColumnNames="user_permission_group_id" baseTableName="user_permission" constraintName="user_permission_user_permission_group_id_fk" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="user_permission_groups" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-173">
+        <addForeignKeyConstraint baseColumnNames="role_id" baseTableName="users" constraintName="user_roles_fk" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="user_roles" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-174">
+        <addForeignKeyConstraint baseColumnNames="security_question_id" baseTableName="user_security_questions" constraintName="user_security_questions_security_question_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="security_questions" validate="true"/>
+    </changeSet>
+    <changeSet author="hellamimbosa (generated)" id="1762577811617-175">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_security_questions" constraintName="user_security_questions_user_id_foreign" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="users" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

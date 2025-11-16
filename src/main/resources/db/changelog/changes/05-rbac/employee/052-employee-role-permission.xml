@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 052 - EMPLOYEE ROLE → PERMISSIONS -->
+
+    <changeSet id="pg-rbac-052-employee-role-permission" author="hellamimbosa">
+
+        <createTable tableName="employee_role_permission">
+
+            <column name="employee_role_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="employee_permission_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <addPrimaryKey tableName="employee_role_permission"
+                       columnNames="employee_role_id,employee_permission_id"
+                       constraintName="pk_employee_role_permission"/>
+
+        <addForeignKeyConstraint
+                baseTableName="employee_role_permission"
+                baseColumnNames="employee_role_id"
+                referencedTableName="employee_role"
+                referencedColumnNames="id"
+                constraintName="fk_emp_role_perm_role"/>
+
+        <addForeignKeyConstraint
+                baseTableName="employee_role_permission"
+                baseColumnNames="employee_permission_id"
+                referencedTableName="employee_permission"
+                referencedColumnNames="id"
+                constraintName="fk_emp_role_perm_perm"/>
+
+        <createIndex tableName="employee_role_permission"
+                     indexName="idx_emp_role_perm_role">
+            <column name="employee_role_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

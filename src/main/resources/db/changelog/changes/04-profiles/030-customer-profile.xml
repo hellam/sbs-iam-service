@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ============================================================= -->
+    <!-- CUSTOMER PROFILE                                              -->
+    <!-- Retail personal customers ONLY                                -->
+    <!-- (Corporate users DO NOT require this profile)                 -->
+    <!-- ============================================================= -->
+
+    <changeSet id="pg-iam-030-customer-profile" author="hellamimbosa">
+
+        <comment>
+            CUSTOMER_PROFILE represents a retail customer's profile.
+            This is ONLY for personal / retail customers who own accounts
+            in their own name.
+
+            Corporate users (directors, signatories, accountants) DO NOT
+            need a customer_profile unless they ALSO have a separate
+            retail banking relationship.
+
+            Authentication details (IB password, mobile PIN, MFA) are
+            stored in customer_auth, not here.
+        </comment>
+
+        <createTable tableName="customer_profile">
+
+            <!-- PK = FK to IAM_USER (for a retail customer) -->
+            <column name="iam_user_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_customer_profile"/>
+            </column>
+
+            <!-- Link to core banking CIF / customer number (retail) -->
+            <column name="core_customer_id" type="VARCHAR(50)"/>
+
+            <!-- Basic segment info: RETAIL, PRIORITY, etc. -->
+            <column name="segment" type="VARCHAR(50)"/>
+
+            <!-- UI / UX preferences for retail IB/MB channels -->
+            <column name="language" type="VARCHAR(10)" defaultValue="en"/>
+            <column name="timezone" type="VARCHAR(50)" defaultValue="Africa/Nairobi"/>
+            <column name="theme" type="VARCHAR(20)" defaultValue="light"/>
+
+            <!-- Notification preferences (for retail alerts) -->
+            <column name="allow_email" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="allow_sms" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="allow_push" type="BOOLEAN" defaultValueBoolean="false"/>
+
+            <!-- Audit fields -->
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <!-- FK to IAM_USER: in code, enforce user_category = CUSTOMER + retail flag -->
+        <addForeignKeyConstraint
+                baseTableName="customer_profile" baseColumnNames="iam_user_id"
+                referencedTableName="iam_user" referencedColumnNames="id"
+                constraintName="fk_customer_profile_iam_user"/>
+
+    </changeSet>
+
+</databaseChangeLog>

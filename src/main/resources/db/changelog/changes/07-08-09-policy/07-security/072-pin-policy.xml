@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ============================================================= -->
+    <!-- PIN POLICY (MOBILE BANKING)                                   -->
+    <!-- ============================================================= -->
+
+    <changeSet id="pg-iam-072-pin-policy" author="hellamimbosa">
+
+        <createTable tableName="pin_policy">
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"
+                             primaryKeyName="pk_pin_policy"/>
+            </column>
+
+            <column name="policy_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <!-- PIN length -->
+            <column name="min_length" type="SMALLINT" defaultValueNumeric="4"/>
+            <column name="max_length" type="SMALLINT" defaultValueNumeric="6"/>
+
+            <!-- Reuse -->
+            <column name="pin_history_count" type="SMALLINT" defaultValueNumeric="5"/>
+
+            <!-- Complexity -->
+            <column name="block_sequential" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="block_repeating" type="BOOLEAN" defaultValueBoolean="true"/>
+
+            <!-- Lockout -->
+            <column name="max_failed_attempts" type="SMALLINT" defaultValueNumeric="5"/>
+            <column name="lockout_minutes" type="SMALLINT" defaultValueNumeric="30"/>
+
+            <!-- Hashing -->
+            <column name="hash_algorithm" type="VARCHAR(50)" defaultValue="bcrypt"/>
+            <column name="hash_cost" type="SMALLINT" defaultValueNumeric="10"/>
+
+            <!-- Audit -->
+            <column name="created_at" type="TIMESTAMPTZ"
+                    defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ"
+                    defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="pin_policy" baseColumnNames="policy_id"
+                referencedTableName="policies" referencedColumnNames="id"
+                constraintName="fk_pin_policy_base"/>
+
+        <createIndex tableName="pin_policy" indexName="idx_pin_policy_base">
+            <column name="policy_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

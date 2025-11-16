@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ============================================================= -->
+    <!-- ORGANIZATION USER AUTH                                        -->
+    <!-- Approver PIN/password & 2FA for corporate users               -->
+    <!-- ============================================================= -->
+
+    <changeSet id="pg-iam-052-organization-user-auth" author="hellamimbosa">
+
+        <comment>
+            ORGANIZATION_USER_AUTH stores optional authentication data
+            used during corporate approval workflows:
+            - Approver PIN
+            - Approver password
+            - Corporate-specific MFA
+            - Approval limits override
+
+            This is NOT used for login, but ONLY for transaction approval.
+        </comment>
+
+        <createTable tableName="organization_user_auth">
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_org_user_auth"/>
+            </column>
+
+            <!-- FK to organization_user -->
+            <column name="organization_user_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <!-- Optional approval password -->
+            <column name="approver_password_hash" type="VARCHAR(255)"/>
+            <column name="approver_password_algo" type="VARCHAR(50)" defaultValue="bcrypt"/>
+
+            <!-- Optional approval PIN -->
+            <column name="approver_pin_hash" type="VARCHAR(255)"/>
+            <column name="approver_pin_algo" type="VARCHAR(50)" defaultValue="bcrypt"/>
+
+            <!-- Additional 2FA secret for high-value approvals -->
+            <column name="second_factor_secret" type="VARCHAR(255)"/>
+            <column name="second_factor_last_verified_at" type="TIMESTAMPTZ"/>
+
+            <!-- Optional override of approval limit -->
+            <column name="auth_approval_limit" type="DECIMAL(18,2)" defaultValue="0"/>
+
+            <!-- Audit -->
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="organization_user_auth" baseColumnNames="organization_user_id"
+                referencedTableName="organization_user" referencedColumnNames="id"
+                constraintName="fk_org_user_auth_org_user"/>
+
+        <createIndex tableName="organization_user_auth" indexName="idx_org_user_auth_org_user">
+            <column name="organization_user_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

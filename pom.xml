@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ke.shiva</groupId>
-    <artifactId>microservice-template</artifactId>
+    <artifactId>sbs_iam</artifactId>
     <version>1.0.1-SNAPSHOT</version>
-    <name>notification-service</name>
-    <description>notification-service</description>
+    <name>iam-service</name>
+    <description>Identity and Access Management Service</description>
     <url/>
     <licenses>
         <license/>
@@ -89,12 +89,29 @@
         <dependency>
             <groupId>ke.shiva</groupId>
             <artifactId>shiva-spring-core-starter</artifactId>
-            <version>1.0.18</version>
+            <version>1.0.19</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-authorization-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
     </dependencies>
     <dependencyManagement>
@@ -119,6 +136,14 @@
                 <groupId>org.liquibase</groupId>
                 <artifactId>liquibase-maven-plugin</artifactId>
                 <version>4.31.1</version>
+<!--                <configuration>-->
+<!--                    <url>jdbc:mysql://localhost:3306/sb_net_ibs</url>-->
+<!--                    <username>root</username>-->
+<!--                    <password>mysql</password>-->
+<!--                    <driver>com.mysql.cj.jdbc.Driver</driver>-->
+<!--                    <changeLogFile>src/main/resources/db/changelog/db.changelog-master.yaml</changeLogFile>-->
+<!--                    <outputChangeLogFile>src/main/resources/db/changelog/db.changelog-initial.xml</outputChangeLogFile>-->
+<!--                </configuration>-->
             </plugin>
         </plugins>
     </build>

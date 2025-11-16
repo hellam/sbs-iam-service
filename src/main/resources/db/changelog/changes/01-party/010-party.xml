@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ============================================================= -->
+    <!-- PARTY TABLE                                                   -->
+    <!-- The universal identity container for PERSON & ORGANIZATION    -->
+    <!-- No authentication data belongs here.                          -->
+    <!-- Used as root entity for linkages, overrides, client grouping. -->
+    <!-- ============================================================= -->
+
+    <changeSet id="pg-iam-010-party" author="hellamimbosa">
+
+        <comment>
+            Master PARTY table.
+            Each party represents either:
+            - a PERSON (retail customer, corporate user, employee), OR
+            - an ORGANIZATION (SME, Corporate entity).
+            This table provides a universal, consistent identity anchor for:
+            - IAM users (PERSON only),
+            - Organization membership,
+            - Feature overrides,
+            - Roles scoped to organizations,
+            - Limits, approvals, and future domain expansions.
+        </comment>
+
+        <createTable tableName="party">
+
+            <!-- Internal primary key -->
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_party"/>
+            </column>
+
+            <!-- UUID used externally (public APIs, tokens, logs) -->
+            <column name="public_id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <!-- PERSON or ORGANIZATION -->
+            <column name="party_type" type="party_type_enum">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Optional link to core banking CIF / customer ID -->
+            <column name="core_customer_id" type="VARCHAR(50)"/>
+
+            <!-- ACTIVE, BLOCKED, DORMANT, CLOSED -->
+            <column name="status" type="party_status_enum" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Audit fields -->
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <!-- Useful indexes -->
+        <createIndex tableName="party" indexName="idx_party_public_id" unique="true">
+            <column name="public_id"/>
+        </createIndex>
+
+        <createIndex tableName="party" indexName="idx_party_type_status">
+            <column name="party_type"/>
+            <column name="status"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
