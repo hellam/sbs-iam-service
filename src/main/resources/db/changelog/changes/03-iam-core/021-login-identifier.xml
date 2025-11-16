@@ -44,7 +44,7 @@
                 <constraints nullable="false"/>
             </column>
 
-            <!-- USERNAME, PHONE -->
+            <!-- USERNAME, EMAIL, PHONE -->
             <column name="identifier_type" type="identifier_type_enum">
                 <constraints nullable="false"/>
             </column>
