@@ -1,13 +1,98 @@
 databaseChangeLog:
+  - changeSet:
+      id: create-iam-schema
+      author: shiva_developer
+      changes:
+        - sql: CREATE SCHEMA IF NOT EXISTS iam_service;
   - preConditions:
       - dbms:
           type: postgresql
     onFail: HALT
   - include:
-      file: db/changelog/changes/00-core/000-countries.xml
+      file: db/changelog/changes/iam/00-core/000-countries.xml
   - include:
-      file: db/changelog/changes/00-core/001-branches.xml
+      file: db/changelog/changes/iam/00-core/001-branches.xml
   - include:
-      file: db/changelog/changes/00-core/003-transaction-type.xml
+      file: db/changelog/changes/iam/00-core/004-features.xml
   - include:
-      file: db/changelog/changes/00-core/004-features.xml
+      file: db/changelog/changes/iam/00-core/005-security-question.xml
+  - include:
+      file: db/changelog/changes/iam/00-credentials/001-client-credentials.xml
+  - include:
+      file: db/changelog/changes/iam/01-party/010-party.xml
+  - include:
+      file: db/changelog/changes/iam/02-person-organization/011-person.xml
+  - include:
+      file: db/changelog/changes/iam/02-person-organization/012-organization.xml
+  - include:
+      file: db/changelog/changes/iam/03-iam-core/020-iam-user.xml
+  - include:
+      file: db/changelog/changes/iam/10-session/110-sessions.xml
+  - include:
+      file: db/changelog/changes/iam/03-iam-core/021-login-identifier.xml
+  - include:
+      file: db/changelog/changes/iam/04-profiles/030-customer-profile.xml
+  - include:
+      file: db/changelog/changes/iam/04-profiles/031-organization-user.xml
+  - include:
+      file: db/changelog/changes/iam/04-profiles/032-employee-profile.xml
+  - include:
+      file: db/changelog/changes/iam/05-auth/050-customer-auth.xml
+  - include:
+      file: db/changelog/changes/iam/05-auth/051-employee-auth.xml
+  - include:
+      file: db/changelog/changes/iam/05-auth/052-organization-user-auth.xml
+  - include:
+      file: db/changelog/changes/iam/05-auth/053-iam-user-security-question.xml
+  - include:
+      file: db/changelog/changes/iam/05-rbac/employee/050-employee-permission.xml
+  - include:
+      file: db/changelog/changes/iam/05-rbac/employee/051-employee-role.xml
+  - include:
+      file: db/changelog/changes/iam/05-rbac/employee/052-employee-role-permission.xml
+  - include:
+      file: db/changelog/changes/iam/05-rbac/employee/053-employee-profile-role.xml
+  - include:
+      file: db/changelog/changes/iam/05-rbac/org-user/063-org-role.xml
+  - include:
+      file: db/changelog/changes/iam/05-rbac/org-user/064-org-role-permission.xml
+  - include:
+      file: db/changelog/changes/iam/05-rbac/org-user/065-org-user-role.xml
+  - include:
+      file: db/changelog/changes/iam/06-audit/060-iam-audit-log.xml
+  - include:
+      file: db/changelog/changes/iam/06-audit/061-password-history.xml
+  - include:
+      file: db/changelog/changes/iam/06-audit/062-pin-history.xml
+  - include:
+      file: db/changelog/changes/iam/06-audit/063-employee-password-history.xml
+  - include:
+      file: db/changelog/changes/iam/06-audit/064-org-approver-secret-history.xml
+  - include:
+      file: db/changelog/changes/iam/06-audit/065-login-history.xml
+  - include:
+      file: db/changelog/changes/iam/06-audit/066-security-events.xml
+  - include:
+      file: db/changelog/changes/iam/06-audit/067-security-challenge-attempt.xml
+  - include:
+      file: db/changelog/changes/iam/07-08-09-policy/07-security/070-policy.xml
+  - include:
+      file: db/changelog/changes/iam/07-08-09-policy/07-security/071-password-policy.xml
+  - include:
+      file: db/changelog/changes/iam/07-08-09-policy/07-security/072-pin-policy.xml
+  - include:
+      file: db/changelog/changes/iam/07-08-09-policy/07-security/073-mfa-policy.xml
+  - include:
+      file: db/changelog/changes/iam/07-08-09-policy/07-security/075-security-question-policy.xml
+  - include:
+      file: db/changelog/changes/iam/07-08-09-policy/08-feature/081-feature-policy.xml
+  - include:
+      file: db/changelog/changes/iam/07-08-09-policy/08-feature/082-feature-policy-assignment.xml
+  - include:
+      file: db/changelog/changes/iam/10-session/111-refresh-tokens.xml
+  - include:
+      file: db/changelog/changes/iam/10-session/112-trusted-devices.xml
+  - include:
+      file: db/changelog/changes/iam/10-session/113-session-events.xml
+  - include:
+      file: db/changelog/changes/iam/11-consent/120-user-consent.xml

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ================================================================= -->
+    <!-- IAM USER                                                          -->
+    <!-- Pure identity record (NO passwords, NO PINs, NO MFA here).        -->
+    <!-- Every IAM user must be linked to a PERSON party.                  -->
+    <!-- ================================================================= -->
+
+    <changeSet id="pg-iam-020-iam-user" author="hellamimbosa">
+
+        <comment>
+            IAM_USER represents an authenticated human identity.
+            It is always linked to a PERSON (party_type = PERSON).
+            This table does NOT contain any authentication secrets.
+            All channel-specific auth is stored in:
+            - customer_auth (retail + corporate)
+            - employee_auth (backoffice staff)
+            - organization_user_auth (optional # approvals)
+        </comment>
+
+        <createTable tableName="iam_user">
+
+            <!-- Internal primary key -->
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_iam_user"/>
+            </column>
+
+            <!-- External UUID for tokens and public references -->
+            <column name="public_id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <!-- Link to PERSON party -->
+            <column name="party_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- CUSTOMER, EMPLOYEE, AGENT, MERCHANT, SYSTEM -->
+            <column name="user_category" type="VARCHAR(50)" defaultValue="CUSTOMER">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- LOCAL, LDAP, OIDC, SAML -->
+            <column name="auth_provider" type="VARCHAR(50)" defaultValue="LOCAL">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- IAM-level logical status -->
+            <column name="status" type="VARCHAR(50)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- General metadata -->
+            <column name="last_login_at" type="TIMESTAMPTZ"/>
+
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <!-- FK to PERSON (via PARTY) -->
+        <addForeignKeyConstraint
+                baseTableName="iam_user" baseColumnNames="party_id"
+                referencedTableName="party" referencedColumnNames="id"
+                constraintName="fk_iam_user_party"/>
+
+        <createIndex tableName="iam_user" indexName="idx_iam_user_public_id" unique="true">
+            <column name="public_id"/>
+        </createIndex>
+
+        <createIndex tableName="iam_user" indexName="idx_iam_user_party">
+            <column name="party_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

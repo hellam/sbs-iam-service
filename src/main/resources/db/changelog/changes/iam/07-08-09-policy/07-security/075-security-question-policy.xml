@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 094 - SECURITY QUESTION POLICY -->
+
+    <changeSet id="pg-policy-075-security-question-policy" author="hellamimbosa">
+
+        <createTable tableName="security_question_policy" schemaName="iam_service">
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"
+                             primaryKeyName="pk_security_question_policy"/>
+            </column>
+
+
+            <column name="policy_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <!-- INTERNET_BANKING, MOBILE, BACKOFFICE, ATM, API etc -->
+            <column name="channel" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <!-- Enable or disable security questions for this channel -->
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="false"/>
+
+            <!-- Minimum questions user must set (0 if disabled) -->
+            <column name="min_questions" type="SMALLINT" defaultValueNumeric="0"/>
+
+            <!-- Maximum allowed questions for this user/channel -->
+            <column name="max_questions" type="SMALLINT" defaultValueNumeric="0"/>
+
+            <!-- If true, user cannot proceed without setting questions -->
+            <column name="mandatory" type="BOOLEAN" defaultValueBoolean="false"/>
+
+            <!-- If true, asked during password recovery -->
+            <column name="ask_on_forgot_password" type="BOOLEAN" defaultValueBoolean="false"/>
+
+            <!-- If true, security question becomes part of MFA -->
+            <column name="ask_on_sensitive_action" type="BOOLEAN" defaultValueBoolean="false"/>
+
+            <!-- System metadata -->
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="created_at" type="TIMESTAMPTZ"
+                    defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ"
+                    defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="security_question_policy"
+                baseColumnNames="policy_id"
+                referencedTableName="policies"
+                referencedColumnNames="id"
+                constraintName="fk_secq_policy_policy"/>
+
+        <createIndex tableName="security_question_policy"
+                     indexName="idx_security_question_policy_policy">
+            <column name="policy_id"/>
+        </createIndex>
+
+        <createIndex tableName="security_question_policy"
+                     indexName="idx_security_question_policy_channel">
+            <column name="channel"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

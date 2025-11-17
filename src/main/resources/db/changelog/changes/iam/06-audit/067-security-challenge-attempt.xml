@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="pg-iam-067-security-challenge-attempt" author="hellamimbosa">
+
+        <createTable tableName="security_challenge_attempt" schemaName="iam_service">
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="iam_user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="security_question_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="answer_correct" type="BOOLEAN" defaultValueBoolean="false"/>
+
+            <column name="ip_address" type="VARCHAR(64)"/>
+            <column name="device_id" type="VARCHAR(255)"/>
+            <column name="channel" type="VARCHAR(50)"/>
+
+            <column name="created_at" type="TIMESTAMPTZ"
+                    defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="security_challenge_attempt"
+                baseColumnNames="iam_user_id"
+                referencedTableName="iam_user"
+                referencedColumnNames="id"
+                constraintName="fk_sec_attempt_user"/>
+
+        <addForeignKeyConstraint
+                baseTableName="security_challenge_attempt"
+                baseColumnNames="security_question_id"
+                referencedTableName="security_question"
+                referencedColumnNames="id"
+                constraintName="fk_sec_attempt_question"/>
+
+    </changeSet>
+
+</databaseChangeLog>

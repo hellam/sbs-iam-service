@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ============================= -->
+    <!-- BRANCHES                      -->
+    <!-- Bank branches + service points -->
+    <!-- ============================= -->
+
+    <changeSet id="pg-core-001-branches" author="hellamimbosa">
+
+        <comment>
+            BRANCHES table represents physical branch locations of the bank.
+            branch_type = 'BRANCH', 'SUB_BRANCH', 'SERVICE_CENTER'.
+            ATMs are stored separately in atm_locations.
+        </comment>
+
+        <createTable tableName="branches">
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_branches"/>
+            </column>
+
+            <column name="branch_code" type="VARCHAR(20)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="branch_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="branch_type" type="VARCHAR(50)" defaultValue="BRANCH">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="country_code" type="VARCHAR(3)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="address" type="VARCHAR(255)"/>
+            <column name="city" type="VARCHAR(100)"/>
+
+            <!-- For maps, geolocation, fraud analysis, ATM selection -->
+            <column name="longitude" type="DOUBLE PRECISION"/>
+            <column name="latitude" type="DOUBLE PRECISION"/>
+
+            <!-- Optional parent branch (if sub-branch) -->
+            <column name="parent_branch_id" type="BIGINT"/>
+
+            <!-- Audit fields -->
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="supervised_by" type="VARCHAR(100)"/>
+            <column name="supervised_at" type="TIMESTAMPTZ"/>
+
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <!-- FK to countries -->
+        <addForeignKeyConstraint
+                baseTableName="branches" baseColumnNames="country_code"
+                referencedTableName="countries" referencedColumnNames="country_code"
+                constraintName="fk_branches_country"/>
+
+        <!-- FK to branches (self-parenting) -->
+        <addForeignKeyConstraint
+                baseTableName="branches" baseColumnNames="parent_branch_id"
+                referencedTableName="branches" referencedColumnNames="id"
+                constraintName="fk_branches_parent"
+                deferrable="true" initiallyDeferred="true"/>
+
+    </changeSet>
+
+</databaseChangeLog>

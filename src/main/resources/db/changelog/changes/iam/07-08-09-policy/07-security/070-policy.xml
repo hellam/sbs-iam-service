@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ============================================================= -->
+    <!-- POLICY TABLE (GENERIC)                                       -->
+    <!-- ============================================================= -->
+
+    <changeSet id="pg-iam-070-policy" author="hellamimbosa">
+
+        <createTable tableName="policies" schemaName="iam_service">
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"
+                             primaryKeyName="pk_policies"/>
+            </column>
+
+            <!-- External UUID for tokens and public references -->
+            <column name="public_id" type="UUID" defaultValueComputed="gen_random_uuid()">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <!-- password, pin, mfa, transaction, approval, etc -->
+            <column name="policy_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="description" type="TEXT"/>
+
+            <!-- GLOBAL, ORGANIZATION, USER -->
+            <column name="scope" type="VARCHAR(20)" defaultValue="GLOBAL">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- If scope = ORG or USER -->
+            <column name="organization_id" type="BIGINT"/>
+            <column name="iam_user_id" type="BIGINT"/>
+
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
+
+            <column name="created_at" type="TIMESTAMPTZ"
+                    defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ"
+                    defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="policies" baseColumnNames="organization_id"
+                referencedTableName="party" referencedColumnNames="id"
+                constraintName="fk_policy_org"
+                deferrable="true" initiallyDeferred="true"/>
+
+        <addForeignKeyConstraint
+                baseTableName="policies" baseColumnNames="iam_user_id"
+                referencedTableName="iam_user" referencedColumnNames="id"
+                constraintName="fk_policy_user"
+                deferrable="true" initiallyDeferred="true"/>
+
+        <createIndex tableName="policies" indexName="idx_policy_type">
+            <column name="policy_type"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ============================================================= -->
+    <!-- PERSON TABLE                                                  -->
+    <!-- Holds personal demographic data for persons                   -->
+    <!-- Only PERSON entries in party can have person rows             -->
+    <!-- ============================================================= -->
+
+    <changeSet id="pg-iam-011-person" author="hellamimbosa">
+
+        <comment>
+            PERSON table stores demographic profile for individuals.
+            These individuals can become:
+            - retail customers,
+            - corporate users (directors, accountants, signatories),
+            - bank employees,
+            - agents/merchants later.
+
+            Each PERSON corresponds to one PARTY row.
+            Only PERSON-type parties may have IAM_USER accounts.
+        </comment>
+
+        <createTable tableName="person">
+
+            <!-- PK is also FK to PARTY -->
+            <column name="party_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_person"/>
+            </column>
+
+            <!-- Basic identity fields -->
+            <column name="first_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="full_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="national_id" type="VARCHAR(50)"/>
+            <column name="dob" type="DATE"/>
+            <column name="gender" type="VARCHAR(20)"/>
+
+            <!-- ISO3 country code -->
+            <column name="country_code" type="VARCHAR(3)"/>
+            <column name="phone" type="VARCHAR(20)"/>
+            <column name="email" type="VARCHAR(255)"/>
+            <column name="address" type="VARCHAR(255)"/>
+            <column name="city" type="VARCHAR(100)"/>
+
+            <!-- Audit fields -->
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+
+        </createTable>
+
+        <!-- FK to PARTY -->
+        <addForeignKeyConstraint
+                baseTableName="person" baseColumnNames="party_id"
+                referencedTableName="party" referencedColumnNames="id"
+                constraintName="fk_person_party"/>
+
+        <!-- FK to COUNTRIES -->
+        <addForeignKeyConstraint
+                baseTableName="person" baseColumnNames="country_code"
+                referencedTableName="countries" referencedColumnNames="country_code"
+                constraintName="fk_person_country"/>
+
+        <createIndex tableName="person" indexName="idx_person_country">
+            <column name="country_code"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
