@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 133 - SECURITY EVENTS: AI & HANDLING METADATA -->
+
+    <changeSet id="pg-iam-110-1-add-fields=to-sessions" author="hellamimbosa">
+        <addColumn tableName="sessions">
+            <column name="session_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="sessions">
+            <!-- JSON column)-->
+            <column name="metadata" type="JSONB"/>
+        </addColumn>
+
+    </changeSet>
+
+</databaseChangeLog>

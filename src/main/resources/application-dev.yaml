@@ -25,3 +25,13 @@ management:
 
 server:
   port: 9001
+
+security:
+  allowed-domains:
+    map:
+      BACKOFFICE:
+        - "localhost:42000"
+      INTERNET_BANKING:
+        - "localhost:43000"
+      MOBILE_BANKING:
+        - "localhost:44000"

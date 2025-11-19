@@ -15,3 +15,14 @@ management:
 
 server:
   port: 7001
+
+security:
+  allowed-domains:
+    map:
+      BACKOFFICE:
+        - "backoffice.gibbank.so"
+        - "admin.gibbank.so"
+      INTERNET_BANKING:
+        - "ib.gibbank.so"
+      MOBILE_BANKING:
+        - "mobile.gibbank.so"

@@ -113,6 +113,11 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>
@@ -136,6 +141,16 @@
                 <groupId>org.liquibase</groupId>
                 <artifactId>liquibase-maven-plugin</artifactId>
                 <version>4.31.1</version>
+
+                <configuration>
+                    <changeLogFile>src/main/resources/db/changelog/db.changelog-master.yaml</changeLogFile>
+                    <url>jdbc:postgresql://localhost:5432/shiva_banking</url>
+                    <username>hellam</username>
+                    <password>Hellix1425</password>
+                    <driver>org.postgresql.Driver</driver>
+                    <defaultSchemaName>iam_service</defaultSchemaName>
+                    <changelogSchemaName>public</changelogSchemaName>
+                </configuration>
             </plugin>
         </plugins>
     </build>

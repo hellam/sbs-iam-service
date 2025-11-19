@@ -1,0 +1,14 @@
+package ke.shiva.sbs_iam.modules.iam.api.response;
+
+import lombok.Data;
+
+import java.util.UUID;
+
+@Data
+public class PasswordStepResponse {
+    private UUID flowId;
+    private boolean mfaRequired;
+    private boolean passwordChangeRequired;
+    private boolean securityQuestionsRequired;
+    private boolean profileSelectionRequired;
+}
