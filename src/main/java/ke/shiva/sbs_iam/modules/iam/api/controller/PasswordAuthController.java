@@ -1,7 +1,10 @@
 package ke.shiva.sbs_iam.modules.iam.api.controller;
 
 import jakarta.validation.Valid;
+import ke.shiva.sbs_iam.modules.iam.api.request.PasswordLoginRequest;
+import ke.shiva.sbs_iam.modules.iam.api.response.PasswordStepResponse;
 import ke.shiva.sbs_iam.modules.iam.app.service.PasswordAuthService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
