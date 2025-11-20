@@ -3,7 +3,7 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.identity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.ChannelEnum;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
 import org.hibernate.annotations.ColumnDefault;
 
@@ -25,7 +25,7 @@ public class LoginIdentifierEntity extends BaseEntity {
     @NotNull
     @Column(name = "channel", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
-    private ChannelEnum channel;
+    private Channel channel;
 
     @Size(max = 20)
     @NotNull
@@ -53,11 +53,11 @@ public class LoginIdentifierEntity extends BaseEntity {
         this.iamUser = iamUser;
     }
 
-    public ChannelEnum getChannel() {
+    public Channel getChannel() {
         return channel;
     }
 
-    public void setChannel(ChannelEnum channel) {
+    public void setChannel(Channel channel) {
         this.channel = channel;
     }
 

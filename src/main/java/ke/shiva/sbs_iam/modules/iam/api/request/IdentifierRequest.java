@@ -2,7 +2,7 @@ package ke.shiva.sbs_iam.modules.iam.api.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
-import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.ChannelEnum;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import lombok.Data;
 
 @Data
@@ -11,5 +11,5 @@ public class IdentifierRequest {
     private String identifier;
 
     @JsonIgnore
-    private ChannelEnum channel;
+    private Channel channel;
 }

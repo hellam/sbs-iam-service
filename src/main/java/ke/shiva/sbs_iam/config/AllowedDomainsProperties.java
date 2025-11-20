@@ -1,6 +1,6 @@
 package ke.shiva.sbs_iam.config;
 
-import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.ChannelEnum;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.EnumMap;
@@ -23,13 +23,13 @@ public class AllowedDomainsProperties {
      *       INTERNET_BANKING:
      *         - "ib.bank.com"
      */
-    private Map<ChannelEnum, List<String>> map = new EnumMap<>(ChannelEnum.class);
+    private Map<Channel, List<String>> map = new EnumMap<>(Channel.class);
 
-    public Map<ChannelEnum, List<String>> getMap() {
+    public Map<Channel, List<String>> getMap() {
         return map;
     }
 
-    public void setMap(Map<ChannelEnum, List<String>> map) {
+    public void setMap(Map<Channel, List<String>> map) {
         this.map = map;
     }
 }

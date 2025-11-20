@@ -1,6 +1,6 @@
 package ke.shiva.sbs_iam.modules.iam.domain.enums.user;
 
-public enum AuthProviderEnum {
+public enum AuthProvider {
     LOCAL,
     LDAP,
     OIDC,

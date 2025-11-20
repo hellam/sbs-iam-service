@@ -6,7 +6,7 @@ import ke.shiva.sbs_iam.modules.iam.api.request.IdentifierRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.IdentifierResponse;
 import ke.shiva.sbs_iam.modules.iam.app.service.DomainGuard;
 import ke.shiva.sbs_iam.modules.iam.app.service.IdentifierService;
-import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.ChannelEnum;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,8 +27,8 @@ public class IdentifierController {
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
     ) {
-        domainGuard.validate(ChannelEnum.BACKOFFICE, http);
-        req.setChannel(ChannelEnum.BACKOFFICE);
+        domainGuard.validate(Channel.BACKOFFICE, http);
+        req.setChannel(Channel.BACKOFFICE);
         return ResponseEntity.ok(identifierService.handle(req));
     }
 
@@ -37,8 +37,8 @@ public class IdentifierController {
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
     ) {
-        domainGuard.validate(ChannelEnum.MOBILE_BANKING, http);
-        req.setChannel(ChannelEnum.MOBILE_BANKING);
+        domainGuard.validate(Channel.MOBILE_BANKING, http);
+        req.setChannel(Channel.MOBILE_BANKING);
         return ResponseEntity.ok(identifierService.handle(req));
     }
 
@@ -47,8 +47,8 @@ public class IdentifierController {
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
     ) {
-        domainGuard.validate(ChannelEnum.INTERNET_BANKING, http);
-        req.setChannel(ChannelEnum.INTERNET_BANKING);
+        domainGuard.validate(Channel.INTERNET_BANKING, http);
+        req.setChannel(Channel.INTERNET_BANKING);
         return ResponseEntity.ok(identifierService.handle(req));
     }
 }

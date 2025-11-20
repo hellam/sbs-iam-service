@@ -8,7 +8,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.SessionType;
-import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.ChannelEnum;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerProfileRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.OrganizationUserRepository;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,7 @@ public class LoginFlowService {
     private final OrganizationUserRepository orgRepo;
 
     // -------- CREATE LOGIN FLOW --------
-    public SessionEntity start(IamUserEntity user, ChannelEnum channel, LoginRequirements reqs) {
+    public SessionEntity start(IamUserEntity user, Channel channel, LoginRequirements reqs) {
 
         SessionEntity s = new SessionEntity();
         s.setSessionId(String.valueOf(UUID.randomUUID()));
@@ -42,7 +43,7 @@ public class LoginFlowService {
         s.setChannel(channel);
         s.setStatus(LoginStage.IDENTIFIER_OK);
         s.setSessionType(SessionType.LOGIN_TEMP);
-        s.setExpiresAt(Instant.now().plus(Duration.ofMinutes(15)));
+        s.setExpiresAt(OffsetDateTime.from(Instant.now().plus(Duration.ofMinutes(15))));
 
         // store LoginRequirements in metadata (JSON column)
         s.setMetadata(Map.of("requirements", reqs));

@@ -28,6 +28,10 @@
 
             <column name="channel" type="VARCHAR(50)"/>
 
+            <column name="session_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
             <column name="device_id" type="VARCHAR(255)"/>
             <column name="ip_address" type="VARCHAR(50)"/>
             <column name="user_agent" type="TEXT"/>
@@ -43,6 +47,8 @@
             <column name="expires_at" type="TIMESTAMPTZ"/>
             <column name="revoked_at" type="TIMESTAMPTZ"/>
             <column name="revoked_reason" type="TEXT"/>
+
+            <column name="metadata" type="JSONB"/>
 
         </createTable>
 

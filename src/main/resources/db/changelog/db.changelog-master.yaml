@@ -96,5 +96,3 @@ databaseChangeLog:
       file: db/changelog/changes/iam/10-session/113-session-events.xml
   - include:
       file: db/changelog/changes/iam/11-consent/120-user-consent.xml
-  - include:
-        file: db/changelog/changes/iam/10-session/modifications/110-1-add-fields-to-session.xml

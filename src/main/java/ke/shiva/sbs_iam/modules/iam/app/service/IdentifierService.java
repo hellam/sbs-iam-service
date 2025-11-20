@@ -3,6 +3,10 @@ package ke.shiva.sbs_iam.modules.iam.app.service;
 import jakarta.security.auth.message.AuthException;
 import ke.shiva.sbs_iam.modules.iam.api.request.IdentifierRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.IdentifierResponse;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
+import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,14 +25,14 @@ public class IdentifierService {
                 .findValidForChannel(req.getIdentifier(), req.getChannel())
                 .orElseThrow(() -> new AuthException("Identifier not allowed or inactive"));
 
-        IamUser user = identifier.getUser();
+        IamUserEntity user = identifier.getUser();
         policyService.validateUserStatus(user);
 
         // Determine requirements (password, mfa, questions etc)
         LoginRequirements reqs = policyService.evaluateRequirements(user, req.getChannel());
 
         // Create temp session
-        Session session = flowService.startFlow(user, req.getChannel(), reqs);
+        SessionEntity session = flowService.startFlow(user, req.getChannel(), reqs);
 
         IdentifierResponse resp = new IdentifierResponse();
         resp.setFlowId(session.getId());
@@ -39,7 +43,7 @@ public class IdentifierService {
         resp.setSecurityQuestionsRequired(reqs.isQuestionsRequired());
 
         // IB only
-        resp.setProfileSelectionRequired(req.getChannel() == ChannelEnum.INTERNET_BANKING);
+        resp.setProfileSelectionRequired(req.getChannel() == Channel.INTERNET_BANKING);
 
         return resp;
     }

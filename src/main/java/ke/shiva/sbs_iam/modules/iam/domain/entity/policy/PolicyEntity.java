@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PartyEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.enums.policy.PolicyScopeEnum;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.policy.PolicyScope;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
 import org.hibernate.annotations.ColumnDefault;
 
@@ -41,7 +41,7 @@ public class PolicyEntity extends BaseEntity {
     @ColumnDefault("'GLOBAL'")
     @Column(name = "scope", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
-    private PolicyScopeEnum scope;
+    private PolicyScope scope;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id")
@@ -99,11 +99,11 @@ public class PolicyEntity extends BaseEntity {
         this.description = description;
     }
 
-    public PolicyScopeEnum getScope() {
+    public PolicyScope getScope() {
         return scope;
     }
 
-    public void setScope(PolicyScopeEnum scope) {
+    public void setScope(PolicyScope scope) {
         this.scope = scope;
     }
 

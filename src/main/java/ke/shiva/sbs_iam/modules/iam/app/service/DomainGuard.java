@@ -2,7 +2,7 @@ package ke.shiva.sbs_iam.modules.iam.app.service;
 
 import jakarta.servlet.http.HttpServletRequest;
 import ke.shiva.sbs_iam.config.AllowedDomainsProperties;
-import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.ChannelEnum;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.shared.exception.DomainNotAllowedException;
 import org.springframework.stereotype.Component;
 
@@ -18,8 +18,8 @@ public class DomainGuard {
         this.properties = properties;
     }
 
-    public void validate(ChannelEnum channel, HttpServletRequest request) {
-        Map<ChannelEnum, List<String>> map = properties.getMap();
+    public void validate(Channel channel, HttpServletRequest request) {
+        Map<Channel, List<String>> map = properties.getMap();
         List<String> allowed = map.get(channel);
         if (allowed == null || allowed.isEmpty()) {
             return; // if not configured, don't restrict (or flip to strict)

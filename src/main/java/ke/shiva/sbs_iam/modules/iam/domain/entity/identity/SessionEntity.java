@@ -7,7 +7,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.security.SecurityEventEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.SessionEventEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.SessionType;
-import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.ChannelEnum;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
@@ -42,7 +42,7 @@ public class SessionEntity {
     @Size(max = 50)
     @Column(name = "channel", length = 50)
     @Enumerated(EnumType.STRING)
-    private ChannelEnum channel;
+    private Channel channel;
 
     @Size(max = 255)
     @Column(name = "device_id")

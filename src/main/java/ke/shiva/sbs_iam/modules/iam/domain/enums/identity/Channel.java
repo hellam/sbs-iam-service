@@ -1,6 +1,6 @@
 package ke.shiva.sbs_iam.modules.iam.domain.enums.identity;
 
-public enum ChannelEnum {
+public enum Channel {
     INTERNET_BANKING,
     MOBILE_BANKING,
     BACKOFFICE,

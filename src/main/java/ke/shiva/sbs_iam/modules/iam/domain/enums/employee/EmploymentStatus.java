@@ -1,6 +1,6 @@
 package ke.shiva.sbs_iam.modules.iam.domain.enums.employee;
 
-public enum EmploymentStatusEnum {
+public enum EmploymentStatus {
     ACTIVE,
     SUSPENDED,
     TERMINATED,
