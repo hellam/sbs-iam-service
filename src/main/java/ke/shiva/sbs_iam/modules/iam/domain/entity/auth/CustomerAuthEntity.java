@@ -5,10 +5,14 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.OffsetDateTime;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "customer_auth", schema = "iam_service")
 @AttributeOverrides({
@@ -95,157 +99,5 @@ public class CustomerAuthEntity extends BaseEntity {
 
     @Column(name = "mfa_last_verified_at")
     private OffsetDateTime mfaLastVerifiedAt;
-
-    public IamUserEntity getIamUser() {
-        return iamUser;
-    }
-
-    public void setIamUser(IamUserEntity iamUser) {
-        this.iamUser = iamUser;
-    }
-
-    public String getInternetPasswordHash() {
-        return internetPasswordHash;
-    }
-
-    public void setInternetPasswordHash(String internetPasswordHash) {
-        this.internetPasswordHash = internetPasswordHash;
-    }
-
-    public String getInternetPasswordAlgo() {
-        return internetPasswordAlgo;
-    }
-
-    public void setInternetPasswordAlgo(String internetPasswordAlgo) {
-        this.internetPasswordAlgo = internetPasswordAlgo;
-    }
-
-    public OffsetDateTime getInternetPasswordExpiry() {
-        return internetPasswordExpiry;
-    }
-
-    public void setInternetPasswordExpiry(OffsetDateTime internetPasswordExpiry) {
-        this.internetPasswordExpiry = internetPasswordExpiry;
-    }
-
-    public OffsetDateTime getInternetPasswordChangedAt() {
-        return internetPasswordChangedAt;
-    }
-
-    public void setInternetPasswordChangedAt(OffsetDateTime internetPasswordChangedAt) {
-        this.internetPasswordChangedAt = internetPasswordChangedAt;
-    }
-
-    public Boolean getInternetFirstTimeLogin() {
-        return internetFirstTimeLogin;
-    }
-
-    public void setInternetFirstTimeLogin(Boolean internetFirstTimeLogin) {
-        this.internetFirstTimeLogin = internetFirstTimeLogin;
-    }
-
-    public Short getInternetFailedAttempts() {
-        return internetFailedAttempts;
-    }
-
-    public void setInternetFailedAttempts(Short internetFailedAttempts) {
-        this.internetFailedAttempts = internetFailedAttempts;
-    }
-
-    public Boolean getInternetLocked() {
-        return internetLocked;
-    }
-
-    public void setInternetLocked(Boolean internetLocked) {
-        this.internetLocked = internetLocked;
-    }
-
-    public OffsetDateTime getInternetLastLoginAt() {
-        return internetLastLoginAt;
-    }
-
-    public void setInternetLastLoginAt(OffsetDateTime internetLastLoginAt) {
-        this.internetLastLoginAt = internetLastLoginAt;
-    }
-
-    public String getMobilePinHash() {
-        return mobilePinHash;
-    }
-
-    public void setMobilePinHash(String mobilePinHash) {
-        this.mobilePinHash = mobilePinHash;
-    }
-
-    public String getMobilePinAlgo() {
-        return mobilePinAlgo;
-    }
-
-    public void setMobilePinAlgo(String mobilePinAlgo) {
-        this.mobilePinAlgo = mobilePinAlgo;
-    }
-
-    public OffsetDateTime getMobilePinSetAt() {
-        return mobilePinSetAt;
-    }
-
-    public void setMobilePinSetAt(OffsetDateTime mobilePinSetAt) {
-        this.mobilePinSetAt = mobilePinSetAt;
-    }
-
-    public Boolean getMobileFirstTimeLogin() {
-        return mobileFirstTimeLogin;
-    }
-
-    public void setMobileFirstTimeLogin(Boolean mobileFirstTimeLogin) {
-        this.mobileFirstTimeLogin = mobileFirstTimeLogin;
-    }
-
-    public Short getMobileFailedAttempts() {
-        return mobileFailedAttempts;
-    }
-
-    public void setMobileFailedAttempts(Short mobileFailedAttempts) {
-        this.mobileFailedAttempts = mobileFailedAttempts;
-    }
-
-    public Boolean getMobileLocked() {
-        return mobileLocked;
-    }
-
-    public void setMobileLocked(Boolean mobileLocked) {
-        this.mobileLocked = mobileLocked;
-    }
-
-    public OffsetDateTime getMobileLastLoginAt() {
-        return mobileLastLoginAt;
-    }
-
-    public void setMobileLastLoginAt(OffsetDateTime mobileLastLoginAt) {
-        this.mobileLastLoginAt = mobileLastLoginAt;
-    }
-
-    public Boolean getMfaEnabled() {
-        return mfaEnabled;
-    }
-
-    public void setMfaEnabled(Boolean mfaEnabled) {
-        this.mfaEnabled = mfaEnabled;
-    }
-
-    public String getMfaSecret() {
-        return mfaSecret;
-    }
-
-    public void setMfaSecret(String mfaSecret) {
-        this.mfaSecret = mfaSecret;
-    }
-
-    public OffsetDateTime getMfaLastVerifiedAt() {
-        return mfaLastVerifiedAt;
-    }
-
-    public void setMfaLastVerifiedAt(OffsetDateTime mfaLastVerifiedAt) {
-        this.mfaLastVerifiedAt = mfaLastVerifiedAt;
-    }
 
 }

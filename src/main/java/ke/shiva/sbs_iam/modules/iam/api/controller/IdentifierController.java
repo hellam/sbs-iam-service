@@ -1,5 +1,6 @@
 package ke.shiva.sbs_iam.modules.iam.api.controller;
 
+import jakarta.security.auth.message.AuthException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.modules.iam.api.request.IdentifierRequest;
@@ -26,7 +27,7 @@ public class IdentifierController {
     public ResponseEntity<IdentifierResponse> identifyBackoffice(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
-    ) {
+    ) throws AuthException {
         domainGuard.validate(Channel.BACKOFFICE, http);
         req.setChannel(Channel.BACKOFFICE);
         return ResponseEntity.ok(identifierService.handle(req));
@@ -36,7 +37,7 @@ public class IdentifierController {
     public ResponseEntity<IdentifierResponse> identifyMobile(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
-    ) {
+    ) throws AuthException {
         domainGuard.validate(Channel.MOBILE_BANKING, http);
         req.setChannel(Channel.MOBILE_BANKING);
         return ResponseEntity.ok(identifierService.handle(req));
@@ -46,7 +47,7 @@ public class IdentifierController {
     public ResponseEntity<IdentifierResponse> identifyIB(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
-    ) {
+    ) throws AuthException {
         domainGuard.validate(Channel.INTERNET_BANKING, http);
         req.setChannel(Channel.INTERNET_BANKING);
         return ResponseEntity.ok(identifierService.handle(req));

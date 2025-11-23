@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.SecurityEventEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.SessionEventEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.ProfileType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.SessionType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import lombok.Getter;
@@ -96,5 +97,13 @@ public class SessionEntity {
 
     @OneToMany(mappedBy = "session")
     private Set<SessionEventEntity> sessionEvents = new LinkedHashSet<>();
+
+    @Size(max = 50)
+    @Column(name = "profile_type", length = 50)
+    @Enumerated(EnumType.STRING)
+    private ProfileType profileType;
+
+    @Column(name = "profile_id")
+    private Long profileId;
 
 }

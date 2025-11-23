@@ -7,10 +7,14 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PartyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.policy.PolicyScope;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.util.UUID;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "policies", schema = "iam_service")
 @AttributeOverrides({
@@ -66,101 +70,5 @@ public class PolicyEntity extends BaseEntity {
 
     @OneToOne(mappedBy = "policy")
     private SecurityQuestionPolicyEntity securityQuestionPolicy;
-
-    public UUID getPublicId() {
-        return publicId;
-    }
-
-    public void setPublicId(UUID publicId) {
-        this.publicId = publicId;
-    }
-
-    public String getPolicyType() {
-        return policyType;
-    }
-
-    public void setPolicyType(String policyType) {
-        this.policyType = policyType;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public PolicyScope getScope() {
-        return scope;
-    }
-
-    public void setScope(PolicyScope scope) {
-        this.scope = scope;
-    }
-
-    public PartyEntity getOrganization() {
-        return organization;
-    }
-
-    public void setOrganization(PartyEntity organization) {
-        this.organization = organization;
-    }
-
-    public IamUserEntity getIamUser() {
-        return iamUser;
-    }
-
-    public void setIamUser(IamUserEntity iamUser) {
-        this.iamUser = iamUser;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
-
-    public MfaPolicyEntity getMfaPolicy() {
-        return mfaPolicy;
-    }
-
-    public void setMfaPolicy(MfaPolicyEntity mfaPolicy) {
-        this.mfaPolicy = mfaPolicy;
-    }
-
-    public PasswordPolicyEntity getPasswordPolicy() {
-        return passwordPolicy;
-    }
-
-    public void setPasswordPolicy(PasswordPolicyEntity passwordPolicy) {
-        this.passwordPolicy = passwordPolicy;
-    }
-
-    public PinPolicyEntity getPinPolicy() {
-        return pinPolicy;
-    }
-
-    public void setPinPolicy(PinPolicyEntity pinPolicy) {
-        this.pinPolicy = pinPolicy;
-    }
-
-    public SecurityQuestionPolicyEntity getSecurityQuestionPolicy() {
-        return securityQuestionPolicy;
-    }
-
-    public void setSecurityQuestionPolicy(SecurityQuestionPolicyEntity securityQuestionPolicy) {
-        this.securityQuestionPolicy = securityQuestionPolicy;
-    }
 
 }

@@ -4,8 +4,12 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "security_question_policy", schema = "iam_service")
 @AttributeOverrides({
@@ -50,77 +54,5 @@ public class SecurityQuestionPolicyEntity extends BaseEntity {
     @ColumnDefault("true")
     @Column(name = "is_active")
     private Boolean isActive;
-
-    public PolicyEntity getPolicy() {
-        return policy;
-    }
-
-    public void setPolicy(PolicyEntity policy) {
-        this.policy = policy;
-    }
-
-    public String getChannel() {
-        return channel;
-    }
-
-    public void setChannel(String channel) {
-        this.channel = channel;
-    }
-
-    public Boolean getEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public Short getMinQuestions() {
-        return minQuestions;
-    }
-
-    public void setMinQuestions(Short minQuestions) {
-        this.minQuestions = minQuestions;
-    }
-
-    public Short getMaxQuestions() {
-        return maxQuestions;
-    }
-
-    public void setMaxQuestions(Short maxQuestions) {
-        this.maxQuestions = maxQuestions;
-    }
-
-    public Boolean getMandatory() {
-        return mandatory;
-    }
-
-    public void setMandatory(Boolean mandatory) {
-        this.mandatory = mandatory;
-    }
-
-    public Boolean getAskOnForgotPassword() {
-        return askOnForgotPassword;
-    }
-
-    public void setAskOnForgotPassword(Boolean askOnForgotPassword) {
-        this.askOnForgotPassword = askOnForgotPassword;
-    }
-
-    public Boolean getAskOnSensitiveAction() {
-        return askOnSensitiveAction;
-    }
-
-    public void setAskOnSensitiveAction(Boolean askOnSensitiveAction) {
-        this.askOnSensitiveAction = askOnSensitiveAction;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
 
 }

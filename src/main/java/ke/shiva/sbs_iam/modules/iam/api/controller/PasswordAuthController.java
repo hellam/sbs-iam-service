@@ -1,5 +1,6 @@
 package ke.shiva.sbs_iam.modules.iam.api.controller;
 
+import jakarta.security.auth.message.AuthException;
 import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.modules.iam.api.request.PasswordLoginRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.PasswordStepResponse;
@@ -21,7 +22,7 @@ public class PasswordAuthController {
     @PostMapping("/password")
     public ResponseEntity<PasswordStepResponse> passwordStep(
             @RequestBody @Valid PasswordLoginRequest request
-    ) {
+    ) throws AuthException {
         return ResponseEntity.ok(passwordAuthService.handle(request));
     }
 }

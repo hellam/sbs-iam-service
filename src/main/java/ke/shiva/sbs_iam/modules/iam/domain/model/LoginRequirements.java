@@ -5,18 +5,23 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class LoginRequirements {
 
     private boolean mfaRequired;
     private boolean passwordExpired;
     private boolean firstLogin;
     private boolean questionsRequired;
-    private boolean profileSelectionRequired;
+    private boolean profileSelectionRequired; // IB only
 
-    public boolean passwordChangeRequired() {
-        return firstLogin || passwordExpired;
+    public boolean isPasswordChangeRequired() {
+        return passwordExpired || firstLogin;
+    }
+
+    public boolean hasPostLoginSteps() {
+        return isPasswordChangeRequired() || questionsRequired;
     }
 }
+
 

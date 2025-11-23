@@ -1,7 +1,13 @@
 package ke.shiva.sbs_iam.modules.iam.api.controller;
 
+import jakarta.security.auth.message.AuthException;
 import jakarta.validation.Valid;
+import ke.shiva.sbs_iam.modules.iam.api.request.MfaInitRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.MfaVerifyRequest;
+import ke.shiva.sbs_iam.modules.iam.api.response.MfaInitResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.MfaVerifyResponse;
 import ke.shiva.sbs_iam.modules.iam.app.service.MfaService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,12 +22,12 @@ public class MfaController {
     private final MfaService mfaService;
 
     @PostMapping("/mfa/init")
-    public ResponseEntity<MfaInitResponse> initiate(@Valid @RequestBody MfaInitRequest req) {
+    public ResponseEntity<MfaInitResponse> initiate(@Valid @RequestBody MfaInitRequest req) throws AuthException {
         return ResponseEntity.ok(mfaService.initiate(req));
     }
 
     @PostMapping("/mfa/verify")
-    public ResponseEntity<MfaVerifyResponse> verify(@Valid @RequestBody MfaVerifyRequest req) {
+    public ResponseEntity<MfaVerifyResponse> verify(@Valid @RequestBody MfaVerifyRequest req) throws AuthException {
         return ResponseEntity.ok(mfaService.verify(req));
     }
 }

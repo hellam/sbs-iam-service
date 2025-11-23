@@ -3,10 +3,14 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.profile;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDateTime;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "customer_profile", schema = "iam_service")
 public class CustomerProfileEntity {
@@ -63,100 +67,10 @@ public class CustomerProfileEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public Long getId() {
-        return id;
+    public String getFullName() {
+        if (iamUser != null && iamUser.getParty() != null) {
+            return iamUser.getParty().getPerson().getFullName();
+        }
+        return "";
     }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public IamUserEntity getIamUser() {
-        return iamUser;
-    }
-
-    public void setIamUser(IamUserEntity iamUser) {
-        this.iamUser = iamUser;
-    }
-
-    public String getCoreCustomerId() {
-        return coreCustomerId;
-    }
-
-    public void setCoreCustomerId(String coreCustomerId) {
-        this.coreCustomerId = coreCustomerId;
-    }
-
-    public String getSegment() {
-        return segment;
-    }
-
-    public void setSegment(String segment) {
-        this.segment = segment;
-    }
-
-    public String getLanguage() {
-        return language;
-    }
-
-    public void setLanguage(String language) {
-        this.language = language;
-    }
-
-    public String getTimezone() {
-        return timezone;
-    }
-
-    public void setTimezone(String timezone) {
-        this.timezone = timezone;
-    }
-
-    public String getTheme() {
-        return theme;
-    }
-
-    public void setTheme(String theme) {
-        this.theme = theme;
-    }
-
-    public Boolean getAllowEmail() {
-        return allowEmail;
-    }
-
-    public void setAllowEmail(Boolean allowEmail) {
-        this.allowEmail = allowEmail;
-    }
-
-    public Boolean getAllowSms() {
-        return allowSms;
-    }
-
-    public void setAllowSms(Boolean allowSms) {
-        this.allowSms = allowSms;
-    }
-
-    public Boolean getAllowPush() {
-        return allowPush;
-    }
-
-    public void setAllowPush(Boolean allowPush) {
-        this.allowPush = allowPush;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
 }

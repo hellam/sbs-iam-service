@@ -3,12 +3,16 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.policy;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.system.FeatureEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "feature_policy", schema = "iam_service")
 public class FeaturePolicyEntity {
@@ -33,45 +37,5 @@ public class FeaturePolicyEntity {
 
     @OneToMany(mappedBy = "featurePolicy")
     private Set<FeaturePolicyAssignmentEntity> featurePolicyAssignments = new LinkedHashSet<>();
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public FeatureEntity getFeature() {
-        return feature;
-    }
-
-    public void setFeature(FeatureEntity feature) {
-        this.feature = feature;
-    }
-
-    public Boolean getEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(Boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Set<FeaturePolicyAssignmentEntity> getFeaturePolicyAssignments() {
-        return featurePolicyAssignments;
-    }
-
-    public void setFeaturePolicyAssignments(Set<FeaturePolicyAssignmentEntity> featurePolicyAssignments) {
-        this.featurePolicyAssignments = featurePolicyAssignments;
-    }
 
 }

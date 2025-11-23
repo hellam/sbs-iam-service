@@ -7,6 +7,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.ProfileType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.SessionType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
@@ -18,12 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +30,7 @@ public class LoginFlowService {
     private final SessionEventRepository eventRepo;
     private final CustomerProfileRepository customerRepo;
     private final OrganizationUserRepository orgRepo;
+    private final SessionRepository sessionRepository;
 
     // -------- CREATE LOGIN FLOW --------
     public SessionEntity start(IamUserEntity user, Channel channel, LoginRequirements reqs) {
@@ -43,10 +41,11 @@ public class LoginFlowService {
         s.setChannel(channel);
         s.setStatus(LoginStage.IDENTIFIER_OK);
         s.setSessionType(SessionType.LOGIN_TEMP);
-        s.setExpiresAt(OffsetDateTime.from(Instant.now().plus(Duration.ofMinutes(15))));
+        s.setExpiresAt(OffsetDateTime.now().plus(Duration.ofMinutes(15)));
 
-        // store LoginRequirements in metadata (JSON column)
-        s.setMetadata(Map.of("requirements", reqs));
+        // store requirements as JSON in existing "metadata" column if you have it
+        if (s.getMetadata() == null) s.setMetadata(new HashMap<>());
+        s.getMetadata().put("requirements", reqs);
 
         sessionRepo.save(s);
         logEvent(s, "LOGIN_FLOW_STARTED");
@@ -55,22 +54,36 @@ public class LoginFlowService {
     }
 
     // -------- GET AND VALIDATE STAGE --------
-    public SessionEntity requireStage(UUID flowId, LoginStage stage) {
-        SessionEntity s = sessionRepo.findById(flowId)
-                .orElseThrow(() -> new AuthException("Flow not found"));
+    public SessionEntity requireStage(UUID flowId, LoginStage stage) throws AuthException {
+        SessionEntity s = sessionRepo.findBySessionId(String.valueOf(flowId));
 
-        if (s.getExpiresAt().isBefore(Instant.now()))
+        if (s == null)
+            throw new AuthException("Invalid flow");
+
+        if (s.getExpiresAt().isBefore(OffsetDateTime.now()))
             throw new AuthException("Session expired");
 
-        if (s.getStage() != stage)
+        if (s.getStatus() != stage)
             throw new AuthException("Invalid stage");
+
+        return s;
+    }
+
+    public SessionEntity requireAtLeast(UUID flowId, LoginStage minStage) throws AuthException {
+        SessionEntity s = sessionRepo.findBySessionId(String.valueOf(flowId));
+
+        if (s == null)
+            throw new AuthException("Invalid flow");
+
+        if (s.getStatus().ordinal() < minStage.ordinal())
+            throw new AuthException("Not allowed at this stage");
 
         return s;
     }
 
     // -------- UPDATE STAGE --------
     public void updateStage(SessionEntity s, LoginStage stage) {
-        s.setStage(stage);
+        s.setStatus(stage);
         sessionRepo.save(s);
         logEvent(s, "STAGE_CHANGED_" + stage.name());
     }
@@ -84,16 +97,16 @@ public class LoginFlowService {
             list.add(new ProfileSummary("CUSTOMER", cp.getId(), cp.getFullName()));
         });
 
-        List<OrganizationUserEntity> orgUsers = orgRepo.findByUserId(userId);
+        List<OrganizationUserEntity> orgUsers = orgRepo.findAllByUserId(userId);
         for (var ou : orgUsers) {
-            list.add(new ProfileSummary("ORG_USER", ou.getId(), ou.getDisplayName()));
+            list.add(new ProfileSummary("ORG_USER", ou.getId(), ou.getOrgDisplayName()));
         }
 
         return list;
     }
 
     // -------- SELECT PROFILE --------
-    public void selectProfile(SessionEntity s, String type, Long profileId) {
+    public void selectProfile(SessionEntity s, ProfileType type, Long profileId) {
         s.setSessionType(SessionType.LOGIN_ACTIVE);
         s.setProfileType(type);
         s.setProfileId(profileId);
@@ -106,10 +119,23 @@ public class LoginFlowService {
     private void logEvent(SessionEntity s, String action) {
         SessionEventEntity event = new SessionEventEntity();
         event.setSession(s);
-        event.setAction(action);
-        event.setCreatedAt(Instant.now());
+        event.setEventType(action);
+        event.setEventAt(OffsetDateTime.now());
         eventRepo.save(event);
     }
+
+    // ----------------------------
+    // Fetch requirements from metadata
+    // ----------------------------
+    public LoginRequirements getRequirements(SessionEntity s) {
+        Object obj = s.getMetadata().get("requirements");
+        return (LoginRequirements) obj;
+    }
+
+    public void save(SessionEntity s) {
+        sessionRepository.save(s);
+    }
+
 }
 
 

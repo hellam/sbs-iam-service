@@ -3,10 +3,14 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.policy;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "mfa_policy", schema = "iam_service")
 @AttributeOverrides({
@@ -78,133 +82,5 @@ public class MfaPolicyEntity extends BaseEntity {
     @ColumnDefault("true")
     @Column(name = "enforce_on_new_location")
     private Boolean enforceOnNewLocation;
-
-    public PolicyEntity getPolicy() {
-        return policy;
-    }
-
-    public void setPolicy(PolicyEntity policy) {
-        this.policy = policy;
-    }
-
-    public Boolean getRequireMfaIb() {
-        return requireMfaIb;
-    }
-
-    public void setRequireMfaIb(Boolean requireMfaIb) {
-        this.requireMfaIb = requireMfaIb;
-    }
-
-    public Boolean getRequireMfaMb() {
-        return requireMfaMb;
-    }
-
-    public void setRequireMfaMb(Boolean requireMfaMb) {
-        this.requireMfaMb = requireMfaMb;
-    }
-
-    public Boolean getRequireMfaBackoffice() {
-        return requireMfaBackoffice;
-    }
-
-    public void setRequireMfaBackoffice(Boolean requireMfaBackoffice) {
-        this.requireMfaBackoffice = requireMfaBackoffice;
-    }
-
-    public Boolean getAllowTotp() {
-        return allowTotp;
-    }
-
-    public void setAllowTotp(Boolean allowTotp) {
-        this.allowTotp = allowTotp;
-    }
-
-    public Boolean getAllowSmsOtp() {
-        return allowSmsOtp;
-    }
-
-    public void setAllowSmsOtp(Boolean allowSmsOtp) {
-        this.allowSmsOtp = allowSmsOtp;
-    }
-
-    public Boolean getAllowEmailOtp() {
-        return allowEmailOtp;
-    }
-
-    public void setAllowEmailOtp(Boolean allowEmailOtp) {
-        this.allowEmailOtp = allowEmailOtp;
-    }
-
-    public Boolean getAllowWhatsappOtp() {
-        return allowWhatsappOtp;
-    }
-
-    public void setAllowWhatsappOtp(Boolean allowWhatsappOtp) {
-        this.allowWhatsappOtp = allowWhatsappOtp;
-    }
-
-    public Boolean getAllowPush() {
-        return allowPush;
-    }
-
-    public void setAllowPush(Boolean allowPush) {
-        this.allowPush = allowPush;
-    }
-
-    public Boolean getAllowWebauthn() {
-        return allowWebauthn;
-    }
-
-    public void setAllowWebauthn(Boolean allowWebauthn) {
-        this.allowWebauthn = allowWebauthn;
-    }
-
-    public Integer getOtpExpirySeconds() {
-        return otpExpirySeconds;
-    }
-
-    public void setOtpExpirySeconds(Integer otpExpirySeconds) {
-        this.otpExpirySeconds = otpExpirySeconds;
-    }
-
-    public Short getOtpDailyLimit() {
-        return otpDailyLimit;
-    }
-
-    public void setOtpDailyLimit(Short otpDailyLimit) {
-        this.otpDailyLimit = otpDailyLimit;
-    }
-
-    public Boolean getRequireMfaHighValueTxn() {
-        return requireMfaHighValueTxn;
-    }
-
-    public void setRequireMfaHighValueTxn(Boolean requireMfaHighValueTxn) {
-        this.requireMfaHighValueTxn = requireMfaHighValueTxn;
-    }
-
-    public BigDecimal getHighValueThreshold() {
-        return highValueThreshold;
-    }
-
-    public void setHighValueThreshold(BigDecimal highValueThreshold) {
-        this.highValueThreshold = highValueThreshold;
-    }
-
-    public Boolean getEnforceOnNewDevice() {
-        return enforceOnNewDevice;
-    }
-
-    public void setEnforceOnNewDevice(Boolean enforceOnNewDevice) {
-        this.enforceOnNewDevice = enforceOnNewDevice;
-    }
-
-    public Boolean getEnforceOnNewLocation() {
-        return enforceOnNewLocation;
-    }
-
-    public void setEnforceOnNewLocation(Boolean enforceOnNewLocation) {
-        this.enforceOnNewLocation = enforceOnNewLocation;
-    }
 
 }

@@ -28,6 +28,10 @@
 
             <column name="channel" type="VARCHAR(50)"/>
 
+            <!-- Added profile reference columns: nullable by default -->
+            <column name="profile_type" type="VARCHAR(50)"/>
+            <column name="profile_id" type="BIGINT"/>
+
             <column name="session_type" type="VARCHAR(50)">
                 <constraints nullable="false"/>
             </column>

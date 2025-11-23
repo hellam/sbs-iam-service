@@ -5,8 +5,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "iam_user_security_question", schema = "iam_service")
 @AttributeOverrides({
@@ -37,45 +41,5 @@ public class IamUserSecurityQuestionEntity extends BaseEntity {
     @ColumnDefault("true")
     @Column(name = "is_active")
     private Boolean isActive;
-
-    public IamUserEntity getIamUser() {
-        return iamUser;
-    }
-
-    public void setIamUser(IamUserEntity iamUser) {
-        this.iamUser = iamUser;
-    }
-
-    public SecurityQuestionEntity getSecurityQuestion() {
-        return securityQuestion;
-    }
-
-    public void setSecurityQuestion(SecurityQuestionEntity securityQuestion) {
-        this.securityQuestion = securityQuestion;
-    }
-
-    public String getAnswerHash() {
-        return answerHash;
-    }
-
-    public void setAnswerHash(String answerHash) {
-        this.answerHash = answerHash;
-    }
-
-    public String getAnswerAlgo() {
-        return answerAlgo;
-    }
-
-    public void setAnswerAlgo(String answerAlgo) {
-        this.answerAlgo = answerAlgo;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
 
 }

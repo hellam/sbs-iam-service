@@ -4,8 +4,12 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "pin_policy", schema = "iam_service")
 @AttributeOverrides({
@@ -54,85 +58,5 @@ public class PinPolicyEntity extends BaseEntity {
     @ColumnDefault("10")
     @Column(name = "hash_cost")
     private Short hashCost;
-
-    public PolicyEntity getPolicy() {
-        return policy;
-    }
-
-    public void setPolicy(PolicyEntity policy) {
-        this.policy = policy;
-    }
-
-    public Short getMinLength() {
-        return minLength;
-    }
-
-    public void setMinLength(Short minLength) {
-        this.minLength = minLength;
-    }
-
-    public Short getMaxLength() {
-        return maxLength;
-    }
-
-    public void setMaxLength(Short maxLength) {
-        this.maxLength = maxLength;
-    }
-
-    public Short getPinHistoryCount() {
-        return pinHistoryCount;
-    }
-
-    public void setPinHistoryCount(Short pinHistoryCount) {
-        this.pinHistoryCount = pinHistoryCount;
-    }
-
-    public Boolean getBlockSequential() {
-        return blockSequential;
-    }
-
-    public void setBlockSequential(Boolean blockSequential) {
-        this.blockSequential = blockSequential;
-    }
-
-    public Boolean getBlockRepeating() {
-        return blockRepeating;
-    }
-
-    public void setBlockRepeating(Boolean blockRepeating) {
-        this.blockRepeating = blockRepeating;
-    }
-
-    public Short getMaxFailedAttempts() {
-        return maxFailedAttempts;
-    }
-
-    public void setMaxFailedAttempts(Short maxFailedAttempts) {
-        this.maxFailedAttempts = maxFailedAttempts;
-    }
-
-    public Short getLockoutMinutes() {
-        return lockoutMinutes;
-    }
-
-    public void setLockoutMinutes(Short lockoutMinutes) {
-        this.lockoutMinutes = lockoutMinutes;
-    }
-
-    public String getHashAlgorithm() {
-        return hashAlgorithm;
-    }
-
-    public void setHashAlgorithm(String hashAlgorithm) {
-        this.hashAlgorithm = hashAlgorithm;
-    }
-
-    public Short getHashCost() {
-        return hashCost;
-    }
-
-    public void setHashCost(Short hashCost) {
-        this.hashCost = hashCost;
-    }
 
 }

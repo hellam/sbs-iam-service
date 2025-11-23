@@ -2,20 +2,21 @@ package ke.shiva.sbs_iam.modules.iam.api.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import ke.shiva.sbs_iam.modules.iam.domain.enums.ProfileType;
 import lombok.Data;
 
 import java.util.UUID;
 
 @Data
-public class ProfileSelectRequest {
+public class PasswordChangeRequest {
 
     @NotNull
     private UUID flowId;
 
-    @NotBlank
-    private ProfileType profileType;
+    private String oldPassword; // optional depending on policy
 
-    @NotNull
-    private Long profileId;
+    @NotBlank
+    private String newPassword;
+
+    @NotBlank
+    private String newPasswordConfirmation;
 }

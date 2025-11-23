@@ -1,0 +1,70 @@
+package ke.shiva.sbs_iam.modules.iam.app.service;
+
+import jakarta.security.auth.message.AuthException;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.EmployeeAuthEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.OrganizationUserAuthEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.PasswordHistoryEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PasswordPolicyEntity;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
+import ke.shiva.shivacorestarter.util.HashUtil;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.time.OffsetDateTime;
+
+@Service
+@RequiredArgsConstructor
+public class PasswordManager {
+
+    private final CustomerAuthRepository customerAuthRepo;
+    private final EmployeeAuthRepository employeeAuthRepo;
+    private final OrganizationUserAuthRepository orgAuthRepo;
+    private final PasswordHistoryRepository historyRepo;
+    private final PasswordPolicyService passwordPolicyService;
+
+    public void changePassword(IamUserEntity user, String newPassword) throws AuthException {
+
+        // 1. Validate against policy
+        passwordPolicyService.validatePasswordChange(user, newPassword);
+
+        // 2. Hash new password
+        String hash = HashUtil.bcrypt(newPassword);
+        PasswordPolicyEntity passwordPolicy = passwordPolicyService.resolvePolicy(user);
+
+        OffsetDateTime expiry = null;
+        if (passwordPolicy.getExpirationEnabled() && passwordPolicy.getExpirationDays() > 0) {
+            expiry = OffsetDateTime.now().plusDays(passwordPolicy.getExpirationDays());
+        }
+
+        // 3. Update correct credentials table
+        switch (user.getUserCategory()) {
+
+            case CUSTOMER -> {
+                CustomerAuthEntity auth = customerAuthRepo.findByIamUserId(user.getId())
+                        .orElseThrow(() -> new AuthException("CustomerAuth missing"));
+                auth.setInternetPasswordHash(hash);
+                auth.setInternetPasswordExpiry(expiry);
+                customerAuthRepo.save(auth);
+            }
+
+            case EMPLOYEE -> {
+                EmployeeAuthEntity auth = employeeAuthRepo.findByIamUserId(user.getId())
+                        .orElseThrow(() -> new AuthException("EmployeeAuth missing"));
+                auth.setStaffPasswordHash(hash);
+                auth.setStaffPasswordExpiry(expiry);
+                employeeAuthRepo.save(auth);
+            }
+
+            default -> throw new AuthException("Unsupported user category");
+        }
+        PasswordHistoryEntity history = new PasswordHistoryEntity();
+        history.setIamUser(user);
+        history.setPasswordHash(hash);
+        history.setCreatedAt(OffsetDateTime.now());
+        historyRepo.save(history);
+    }
+}

@@ -54,11 +54,8 @@
                 <constraints nullable="false"/>
             </column>
 
-            <!-- Whether identifier is verified (for email/phone) -->
-            <column name="verified_at" type="TIMESTAMPTZ"/>
-
-            <!-- Whether this is the primary identifier for the channel -->
-            <column name="is_primary" type="BOOLEAN" defaultValueBoolean="true">
+            <!-- Logical status of this identifier -->
+            <column name="status" type="VARCHAR(50)" defaultValue="ACTIVE">
                 <constraints nullable="false"/>
             </column>
 

@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 @Repository
-public interface SessionRepository extends JpaRepository<SessionEntity, UUID> {}
+public interface SessionRepository extends JpaRepository<SessionEntity, UUID> {
+    SessionEntity findBySessionId(String flowId);
+}

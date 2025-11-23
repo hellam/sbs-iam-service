@@ -8,12 +8,16 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.OrganizationApproverSecr
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.OrganizationUserAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "organization_user", schema = "iam_service")
 @AttributeOverrides({
@@ -59,76 +63,8 @@ public class OrganizationUserEntity extends BaseEntity {
     @OneToOne(mappedBy = "organizationUser")
     private OrganizationUserAuthEntity organizationUserAuth;
 
-    public IamUserEntity getIamUser() {
-        return iamUser;
-    }
 
-    public void setIamUser(IamUserEntity iamUser) {
-        this.iamUser = iamUser;
+    public String getOrgDisplayName() {
+        return organizationParty.getOrganization().getDisplayName();
     }
-
-    public PartyEntity getOrganizationParty() {
-        return organizationParty;
-    }
-
-    public void setOrganizationParty(PartyEntity organizationParty) {
-        this.organizationParty = organizationParty;
-    }
-
-    public String getOrgRole() {
-        return orgRole;
-    }
-
-    public void setOrgRole(String orgRole) {
-        this.orgRole = orgRole;
-    }
-
-    public BigDecimal getApprovalLimit() {
-        return approvalLimit;
-    }
-
-    public void setApprovalLimit(BigDecimal approvalLimit) {
-        this.approvalLimit = approvalLimit;
-    }
-
-    public Boolean getIsPrimary() {
-        return isPrimary;
-    }
-
-    public void setIsPrimary(Boolean isPrimary) {
-        this.isPrimary = isPrimary;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Set<OrgUserRoleEntity> getOrgUserRoles() {
-        return orgUserRoles;
-    }
-
-    public void setOrgUserRoles(Set<OrgUserRoleEntity> orgUserRoles) {
-        this.orgUserRoles = orgUserRoles;
-    }
-
-    public Set<OrganizationApproverSecretHistoryEntity> getOrganizationApproverSecretHistories() {
-        return organizationApproverSecretHistories;
-    }
-
-    public void setOrganizationApproverSecretHistories(Set<OrganizationApproverSecretHistoryEntity> organizationApproverSecretHistories) {
-        this.organizationApproverSecretHistories = organizationApproverSecretHistories;
-    }
-
-    public OrganizationUserAuthEntity getOrganizationUserAuth() {
-        return organizationUserAuth;
-    }
-
-    public void setOrganizationUserAuth(OrganizationUserAuthEntity organizationUserAuth) {
-        this.organizationUserAuth = organizationUserAuth;
-    }
-
 }

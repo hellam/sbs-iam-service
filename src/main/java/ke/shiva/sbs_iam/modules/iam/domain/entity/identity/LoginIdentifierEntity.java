@@ -4,11 +4,16 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.OffsetDateTime;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "login_identifier", schema = "iam_service")
 @AttributeOverrides({
@@ -37,60 +42,10 @@ public class LoginIdentifierEntity extends BaseEntity {
     @Column(name = "identifier", nullable = false)
     private String identifier;
 
-    @Column(name = "verified_at")
-    private OffsetDateTime verifiedAt;
-
+    @Size(max = 50)
     @NotNull
-    @ColumnDefault("true")
-    @Column(name = "is_primary", nullable = false)
-    private Boolean isPrimary = false;
-
-    public IamUserEntity getIamUser() {
-        return iamUser;
-    }
-
-    public void setIamUser(IamUserEntity iamUser) {
-        this.iamUser = iamUser;
-    }
-
-    public Channel getChannel() {
-        return channel;
-    }
-
-    public void setChannel(Channel channel) {
-        this.channel = channel;
-    }
-
-    public String getIdentifierType() {
-        return identifierType;
-    }
-
-    public void setIdentifierType(String identifierType) {
-        this.identifierType = identifierType;
-    }
-
-    public String getIdentifier() {
-        return identifier;
-    }
-
-    public void setIdentifier(String identifier) {
-        this.identifier = identifier;
-    }
-
-    public OffsetDateTime getVerifiedAt() {
-        return verifiedAt;
-    }
-
-    public void setVerifiedAt(OffsetDateTime verifiedAt) {
-        this.verifiedAt = verifiedAt;
-    }
-
-    public Boolean getIsPrimary() {
-        return isPrimary;
-    }
-
-    public void setIsPrimary(Boolean isPrimary) {
-        this.isPrimary = isPrimary;
-    }
-
+    @ColumnDefault("'ACTIVE'")
+    @Column(name = "status", nullable = false, length = 50)
+    @Enumerated(EnumType.STRING)
+    private IamStatus status;
 }
