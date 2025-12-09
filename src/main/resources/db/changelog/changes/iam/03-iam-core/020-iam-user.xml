@@ -41,11 +41,6 @@
                 <constraints nullable="false"/>
             </column>
 
-            <!-- CUSTOMER, EMPLOYEE, AGENT, MERCHANT, SYSTEM -->
-            <column name="user_category" type="VARCHAR(50)" defaultValue="CUSTOMER">
-                <constraints nullable="false"/>
-            </column>
-
             <!-- LOCAL, LDAP, OIDC, SAML -->
             <column name="auth_provider" type="VARCHAR(50)" defaultValue="LOCAL">
                 <constraints nullable="false"/>

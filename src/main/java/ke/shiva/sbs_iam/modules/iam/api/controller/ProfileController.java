@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/oauth")
+@RequestMapping("/oauth")
 @RequiredArgsConstructor
 public class ProfileController {
 

@@ -5,10 +5,14 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PartyEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.OffsetDateTime;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "feature_policy_assignment", schema = "iam_service")
 public class FeaturePolicyAssignmentEntity {
@@ -38,53 +42,5 @@ public class FeaturePolicyAssignmentEntity {
     @ColumnDefault("now()")
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public FeaturePolicyEntity getFeaturePolicy() {
-        return featurePolicy;
-    }
-
-    public void setFeaturePolicy(FeaturePolicyEntity featurePolicy) {
-        this.featurePolicy = featurePolicy;
-    }
-
-    public String getScope() {
-        return scope;
-    }
-
-    public void setScope(String scope) {
-        this.scope = scope;
-    }
-
-    public PartyEntity getOrganization() {
-        return organization;
-    }
-
-    public void setOrganization(PartyEntity organization) {
-        this.organization = organization;
-    }
-
-    public IamUserEntity getIamUser() {
-        return iamUser;
-    }
-
-    public void setIamUser(IamUserEntity iamUser) {
-        this.iamUser = iamUser;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 
 }

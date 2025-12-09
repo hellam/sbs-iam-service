@@ -21,7 +21,10 @@ management:
   endpoint:
     health:
       show-details: always
-
+logging:
+  level:
+    org.hibernate.orm.mapping: DEBUG
+    org.hibernate.boot.model.internal: DEBUG
 
 server:
   port: 9001

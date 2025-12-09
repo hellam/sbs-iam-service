@@ -3,15 +3,18 @@ package ke.shiva.sbs_iam.modules.reference.domain.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.EmployeeProfileEntity;
 import ke.shiva.sbs_iam.modules.reference.domain.enums.BranchTypeEnum;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "branches", schema = "iam_service")
 @AttributeOverrides({
@@ -76,128 +79,4 @@ public class BranchEntity extends BaseEntity {
 
     @OneToMany(mappedBy = "parentBranch")
     private Set<BranchEntity> branches = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "branch")
-    private Set<EmployeeProfileEntity> employeeProfiles = new LinkedHashSet<>();
-
-    public String getBranchCode() {
-        return branchCode;
-    }
-
-    public void setBranchCode(String branchCode) {
-        this.branchCode = branchCode;
-    }
-
-    public String getBranchName() {
-        return branchName;
-    }
-
-    public void setBranchName(String branchName) {
-        this.branchName = branchName;
-    }
-
-    public BranchTypeEnum getBranchType() {
-        return branchTypeEnum;
-    }
-
-    public void setBranchType(BranchTypeEnum branchTypeEnum) {
-        this.branchTypeEnum = branchTypeEnum;
-    }
-
-    public CountryEntity getCountryCode() {
-        return countryCode;
-    }
-
-    public void setCountryCode(CountryEntity countryCode) {
-        this.countryCode = countryCode;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public Double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(Double longitude) {
-        this.longitude = longitude;
-    }
-
-    public Double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(Double latitude) {
-        this.latitude = latitude;
-    }
-
-    public BranchEntity getParentBranch() {
-        return parentBranch;
-    }
-
-    public void setParentBranch(BranchEntity parentBranch) {
-        this.parentBranch = parentBranch;
-    }
-
-    public String getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public String getUpdatedBy() {
-        return updatedBy;
-    }
-
-    public void setUpdatedBy(String updatedBy) {
-        this.updatedBy = updatedBy;
-    }
-
-    public String getSupervisedBy() {
-        return supervisedBy;
-    }
-
-    public void setSupervisedBy(String supervisedBy) {
-        this.supervisedBy = supervisedBy;
-    }
-
-    public OffsetDateTime getSupervisedAt() {
-        return supervisedAt;
-    }
-
-    public void setSupervisedAt(OffsetDateTime supervisedAt) {
-        this.supervisedAt = supervisedAt;
-    }
-
-    public Set<BranchEntity> getBranches() {
-        return branches;
-    }
-
-    public void setBranches(Set<BranchEntity> branches) {
-        this.branches = branches;
-    }
-
-    public Set<EmployeeProfileEntity> getEmployeeProfiles() {
-        return employeeProfiles;
-    }
-
-    public void setEmployeeProfiles(Set<EmployeeProfileEntity> employeeProfiles) {
-        this.employeeProfiles = employeeProfiles;
-    }
-
 }

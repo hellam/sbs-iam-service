@@ -4,11 +4,15 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "employee_permission", schema = "iam_service")
 @AttributeOverrides({
@@ -32,48 +36,5 @@ public class EmployeePermissionEntity extends BaseEntity {
     @ColumnDefault("true")
     @Column(name = "is_active")
     private Boolean isActive;
-
-    @ManyToMany(mappedBy = "employeePermissions")
-    private Set<EmployeeRoleEntity> employeeRoles = new LinkedHashSet<>();
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
-
-    public Set<EmployeeRoleEntity> getEmployeeRoles() {
-        return employeeRoles;
-    }
-
-    public void setEmployeeRoles(Set<EmployeeRoleEntity> employeeRoles) {
-        this.employeeRoles = employeeRoles;
-    }
 
 }

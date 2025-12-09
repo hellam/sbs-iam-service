@@ -34,7 +34,7 @@ public class ProfileService {
         }
 
         List<ProfileSummary> profiles =
-                loginFlowService.getProfiles(session.getIamUser().getId());
+                loginFlowService.getProfiles(session.getIamUser());
 
         ProfileSelectionResponse resp = new ProfileSelectionResponse();
         resp.setFlowId(flowId);

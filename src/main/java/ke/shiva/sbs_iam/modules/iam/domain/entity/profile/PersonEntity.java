@@ -4,11 +4,15 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.CountryEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "person", schema = "iam_service")
 public class PersonEntity {
@@ -75,125 +79,5 @@ public class PersonEntity {
     @ColumnDefault("now()")
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public PartyEntity getParty() {
-        return party;
-    }
-
-    public void setParty(PartyEntity party) {
-        this.party = party;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getNationalId() {
-        return nationalId;
-    }
-
-    public void setNationalId(String nationalId) {
-        this.nationalId = nationalId;
-    }
-
-    public LocalDate getDob() {
-        return dob;
-    }
-
-    public void setDob(LocalDate dob) {
-        this.dob = dob;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
-    public CountryEntity getCountryCode() {
-        return countryCode;
-    }
-
-    public void setCountryCode(CountryEntity countryCode) {
-        this.countryCode = countryCode;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public OffsetDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
 
 }

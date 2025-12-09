@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -12,6 +14,8 @@ import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.Map;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "security_events", schema = "iam_service")
 public class SecurityEventEntity {
@@ -64,101 +68,5 @@ public class SecurityEventEntity {
     @ColumnDefault("now()")
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public IamUserEntity getIamUser() {
-        return iamUser;
-    }
-
-    public void setIamUser(IamUserEntity iamUser) {
-        this.iamUser = iamUser;
-    }
-
-    public String getEventType() {
-        return eventType;
-    }
-
-    public void setEventType(String eventType) {
-        this.eventType = eventType;
-    }
-
-    public String getSeverity() {
-        return severity;
-    }
-
-    public void setSeverity(String severity) {
-        this.severity = severity;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public SessionEntity getRelatedSession() {
-        return relatedSession;
-    }
-
-    public void setRelatedSession(SessionEntity relatedSession) {
-        this.relatedSession = relatedSession;
-    }
-
-    public String getIpAddress() {
-        return ipAddress;
-    }
-
-    public void setIpAddress(String ipAddress) {
-        this.ipAddress = ipAddress;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
-
-    public String getLocationCountry() {
-        return locationCountry;
-    }
-
-    public void setLocationCountry(String locationCountry) {
-        this.locationCountry = locationCountry;
-    }
-
-    public String getLocationCity() {
-        return locationCity;
-    }
-
-    public void setLocationCity(String locationCity) {
-        this.locationCity = locationCity;
-    }
-
-    public Map<String, Object> getMetadata() {
-        return metadata;
-    }
-
-    public void setMetadata(Map<String, Object> metadata) {
-        this.metadata = metadata;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 
 }

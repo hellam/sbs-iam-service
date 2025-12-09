@@ -4,10 +4,14 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.OffsetDateTime;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "organization_approver_secret_history", schema = "iam_service")
 public class OrganizationApproverSecretHistoryEntity {
@@ -32,45 +36,5 @@ public class OrganizationApproverSecretHistoryEntity {
     @ColumnDefault("now()")
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public OrganizationUserEntity getOrganizationUser() {
-        return organizationUser;
-    }
-
-    public void setOrganizationUser(OrganizationUserEntity organizationUser) {
-        this.organizationUser = organizationUser;
-    }
-
-    public String getApproverPasswordHash() {
-        return approverPasswordHash;
-    }
-
-    public void setApproverPasswordHash(String approverPasswordHash) {
-        this.approverPasswordHash = approverPasswordHash;
-    }
-
-    public String getApproverPinHash() {
-        return approverPinHash;
-    }
-
-    public void setApproverPinHash(String approverPinHash) {
-        this.approverPinHash = approverPinHash;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 
 }

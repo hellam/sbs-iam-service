@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -11,6 +13,8 @@ import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.Map;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "iam_audit_log", schema = "iam_service")
 public class IamAuditLogEntity {
@@ -61,101 +65,5 @@ public class IamAuditLogEntity {
     @ColumnDefault("now()")
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public IamUserEntity getIamUser() {
-        return iamUser;
-    }
-
-    public void setIamUser(IamUserEntity iamUser) {
-        this.iamUser = iamUser;
-    }
-
-    public String getUserCategory() {
-        return userCategory;
-    }
-
-    public void setUserCategory(String userCategory) {
-        this.userCategory = userCategory;
-    }
-
-    public String getEventType() {
-        return eventType;
-    }
-
-    public void setEventType(String eventType) {
-        this.eventType = eventType;
-    }
-
-    public String getChannel() {
-        return channel;
-    }
-
-    public void setChannel(String channel) {
-        this.channel = channel;
-    }
-
-    public String getIpAddress() {
-        return ipAddress;
-    }
-
-    public void setIpAddress(String ipAddress) {
-        this.ipAddress = ipAddress;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
-
-    public String getUserAgent() {
-        return userAgent;
-    }
-
-    public void setUserAgent(String userAgent) {
-        this.userAgent = userAgent;
-    }
-
-    public Map<String, Object> getMetadata() {
-        return metadata;
-    }
-
-    public void setMetadata(Map<String, Object> metadata) {
-        this.metadata = metadata;
-    }
-
-    public Long getEntityId() {
-        return entityId;
-    }
-
-    public void setEntityId(Long entityId) {
-        this.entityId = entityId;
-    }
-
-    public String getEntityType() {
-        return entityType;
-    }
-
-    public void setEntityType(String entityType) {
-        this.entityType = entityType;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 
 }

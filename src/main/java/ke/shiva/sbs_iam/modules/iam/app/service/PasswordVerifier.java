@@ -1,6 +1,8 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
 import jakarta.security.auth.message.AuthException;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.UserCategory;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
@@ -20,13 +22,14 @@ public class PasswordVerifier {
     private final EmployeeAuthRepository employeeAuthRepo;
     private final OrganizationUserAuthRepository orgUserAuthRepo;
 
-    public boolean verify(IamUserEntity user, String rawPassword) throws AuthException {
-        UserCategory category = user.getUserCategory();
+    public boolean verify(SessionEntity session, String rawPassword) throws AuthException {
+        Channel channel = session.getChannel();
+        IamUserEntity user = session.getIamUser();
 
-        return switch (category) {
-            case CUSTOMER      -> verifyCustomer(user, rawPassword);
-            case EMPLOYEE      -> verifyEmployee(user, rawPassword);
-            default            -> throw new AuthException("Unsupported user category: " + category);
+        return switch (channel) {
+            case INTERNET_BANKING,MOBILE_BANKING      -> verifyCustomer(user, rawPassword);
+            case BACKOFFICE      -> verifyEmployee(user, rawPassword);
+            default            -> throw new AuthException("Unsupported channel user: " + channel);
         };
     }
 

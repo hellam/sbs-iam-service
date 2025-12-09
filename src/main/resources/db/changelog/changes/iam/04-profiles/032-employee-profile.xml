@@ -48,7 +48,9 @@
             </column>
 
             <!-- Branch assignment for branch-scoped operations -->
-            <column name="branch_id" type="BIGINT"/>
+            <column name="branch_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
 
             <!-- Audit -->
             <column name="created_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>

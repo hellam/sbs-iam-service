@@ -23,9 +23,8 @@ public class PostLoginService {
             throw new AuthException("Password confirmation does not match");
         }
         SessionEntity session = loginFlowService.requireAtLeast(req.getFlowId(), LoginStage.PASSWORD_OK);
-        IamUserEntity user = session.getIamUser();
 
-        passwordManager.changePassword(user, req.getNewPassword());
+        passwordManager.changePassword(session, req.getNewPassword());
 
         // Update requirement flag
         LoginRequirements reqs = loginFlowService.getRequirements(session);

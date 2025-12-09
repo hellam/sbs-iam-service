@@ -5,10 +5,14 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.OffsetDateTime;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "employee_auth", schema = "iam_service")
 @AttributeOverrides({
@@ -57,85 +61,5 @@ public class EmployeeAuthEntity extends BaseEntity {
 
     @Column(name = "mfa_last_verified_at")
     private OffsetDateTime mfaLastVerifiedAt;
-
-    public IamUserEntity getIamUser() {
-        return iamUser;
-    }
-
-    public void setIamUser(IamUserEntity iamUser) {
-        this.iamUser = iamUser;
-    }
-
-    public String getStaffPasswordHash() {
-        return staffPasswordHash;
-    }
-
-    public void setStaffPasswordHash(String staffPasswordHash) {
-        this.staffPasswordHash = staffPasswordHash;
-    }
-
-    public String getStaffPasswordAlgo() {
-        return staffPasswordAlgo;
-    }
-
-    public void setStaffPasswordAlgo(String staffPasswordAlgo) {
-        this.staffPasswordAlgo = staffPasswordAlgo;
-    }
-
-    public OffsetDateTime getStaffPasswordExpiry() {
-        return staffPasswordExpiry;
-    }
-
-    public void setStaffPasswordExpiry(OffsetDateTime staffPasswordExpiry) {
-        this.staffPasswordExpiry = staffPasswordExpiry;
-    }
-
-    public Short getStaffFailedAttempts() {
-        return staffFailedAttempts;
-    }
-
-    public void setStaffFailedAttempts(Short staffFailedAttempts) {
-        this.staffFailedAttempts = staffFailedAttempts;
-    }
-
-    public Boolean getStaffLocked() {
-        return staffLocked;
-    }
-
-    public void setStaffLocked(Boolean staffLocked) {
-        this.staffLocked = staffLocked;
-    }
-
-    public OffsetDateTime getStaffLastLoginAt() {
-        return staffLastLoginAt;
-    }
-
-    public void setStaffLastLoginAt(OffsetDateTime staffLastLoginAt) {
-        this.staffLastLoginAt = staffLastLoginAt;
-    }
-
-    public Boolean getMfaEnabled() {
-        return mfaEnabled;
-    }
-
-    public void setMfaEnabled(Boolean mfaEnabled) {
-        this.mfaEnabled = mfaEnabled;
-    }
-
-    public String getMfaSecret() {
-        return mfaSecret;
-    }
-
-    public void setMfaSecret(String mfaSecret) {
-        this.mfaSecret = mfaSecret;
-    }
-
-    public OffsetDateTime getMfaLastVerifiedAt() {
-        return mfaLastVerifiedAt;
-    }
-
-    public void setMfaLastVerifiedAt(OffsetDateTime mfaLastVerifiedAt) {
-        this.mfaLastVerifiedAt = mfaLastVerifiedAt;
-    }
 
 }

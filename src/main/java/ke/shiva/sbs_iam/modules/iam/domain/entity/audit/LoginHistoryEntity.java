@@ -3,10 +3,14 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.audit;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.OffsetDateTime;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "login_history", schema = "iam_service")
 public class LoginHistoryEntity {
@@ -57,101 +61,5 @@ public class LoginHistoryEntity {
     @ColumnDefault("now()")
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public IamUserEntity getIamUser() {
-        return iamUser;
-    }
-
-    public void setIamUser(IamUserEntity iamUser) {
-        this.iamUser = iamUser;
-    }
-
-    public String getChannel() {
-        return channel;
-    }
-
-    public void setChannel(String channel) {
-        this.channel = channel;
-    }
-
-    public String getIdentifierUsed() {
-        return identifierUsed;
-    }
-
-    public void setIdentifierUsed(String identifierUsed) {
-        this.identifierUsed = identifierUsed;
-    }
-
-    public Boolean getSuccess() {
-        return success;
-    }
-
-    public void setSuccess(Boolean success) {
-        this.success = success;
-    }
-
-    public String getFailureReason() {
-        return failureReason;
-    }
-
-    public void setFailureReason(String failureReason) {
-        this.failureReason = failureReason;
-    }
-
-    public String getIpAddress() {
-        return ipAddress;
-    }
-
-    public void setIpAddress(String ipAddress) {
-        this.ipAddress = ipAddress;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
-
-    public String getUserAgent() {
-        return userAgent;
-    }
-
-    public void setUserAgent(String userAgent) {
-        this.userAgent = userAgent;
-    }
-
-    public String getLocationCountry() {
-        return locationCountry;
-    }
-
-    public void setLocationCountry(String locationCountry) {
-        this.locationCountry = locationCountry;
-    }
-
-    public String getLocationCity() {
-        return locationCity;
-    }
-
-    public void setLocationCity(String locationCity) {
-        this.locationCity = locationCity;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 
 }

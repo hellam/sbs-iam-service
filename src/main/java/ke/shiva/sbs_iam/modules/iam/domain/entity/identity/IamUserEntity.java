@@ -9,7 +9,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.LoginHistoryEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.PinHistoryEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.EmployeeAuthEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.PasswordHistoryEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.PasswordHistoryEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.FeaturePolicyAssignmentEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.CustomerProfileEntity;
@@ -47,13 +47,6 @@ public class IamUserEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "party_id", nullable = false)
     private PartyEntity party;
-
-    @Size(max = 50)
-    @NotNull
-    @ColumnDefault("'CUSTOMER'")
-    @Column(name = "user_category", nullable = false, length = 50)
-    @Enumerated(EnumType.STRING)
-    private UserCategory userCategory;
 
     @Size(max = 50)
     @NotNull

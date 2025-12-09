@@ -30,7 +30,7 @@ public class PasswordAuthService {
         IamUserEntity user = session.getIamUser();
 
         // 2. Verify password against correct credentials table
-        boolean ok = passwordVerifier.verify(session.getIamUser(), req.getPassword());
+        boolean ok = passwordVerifier.verify(session, req.getPassword());
 
         if (!ok) {
 //            securityEventService.onLoginFailure(user, "PASSWORD_INVALID", session);

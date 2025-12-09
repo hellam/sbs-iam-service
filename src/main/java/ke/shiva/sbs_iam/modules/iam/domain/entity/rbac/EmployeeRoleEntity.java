@@ -4,11 +4,15 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "employee_role", schema = "iam_service")
 @AttributeOverrides({
@@ -34,56 +38,4 @@ public class EmployeeRoleEntity extends BaseEntity {
 
     @OneToMany(mappedBy = "employeeRole")
     private Set<EmployeeProfileRoleEntity> employeeProfileRoles = new LinkedHashSet<>();
-
-    @ManyToMany(mappedBy = "employeeRoles")
-    private Set<EmployeePermissionEntity> employeePermissions = new LinkedHashSet<>();
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Boolean getIsSystem() {
-        return isSystem;
-    }
-
-    public void setIsSystem(Boolean isSystem) {
-        this.isSystem = isSystem;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
-
-    public Set<EmployeeProfileRoleEntity> getEmployeeProfileRoles() {
-        return employeeProfileRoles;
-    }
-
-    public void setEmployeeProfileRoles(Set<EmployeeProfileRoleEntity> employeeProfileRoles) {
-        this.employeeProfileRoles = employeeProfileRoles;
-    }
-
-    public Set<EmployeePermissionEntity> getEmployeePermissions() {
-        return employeePermissions;
-    }
-
-    public void setEmployeePermissions(Set<EmployeePermissionEntity> employeePermissions) {
-        this.employeePermissions = employeePermissions;
-    }
-
 }

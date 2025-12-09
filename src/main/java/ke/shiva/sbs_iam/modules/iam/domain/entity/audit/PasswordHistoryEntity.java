@@ -1,4 +1,4 @@
-package ke.shiva.sbs_iam.modules.iam.domain.entity.auth;
+package ke.shiva.sbs_iam.modules.iam.domain.entity.audit;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;

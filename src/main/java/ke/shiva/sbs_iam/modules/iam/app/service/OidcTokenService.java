@@ -23,7 +23,12 @@ public class OidcTokenService {
 
         IamUserEntity user = session.getIamUser();
         Channel channel = session.getChannel();
-        UserCategory category = user.getUserCategory();
+        UserCategory category = null;
+        switch (channel) {
+            case INTERNET_BANKING, MOBILE_BANKING -> category = UserCategory.CUSTOMER;
+            case BACKOFFICE -> category = UserCategory.EMPLOYEE;
+            default -> throw new IllegalArgumentException("Unsupported channel: " + channel);
+        }
 
         OffsetDateTime now = OffsetDateTime.now();
         long expiresIn = 300L;

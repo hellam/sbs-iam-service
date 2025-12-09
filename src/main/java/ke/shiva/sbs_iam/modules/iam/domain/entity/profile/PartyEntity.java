@@ -8,12 +8,16 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.OrgRoleEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "party", schema = "iam_service")
 @AttributeOverrides({
@@ -61,93 +65,5 @@ public class PartyEntity extends BaseEntity {
 
     @OneToMany(mappedBy = "organization")
     private Set<PolicyEntity> policies = new LinkedHashSet<>();
-
-    public UUID getPublicId() {
-        return publicId;
-    }
-
-    public void setPublicId(UUID publicId) {
-        this.publicId = publicId;
-    }
-
-    public String getPartyType() {
-        return partyType;
-    }
-
-    public void setPartyType(String partyType) {
-        this.partyType = partyType;
-    }
-
-    public String getCoreCustomerId() {
-        return coreCustomerId;
-    }
-
-    public void setCoreCustomerId(String coreCustomerId) {
-        this.coreCustomerId = coreCustomerId;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Set<FeaturePolicyAssignmentEntity> getFeaturePolicyAssignments() {
-        return featurePolicyAssignments;
-    }
-
-    public void setFeaturePolicyAssignments(Set<FeaturePolicyAssignmentEntity> featurePolicyAssignments) {
-        this.featurePolicyAssignments = featurePolicyAssignments;
-    }
-
-    public Set<IamUserEntity> getIamUsers() {
-        return iamUsers;
-    }
-
-    public void setIamUsers(Set<IamUserEntity> iamUsers) {
-        this.iamUsers = iamUsers;
-    }
-
-    public OrgRoleEntity getOrgRole() {
-        return orgRole;
-    }
-
-    public void setOrgRole(OrgRoleEntity orgRole) {
-        this.orgRole = orgRole;
-    }
-
-    public OrganizationEntity getOrganization() {
-        return organization;
-    }
-
-    public void setOrganization(OrganizationEntity organization) {
-        this.organization = organization;
-    }
-
-    public Set<OrganizationUserEntity> getOrganizationUsers() {
-        return organizationUsers;
-    }
-
-    public void setOrganizationUsers(Set<OrganizationUserEntity> organizationUsers) {
-        this.organizationUsers = organizationUsers;
-    }
-
-    public PersonEntity getPerson() {
-        return person;
-    }
-
-    public void setPerson(PersonEntity person) {
-        this.person = person;
-    }
-
-    public Set<PolicyEntity> getPolicies() {
-        return policies;
-    }
-
-    public void setPolicies(Set<PolicyEntity> policies) {
-        this.policies = policies;
-    }
 
 }

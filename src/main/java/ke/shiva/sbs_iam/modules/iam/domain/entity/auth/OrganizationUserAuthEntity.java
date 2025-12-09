@@ -5,11 +5,15 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "organization_user_auth", schema = "iam_service")
 @AttributeOverrides({
@@ -50,69 +54,5 @@ public class OrganizationUserAuthEntity extends BaseEntity {
     @ColumnDefault("0")
     @Column(name = "auth_approval_limit", precision = 18, scale = 2)
     private BigDecimal authApprovalLimit;
-
-    public OrganizationUserEntity getOrganizationUser() {
-        return organizationUser;
-    }
-
-    public void setOrganizationUser(OrganizationUserEntity organizationUser) {
-        this.organizationUser = organizationUser;
-    }
-
-    public String getApproverPasswordHash() {
-        return approverPasswordHash;
-    }
-
-    public void setApproverPasswordHash(String approverPasswordHash) {
-        this.approverPasswordHash = approverPasswordHash;
-    }
-
-    public String getApproverPasswordAlgo() {
-        return approverPasswordAlgo;
-    }
-
-    public void setApproverPasswordAlgo(String approverPasswordAlgo) {
-        this.approverPasswordAlgo = approverPasswordAlgo;
-    }
-
-    public String getApproverPinHash() {
-        return approverPinHash;
-    }
-
-    public void setApproverPinHash(String approverPinHash) {
-        this.approverPinHash = approverPinHash;
-    }
-
-    public String getApproverPinAlgo() {
-        return approverPinAlgo;
-    }
-
-    public void setApproverPinAlgo(String approverPinAlgo) {
-        this.approverPinAlgo = approverPinAlgo;
-    }
-
-    public String getSecondFactorSecret() {
-        return secondFactorSecret;
-    }
-
-    public void setSecondFactorSecret(String secondFactorSecret) {
-        this.secondFactorSecret = secondFactorSecret;
-    }
-
-    public OffsetDateTime getSecondFactorLastVerifiedAt() {
-        return secondFactorLastVerifiedAt;
-    }
-
-    public void setSecondFactorLastVerifiedAt(OffsetDateTime secondFactorLastVerifiedAt) {
-        this.secondFactorLastVerifiedAt = secondFactorLastVerifiedAt;
-    }
-
-    public BigDecimal getAuthApprovalLimit() {
-        return authApprovalLimit;
-    }
-
-    public void setAuthApprovalLimit(BigDecimal authApprovalLimit) {
-        this.authApprovalLimit = authApprovalLimit;
-    }
 
 }

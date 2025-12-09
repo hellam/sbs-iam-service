@@ -8,7 +8,6 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.LoginIdentifierEntity
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
-import ke.shiva.sbs_iam.modules.iam.infra.repository.IamUserRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.LoginIdentifierRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,7 +27,7 @@ public class IdentifierService {
         Channel channel = req.getChannel();
 
         LoginIdentifierEntity identifier = identifierRepo
-                .findByIdentifierAndChannelAndStatus_Active(req.getIdentifier(), channel);
+                .findByIdentifierAndChannelAndStatus(req.getIdentifier(), channel, IamStatus.ACTIVE);
         if (identifier == null) {
             throw new AuthException("Identifier not allowed for this channel");
         }

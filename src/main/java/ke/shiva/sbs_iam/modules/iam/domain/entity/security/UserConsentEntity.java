@@ -4,10 +4,14 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.OffsetDateTime;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "user_consent", schema = "iam_service")
 public class UserConsentEntity {
@@ -49,77 +53,5 @@ public class UserConsentEntity {
     @Size(max = 50)
     @Column(name = "channel", length = 50)
     private String channel;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public IamUserEntity getIamUser() {
-        return iamUser;
-    }
-
-    public void setIamUser(IamUserEntity iamUser) {
-        this.iamUser = iamUser;
-    }
-
-    public String getConsentType() {
-        return consentType;
-    }
-
-    public void setConsentType(String consentType) {
-        this.consentType = consentType;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public OffsetDateTime getAcceptedAt() {
-        return acceptedAt;
-    }
-
-    public void setAcceptedAt(OffsetDateTime acceptedAt) {
-        this.acceptedAt = acceptedAt;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
-
-    public String getIpAddress() {
-        return ipAddress;
-    }
-
-    public void setIpAddress(String ipAddress) {
-        this.ipAddress = ipAddress;
-    }
-
-    public String getUserAgent() {
-        return userAgent;
-    }
-
-    public void setUserAgent(String userAgent) {
-        this.userAgent = userAgent;
-    }
-
-    public String getChannel() {
-        return channel;
-    }
-
-    public void setChannel(String channel) {
-        this.channel = channel;
-    }
 
 }

@@ -3,17 +3,15 @@ package ke.shiva.sbs_iam.modules.iam.app.service;
 import jakarta.security.auth.message.AuthException;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.EmployeeAuthEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.OrganizationUserAuthEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.PasswordHistoryEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.PasswordHistoryEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PasswordPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.time.OffsetDateTime;
 
 @Service
@@ -26,8 +24,9 @@ public class PasswordManager {
     private final PasswordHistoryRepository historyRepo;
     private final PasswordPolicyService passwordPolicyService;
 
-    public void changePassword(IamUserEntity user, String newPassword) throws AuthException {
+    public void changePassword(SessionEntity session, String newPassword) throws AuthException {
 
+        IamUserEntity user = session.getIamUser();
         // 1. Validate against policy
         passwordPolicyService.validatePasswordChange(user, newPassword);
 
@@ -41,9 +40,9 @@ public class PasswordManager {
         }
 
         // 3. Update correct credentials table
-        switch (user.getUserCategory()) {
+        switch (session.getChannel()) {
 
-            case CUSTOMER -> {
+            case INTERNET_BANKING,MOBILE_BANKING -> {
                 CustomerAuthEntity auth = customerAuthRepo.findByIamUserId(user.getId())
                         .orElseThrow(() -> new AuthException("CustomerAuth missing"));
                 auth.setInternetPasswordHash(hash);
@@ -51,7 +50,7 @@ public class PasswordManager {
                 customerAuthRepo.save(auth);
             }
 
-            case EMPLOYEE -> {
+            case BACKOFFICE -> {
                 EmployeeAuthEntity auth = employeeAuthRepo.findByIamUserId(user.getId())
                         .orElseThrow(() -> new AuthException("EmployeeAuth missing"));
                 auth.setStaffPasswordHash(hash);

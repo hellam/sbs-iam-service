@@ -5,12 +5,16 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.FeaturePolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.OrgRoleEntity;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "features", schema = "iam_service")
 public class FeatureEntity {
@@ -42,72 +46,5 @@ public class FeatureEntity {
 
     @OneToMany(mappedBy = "feature")
     private Set<FeaturePolicyEntity> featurePolicies = new LinkedHashSet<>();
-
-    @ManyToMany
-    private Set<OrgRoleEntity> orgRoles = new LinkedHashSet<>();
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Set<FeaturePolicyEntity> getFeaturePolicies() {
-        return featurePolicies;
-    }
-
-    public void setFeaturePolicies(Set<FeaturePolicyEntity> featurePolicies) {
-        this.featurePolicies = featurePolicies;
-    }
-
-    public Set<OrgRoleEntity> getOrgRoles() {
-        return orgRoles;
-    }
-
-    public void setOrgRoles(Set<OrgRoleEntity> orgRoles) {
-        this.orgRoles = orgRoles;
-    }
 
 }

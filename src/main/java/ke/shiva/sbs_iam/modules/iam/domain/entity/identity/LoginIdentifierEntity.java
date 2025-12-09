@@ -44,7 +44,7 @@ public class LoginIdentifierEntity extends BaseEntity {
 
     @Size(max = 50)
     @NotNull
-    @ColumnDefault("'ACTIVE'")
+    @ColumnDefault("ACTIVE")
     @Column(name = "status", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
     private IamStatus status;

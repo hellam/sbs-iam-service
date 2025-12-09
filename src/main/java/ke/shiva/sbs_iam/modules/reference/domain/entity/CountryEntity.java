@@ -6,10 +6,14 @@ import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PersonEntity;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "countries", schema = "iam_service")
 @AttributeOverrides({
@@ -50,69 +54,5 @@ public class CountryEntity extends BaseEntity {
 
     @OneToMany(mappedBy = "countryCode")
     private Set<PersonEntity> people = new LinkedHashSet<>();
-
-    public String getCountryCode() {
-        return countryCode;
-    }
-
-    public void setCountryCode(String countryCode) {
-        this.countryCode = countryCode;
-    }
-
-    public String getPhoneCode() {
-        return phoneCode;
-    }
-
-    public void setPhoneCode(String phoneCode) {
-        this.phoneCode = phoneCode;
-    }
-
-    public String getCountryName() {
-        return countryName;
-    }
-
-    public void setCountryName(String countryName) {
-        this.countryName = countryName;
-    }
-
-    public String getCurrencyCode() {
-        return currencyCode;
-    }
-
-    public void setCurrencyCode(String currencyCode) {
-        this.currencyCode = currencyCode;
-    }
-
-    public String getCurrencyName() {
-        return currencyName;
-    }
-
-    public void setCurrencyName(String currencyName) {
-        this.currencyName = currencyName;
-    }
-
-    public Set<BranchEntity> getBranches() {
-        return branches;
-    }
-
-    public void setBranches(Set<BranchEntity> branches) {
-        this.branches = branches;
-    }
-
-    public Set<OrganizationEntity> getOrganizations() {
-        return organizations;
-    }
-
-    public void setOrganizations(Set<OrganizationEntity> organizations) {
-        this.organizations = organizations;
-    }
-
-    public Set<PersonEntity> getPeople() {
-        return people;
-    }
-
-    public void setPeople(Set<PersonEntity> people) {
-        this.people = people;
-    }
 
 }

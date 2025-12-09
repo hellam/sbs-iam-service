@@ -89,15 +89,15 @@ public class LoginFlowService {
     }
 
     // -------- LIST PROFILES FOR IB --------
-    public List<ProfileSummary> getProfiles(Long userId) {
+    public List<ProfileSummary> getProfiles(IamUserEntity iamUser) {
 
         List<ProfileSummary> list = new ArrayList<>();
 
-        customerRepo.findByUserId(userId).ifPresent(cp -> {
+        customerRepo.findByIamUser(iamUser).ifPresent(cp -> {
             list.add(new ProfileSummary("CUSTOMER", cp.getId(), cp.getFullName()));
         });
 
-        List<OrganizationUserEntity> orgUsers = orgRepo.findAllByUserId(userId);
+        List<OrganizationUserEntity> orgUsers = orgRepo.findAllByIamUser(iamUser);
         for (var ou : orgUsers) {
             list.add(new ProfileSummary("ORG_USER", ou.getId(), ou.getOrgDisplayName()));
         }
