@@ -10,7 +10,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.PinHistoryEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.EmployeeAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.PasswordHistoryEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.FeaturePolicyAssignmentEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.FeaturePolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.CustomerProfileEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.EmployeeProfileEntity;
@@ -87,7 +87,7 @@ public class IamUserEntity {
     private EmployeeProfileEntity employeeProfile;
 
     @OneToMany(mappedBy = "iamUser")
-    private Set<FeaturePolicyAssignmentEntity> featurePolicyAssignments = new LinkedHashSet<>();
+    private Set<FeaturePolicyEntity> featurePolicy = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "iamUser")
     private Set<IamAuditLogEntity> iamAuditLogs = new LinkedHashSet<>();

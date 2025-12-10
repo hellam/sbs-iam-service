@@ -49,7 +49,7 @@ public class PasswordPolicyService {
         // 2. ORGANIZATION-LEVEL POLICY
         if (user.getParty().getOrganization() != null) {
             Optional<PolicyEntity> orgPolicyOpt =
-                    policyRepo.findByOrganizationAndScopeAndIsActiveTrue(user.getParty().getOrganization().getParty(),PolicyScope.ORGANIZATION);
+                    policyRepo.findByOrganizationAndScopeAndIsActiveTrue(user.getParty().getOrganization().getParty(),PolicyScope.ORG);
             if (orgPolicyOpt.isPresent()) {
                 return orgPolicyOpt.get().getPasswordPolicy();
             }

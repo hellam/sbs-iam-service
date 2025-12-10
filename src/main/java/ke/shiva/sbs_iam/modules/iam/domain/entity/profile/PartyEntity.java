@@ -3,7 +3,7 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.profile;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.FeaturePolicyAssignmentEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.FeaturePolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.OrgRoleEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
@@ -46,7 +46,7 @@ public class PartyEntity extends BaseEntity {
     private String status;
 
     @OneToMany(mappedBy = "organization")
-    private Set<FeaturePolicyAssignmentEntity> featurePolicyAssignments = new LinkedHashSet<>();
+    private Set<FeaturePolicyEntity> featurePolicy = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "party")
     private Set<IamUserEntity> iamUsers = new LinkedHashSet<>();
