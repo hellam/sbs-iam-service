@@ -18,7 +18,6 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PartyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.*;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
-import ke.shiva.sbs_iam.modules.iam.domain.enums.user.UserCategory;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
@@ -109,9 +108,6 @@ public class IamUserEntity {
 
     @OneToMany(mappedBy = "iamUser")
     private Set<PinHistoryEntity> pinHistories = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "iamUser")
-    private Set<PolicyEntity> policies = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "iamUser")
     private Set<SecurityChallengeAttemptEntity> securityChallengeAttempts = new LinkedHashSet<>();

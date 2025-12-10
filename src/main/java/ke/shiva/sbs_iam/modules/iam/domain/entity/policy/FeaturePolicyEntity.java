@@ -12,14 +12,9 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.policy.PolicyScope;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.Type;
-import org.hibernate.type.SqlTypes;
 
-import java.time.OffsetDateTime;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 
 @Setter
 @Getter
