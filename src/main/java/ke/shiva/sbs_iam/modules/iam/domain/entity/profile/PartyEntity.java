@@ -63,7 +63,4 @@ public class PartyEntity extends BaseEntity {
     @OneToOne(mappedBy = "party")
     private PersonEntity person;
 
-    @OneToMany(mappedBy = "organization")
-    private Set<PolicyEntity> policies = new LinkedHashSet<>();
-
 }
