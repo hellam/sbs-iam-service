@@ -24,6 +24,7 @@ public class MfaPolicyEntity extends BaseEntity {
     @JoinColumn(name = "policy_id", nullable = false)
     private PolicyEntity policy;
 
+    @NotNull
     @Column(name = "channel", length = 50)
     @Enumerated(EnumType.STRING)
     private Channel channel;

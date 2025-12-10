@@ -7,6 +7,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,9 +19,9 @@ public class PostLoginService {
     private final PasswordManager passwordManager;
     private final SecurityQuestionManager questionManager;
 
-    public void changePassword(PasswordChangeRequest req) throws AuthException {
+    public void changePassword(PasswordChangeRequest req) {
         if (!req.getNewPassword().equals(req.getNewPasswordConfirmation())) {
-            throw new AuthException("Password confirmation does not match");
+            throw BaseException.badRequest("Password confirmation does not match");
         }
         SessionEntity session = loginFlowService.requireAtLeast(req.getFlowId(), LoginStage.PASSWORD_OK);
 
@@ -35,7 +36,7 @@ public class PostLoginService {
         loginFlowService.save(session);
     }
 
-    public void handleQuestions(SecurityQuestionsRequest req) throws AuthException {
+    public void handleQuestions(SecurityQuestionsRequest req) {
         SessionEntity session = loginFlowService.requireAtLeast(req.getFlowId(), LoginStage.PASSWORD_OK);
         IamUserEntity user = session.getIamUser();
 

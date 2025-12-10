@@ -8,6 +8,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +24,7 @@ public class PasswordAuthService {
 //    private final SecurityEventService securityEventService; // records LOGIN_FAILURE / SUCCESS
 
     @Transactional
-    public PasswordStepResponse handle(PasswordLoginRequest req) throws AuthException {
+    public PasswordStepResponse handle(PasswordLoginRequest req) {
 
         // 1. Load session & ensure correct stage (IDENTIFIER_OK)
         SessionEntity session = loginFlowService.requireStage(req.getFlowId(), LoginStage.IDENTIFIER_OK);
@@ -34,7 +35,7 @@ public class PasswordAuthService {
 
         if (!ok) {
 //            securityEventService.onLoginFailure(user, "PASSWORD_INVALID", session);
-            throw new AuthException("Invalid credentials");
+            throw BaseException.unauthorized("Invalid credentials");
         }
 
 //        securityEventService.onLoginSuccess(user, "PASSWORD_SUCCESS", session);

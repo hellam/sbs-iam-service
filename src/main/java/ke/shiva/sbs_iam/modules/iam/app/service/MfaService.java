@@ -24,14 +24,14 @@ public class MfaService {
 //    private final SecurityEventService securityEventService;
 
     // Optional: if using OTP, trigger it here
-    public MfaInitResponse initiate(MfaInitRequest req) throws AuthException {
+    public MfaInitResponse initiate(MfaInitRequest req)  {
 
         SessionEntity session = loginFlowService.requireStage(req.getFlowId(), LoginStage.PASSWORD_OK);
 
         LoginRequirements reqs = loginFlowService.getRequirements(session);
 
         if (!reqs.isMfaRequired()) {
-            throw new AuthException("MFA not required for this session");
+            new MfaInitResponse(req.getFlowId());
         }
 
         // If TOTP is enabled, no need to send OTP

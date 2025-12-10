@@ -8,6 +8,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PasswordPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,11 +25,11 @@ public class PasswordManager {
     private final PasswordHistoryRepository historyRepo;
     private final PasswordPolicyService passwordPolicyService;
 
-    public void changePassword(SessionEntity session, String newPassword) throws AuthException {
+    public void changePassword(SessionEntity session, String newPassword) {
 
         IamUserEntity user = session.getIamUser();
         // 1. Validate against policy
-        passwordPolicyService.validatePasswordChange(user, newPassword);
+        passwordPolicyService.validatePasswordChange(session, newPassword);
 
         // 2. Hash new password
         String hash = HashUtil.bcrypt(newPassword);
@@ -44,7 +45,7 @@ public class PasswordManager {
 
             case INTERNET_BANKING,MOBILE_BANKING -> {
                 CustomerAuthEntity auth = customerAuthRepo.findByIamUserId(user.getId())
-                        .orElseThrow(() -> new AuthException("CustomerAuth missing"));
+                        .orElseThrow(() -> BaseException.channelNotAllowed("CustomerAuth missing"));
                 auth.setInternetPasswordHash(hash);
                 auth.setInternetPasswordExpiry(expiry);
                 customerAuthRepo.save(auth);
@@ -52,13 +53,13 @@ public class PasswordManager {
 
             case BACKOFFICE -> {
                 EmployeeAuthEntity auth = employeeAuthRepo.findByIamUserId(user.getId())
-                        .orElseThrow(() -> new AuthException("EmployeeAuth missing"));
+                        .orElseThrow(() -> BaseException.channelNotAllowed("EmployeeAuth missing"));
                 auth.setStaffPasswordHash(hash);
                 auth.setStaffPasswordExpiry(expiry);
                 employeeAuthRepo.save(auth);
             }
 
-            default -> throw new AuthException("Unsupported user category");
+            default -> throw BaseException.channelNotAllowed("Unsupported user category");
         }
         PasswordHistoryEntity history = new PasswordHistoryEntity();
         history.setIamUser(user);

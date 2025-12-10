@@ -24,7 +24,7 @@ public class PasswordAuthController {
     @PostMapping("/password")
     public ResponseEntity<ApiResponse<PasswordStepResponse>> passwordStep(
             @RequestBody @Valid PasswordLoginRequest request
-    ) throws AuthException {
+    ) {
         return ResponseBuilder.success(passwordAuthService.handle(request));
     }
 }

@@ -8,12 +8,15 @@ import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSelectionResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProfileService {
@@ -21,7 +24,7 @@ public class ProfileService {
     private final LoginFlowService loginFlowService;
     private final OidcTokenService oidcTokenService;
 
-    public ProfileSelectionResponse listProfiles(UUID flowId) throws AuthException {
+    public ProfileSelectionResponse listProfiles(UUID flowId){
 
         SessionEntity session =
                 loginFlowService.requireStage(flowId, LoginStage.MFA_OK);
@@ -30,7 +33,8 @@ public class ProfileService {
                 loginFlowService.getRequirements(session);
 
         if (!reqs.isProfileSelectionRequired()) {
-            throw new AuthException("Profile selection not required for this channel");
+            log.debug("Profile selection not required for this channel");
+            throw BaseException.badRequest();
         }
 
         List<ProfileSummary> profiles =
@@ -42,7 +46,7 @@ public class ProfileService {
         return resp;
     }
 
-    public OidcTokenResponse selectProfile(ProfileSelectRequest req) throws AuthException {
+    public OidcTokenResponse selectProfile(ProfileSelectRequest req) {
 
         SessionEntity session =
                 loginFlowService.requireStage(req.getFlowId(), LoginStage.MFA_OK);

@@ -10,6 +10,7 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 
@@ -19,6 +20,7 @@ public class OidcTokenService {
 
     private final JwtEncoder jwtEncoder;
 
+    @Transactional
     public OidcTokenResponse issueTokens(SessionEntity session) {
 
         IamUserEntity user = session.getIamUser();
@@ -40,10 +42,15 @@ public class OidcTokenService {
                 .subject(String.valueOf(user.getPublicId()))
                 .claim("channel", channel.name())
                 .claim("category", category.name())
-                .claim("profile_type", session.getProfileType())
-                .claim("profile_id", session.getProfileId())
                 .claim("scope", buildScopeFor(session))
                 .build();
+
+        if (session.getProfileType() != null) {
+            accessClaims = JwtClaimsSet.from(accessClaims).claim("profile_type", session.getProfileType()).build();
+        }
+        if (session.getProfileId() != null) {
+            accessClaims = JwtClaimsSet.from(accessClaims).claim("profile_id", session.getProfileId()).build();
+        }
 
         String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(accessClaims)).getTokenValue();
 
@@ -61,4 +68,3 @@ public class OidcTokenService {
         return session.getChannel().name().toLowerCase();
     }
 }
-

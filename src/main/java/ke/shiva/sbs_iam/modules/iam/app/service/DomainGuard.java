@@ -3,7 +3,7 @@ package ke.shiva.sbs_iam.modules.iam.app.service;
 import jakarta.servlet.http.HttpServletRequest;
 import ke.shiva.sbs_iam.config.AllowedDomainsProperties;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
-import ke.shiva.sbs_iam.modules.iam.shared.exception.DomainNotAllowedException;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -33,9 +33,7 @@ public class DomainGuard {
         boolean match = allowed.stream().anyMatch(host::equalsIgnoreCase);
 
         if (!match) {
-            throw new DomainNotAllowedException(
-                    "Host " + host + " is not allowed for channel " + channel
-            + ". Allowed domains: " + String.join(", ", allowed));
+            throw BaseException.domainNotAllowed("Access forbidden");
         }
     }
 }

@@ -6,6 +6,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.security.IamUserSecurityQuesti
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.SecurityQuestionEntity;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.IamUserSecurityQuestionRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SecurityQuestionRepository;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,7 @@ public class SecurityQuestionManager {
 
         for (var qa : questions) {
             SecurityQuestionEntity securityQuestionEntity = securityQuestionRepo.findById(qa.getQuestionId()).
-                    orElseThrow(() -> new IllegalArgumentException("Invalid security question: " + qa.getQuestionId()));
+                    orElseThrow(() -> BaseException.badRequest("Invalid security question: " + qa.getQuestionId()));
 
             IamUserSecurityQuestionEntity entity = new IamUserSecurityQuestionEntity();
             entity.setIamUser(user);

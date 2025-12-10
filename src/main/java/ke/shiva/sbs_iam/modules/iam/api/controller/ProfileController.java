@@ -6,6 +6,8 @@ import ke.shiva.sbs_iam.modules.iam.api.request.ProfileSelectRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.OidcTokenResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSelectionResponse;
 import ke.shiva.sbs_iam.modules.iam.app.service.ProfileService;
+import ke.shiva.shivacorestarter.dto.ApiResponse;
+import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,17 +22,17 @@ public class ProfileController {
     private final ProfileService profileService;
 
     @GetMapping("/profiles")
-    public ResponseEntity<ProfileSelectionResponse> listProfiles(
+    public ResponseEntity<ApiResponse<ProfileSelectionResponse>> listProfiles(
             @RequestParam UUID flowId
-    ) throws AuthException {
-        return ResponseEntity.ok(profileService.listProfiles(flowId));
+    ) {
+        return ResponseBuilder.success(profileService.listProfiles(flowId));
     }
 
     @PostMapping("/profiles/select")
-    public ResponseEntity<OidcTokenResponse> select(
+    public ResponseEntity<ApiResponse<OidcTokenResponse>> select(
             @Valid @RequestBody ProfileSelectRequest req
-    ) throws AuthException {
-        return ResponseEntity.ok(profileService.selectProfile(req));
+    ) {
+        return ResponseBuilder.success(profileService.selectProfile(req));
     }
 }
 

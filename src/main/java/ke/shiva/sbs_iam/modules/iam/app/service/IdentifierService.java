@@ -9,8 +9,10 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.LoginIdentifierRepository;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -22,18 +24,19 @@ public class IdentifierService {
     private final PolicyEvaluationService policyService;
     private final LoginFlowService loginFlowService;
 
-    public IdentifierResponse handle(IdentifierRequest req) throws AuthException {
+    @Transactional(readOnly = false)
+    public IdentifierResponse handle(IdentifierRequest req){
 
         Channel channel = req.getChannel();
 
         LoginIdentifierEntity identifier = identifierRepo
                 .findByIdentifierAndChannelAndStatus(req.getIdentifier(), channel, IamStatus.ACTIVE)
-                .orElseThrow(() -> new AuthException("Identifier not found"));
+                .orElseThrow(() -> BaseException.unauthorized("Invalid credentials"));
 
         IamUserEntity user = identifier.getIamUser();
 
         if (user.getStatus() != IamStatus.ACTIVE) {
-            throw new AuthException("User is not active");
+            throw BaseException.unauthorized("Invalid credentials");
         }
 
         // evaluate policy requirements

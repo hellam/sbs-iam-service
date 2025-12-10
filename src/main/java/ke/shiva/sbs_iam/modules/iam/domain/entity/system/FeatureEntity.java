@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.FeaturePolicyEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
@@ -22,6 +23,11 @@ public class FeatureEntity {
     @Column(name = "id", nullable = false)
     private Long id;
 
+    @NotNull
+    @Column(name = "channel", nullable = false, length = 50)
+    @Enumerated(EnumType.STRING)
+    private Channel channel;
+
     @Size(max = 100)
     @NotNull
     @Column(name = "code", nullable = false, length = 100)
@@ -39,11 +45,13 @@ public class FeatureEntity {
     @Column(name = "category", length = 100)
     private String category;
 
+    @NotNull
+    @ColumnDefault("true")
+    @Column(name = "enabled", nullable = false)
+    private Boolean enabled = false;
+
     @ColumnDefault("now()")
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
-
-    @OneToMany(mappedBy = "feature")
-    private Set<FeaturePolicyEntity> featurePolicies = new LinkedHashSet<>();
 
 }

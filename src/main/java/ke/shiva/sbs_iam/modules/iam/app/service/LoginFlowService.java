@@ -15,6 +15,7 @@ import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerProfileRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.OrganizationUserRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionEventRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -54,29 +55,29 @@ public class LoginFlowService {
     }
 
     // -------- GET AND VALIDATE STAGE --------
-    public SessionEntity requireStage(UUID flowId, LoginStage stage) throws AuthException {
+    public SessionEntity requireStage(UUID flowId, LoginStage stage) {
         SessionEntity s = sessionRepo.findBySessionId(String.valueOf(flowId));
 
         if (s == null)
-            throw new AuthException("Invalid flow");
+            throw BaseException.invalidFlow();
 
         if (s.getExpiresAt().isBefore(OffsetDateTime.now()))
-            throw new AuthException("Session expired");
+            throw BaseException.sessionExpired("Page expired. Please refresh and try again.");
 
         if (s.getStatus() != stage)
-            throw new AuthException("Invalid stage");
+            throw BaseException.invalidStage();
 
         return s;
     }
 
-    public SessionEntity requireAtLeast(UUID flowId, LoginStage minStage) throws AuthException {
+    public SessionEntity requireAtLeast(UUID flowId, LoginStage minStage) {
         SessionEntity s = sessionRepo.findBySessionId(String.valueOf(flowId));
 
         if (s == null)
-            throw new AuthException("Invalid flow");
+            throw BaseException.invalidFlow();
 
         if (s.getStatus().ordinal() < minStage.ordinal())
-            throw new AuthException("Not allowed at this stage");
+            throw BaseException.invalidStage();
 
         return s;
     }

@@ -29,7 +29,7 @@ public class IdentifierController {
     public ResponseEntity<ApiResponse<IdentifierResponse>> identifyBackoffice(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
-    ) throws AuthException {
+    ) {
         domainGuard.validate(Channel.BACKOFFICE, http);
         req.setChannel(Channel.BACKOFFICE);
         return ResponseBuilder.success("User identified successfully", identifierService.handle(req));
@@ -39,7 +39,7 @@ public class IdentifierController {
     public ResponseEntity<IdentifierResponse> identifyMobile(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
-    ) throws AuthException {
+    ) {
         domainGuard.validate(Channel.MOBILE_BANKING, http);
         req.setChannel(Channel.MOBILE_BANKING);
         return ResponseEntity.ok(identifierService.handle(req));
@@ -49,7 +49,7 @@ public class IdentifierController {
     public ResponseEntity<IdentifierResponse> identifyIB(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
-    ) throws AuthException {
+    ) {
         domainGuard.validate(Channel.INTERNET_BANKING, http);
         req.setChannel(Channel.INTERNET_BANKING);
         return ResponseEntity.ok(identifierService.handle(req));

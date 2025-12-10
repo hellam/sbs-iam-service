@@ -2,11 +2,13 @@ package ke.shiva.sbs_iam.modules.iam.app.service;
 
 import jakarta.security.auth.message.AuthException;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PasswordPolicyEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.enums.policy.PolicyScope;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.PasswordHistoryRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.PolicyRepository;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,40 +27,23 @@ public class PasswordPolicyService {
     /**
      * Main entry point for validating a password change attempt.
      */
-    public void validatePasswordChange(IamUserEntity user, String newPassword) throws AuthException {
+    public void validatePasswordChange(SessionEntity session, String newPassword) {
 
-        PasswordPolicyEntity policy = resolvePolicy(user);
+        PasswordPolicyEntity policy = resolvePolicy(session.getChannel());
 
         validateStructure(newPassword, policy);
-        validateAgainstHistory(user, newPassword, policy);
+        validateAgainstHistory(session.getIamUser(), newPassword, policy);
         validateCommonPasswords(newPassword, policy);
     }
 
     /**
-     * Load password policy based on hierarchy: USER → ORGANIZATION → GLOBAL.
+     * Load password policy based on channel.
      */
-    public PasswordPolicyEntity resolvePolicy(IamUserEntity user) throws AuthException {
-
-        // 1. USER-LEVEL POLICY
-        Optional<PolicyEntity> userPolicyOpt =
-                policyRepo.findByIamUserAndScopeAndIsActiveTrue(user, PolicyScope.USER);
-        if (userPolicyOpt.isPresent()) {
-            return userPolicyOpt.get().getPasswordPolicy();
-        }
-
-        // 2. ORGANIZATION-LEVEL POLICY
-        if (user.getParty().getOrganization() != null) {
-            Optional<PolicyEntity> orgPolicyOpt =
-                    policyRepo.findByOrganizationAndScopeAndIsActiveTrue(user.getParty().getOrganization().getParty(),PolicyScope.ORG);
-            if (orgPolicyOpt.isPresent()) {
-                return orgPolicyOpt.get().getPasswordPolicy();
-            }
-        }
-
+    public PasswordPolicyEntity resolvePolicy(Channel channel) {
         // 3. GLOBAL POLICY (always exists)
         PolicyEntity globalPolicy =
-                policyRepo.findFirstByScopeAndIsActiveTrue(PolicyScope.GLOBAL)
-                        .orElseThrow(() -> new AuthException("GLOBAL password policy missing"));
+                policyRepo.findFirstByChannelsContains(channel.name())
+                        .orElseThrow(() -> BaseException.unableToProcessRequest("GLOBAL password policy missing"));
 
         return globalPolicy.getPasswordPolicy();
     }
@@ -66,37 +51,37 @@ public class PasswordPolicyService {
     /**
      * Check password length, uppercase, number, etc.
      */
-    private void validateStructure(String password, PasswordPolicyEntity p) throws AuthException {
+    private void validateStructure(String password, PasswordPolicyEntity p) {
 
         if (p.getMinLength() != null && password.length() < p.getMinLength()) {
-            throw new AuthException("Password is too short (min " + p.getMinLength() + ")");
+            throw BaseException.badRequest("Password is too short (min " + p.getMinLength() + ")");
         }
 
         if (p.getMaxLength() != null && password.length() > p.getMaxLength()) {
-            throw new AuthException("Password is too long (max " + p.getMaxLength() + ")");
+            throw BaseException.badRequest("Password is too long (max " + p.getMaxLength() + ")");
         }
 
         if (Boolean.TRUE.equals(p.getRequireUppercase()) && !password.matches(".*[A-Z].*")) {
-            throw new AuthException("Password must contain an uppercase letter");
+            throw BaseException.badRequest("Password must contain an uppercase letter");
         }
 
         if (Boolean.TRUE.equals(p.getRequireLowercase()) && !password.matches(".*[a-z].*")) {
-            throw new AuthException("Password must contain a lowercase letter");
+            throw BaseException.badRequest("Password must contain a lowercase letter");
         }
 
         if (Boolean.TRUE.equals(p.getRequireNumber()) && !password.matches(".*\\d.*")) {
-            throw new AuthException("Password must contain a number");
+            throw BaseException.badRequest("Password must contain a number");
         }
 
         if (Boolean.TRUE.equals(p.getRequireSymbol()) && !password.matches(".*[^a-zA-Z0-9].*")) {
-            throw new AuthException("Password must contain a special character");
+            throw BaseException.badRequest("Password must contain a special character");
         }
     }
 
     /**
      * Prevent reusing old passwords.
      */
-    private void validateAgainstHistory(IamUserEntity user, String newPassword, PasswordPolicyEntity p) throws AuthException {
+    private void validateAgainstHistory(IamUserEntity user, String newPassword, PasswordPolicyEntity p){
 
         int lastN = Optional.ofNullable(p.getPasswordHistoryCount()).orElse((short) 0);
 
@@ -109,7 +94,7 @@ public class PasswordPolicyService {
 
         for (String oldHash : lastHashes) {
             if (HashUtil.bcryptVerify(newPassword, oldHash)) {
-                throw new AuthException(
+                throw BaseException.badRequest(
                         "Password cannot match any of the last " + lastN + " used passwords"
                 );
             }
@@ -119,7 +104,7 @@ public class PasswordPolicyService {
     /**
      * Optional: block common passwords list.
      */
-    private void validateCommonPasswords(String password, PasswordPolicyEntity p) throws AuthException {
+    private void validateCommonPasswords(String password, PasswordPolicyEntity p) {
         if (Boolean.TRUE.equals(p.getBlockCommonPasswords())) {
             // You can load this from DB later. For now:
             List<String> common = List.of(
@@ -128,7 +113,7 @@ public class PasswordPolicyService {
             );
 
             if (common.contains(password.toLowerCase())) {
-                throw new AuthException("Password is too common and easily guessable");
+                throw BaseException.badRequest("Password is too common and easily guessable");
             }
         }
     }
@@ -151,4 +136,3 @@ public class PasswordPolicyService {
 //        return OffsetDateTime.now().isAfter(expiry);
 //    }
 }
-

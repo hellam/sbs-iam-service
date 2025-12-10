@@ -10,6 +10,9 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.SessionType;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
+import ke.shiva.shivacorestarter.dto.ApiResponse;
+import ke.shiva.shivacorestarter.exception.BaseException;
+import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,7 +29,7 @@ public class FinalizeLoginController {
     private final OidcTokenService oidcTokenService;
 
     @PostMapping("/finalize")
-    public ResponseEntity<OidcTokenResponse> finalize(
+    public ResponseEntity<ApiResponse<OidcTokenResponse>> finalize(
             @RequestBody @Valid FinalizeLoginRequest req
     ) throws AuthException {
         SessionEntity session =
@@ -36,7 +39,7 @@ public class FinalizeLoginController {
                 loginFlowService.getRequirements(session);
 
         if (reqs.hasPostLoginSteps()) {
-            throw new AuthException("Post-login steps must be completed");
+            throw BaseException.forbidden("Access denied");
         }
 
         // No profile selection required
@@ -46,7 +49,7 @@ public class FinalizeLoginController {
 
         loginFlowService.updateStage(session, LoginStage.ACTIVE);
 
-        return ResponseEntity.ok(oidcTokenService.issueTokens(session));
+        return ResponseBuilder.success(oidcTokenService.issueTokens(session));
     }
 }
 

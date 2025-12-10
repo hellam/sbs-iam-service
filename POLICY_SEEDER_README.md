@@ -6,23 +6,23 @@ The Policy Seeder creates initial security policies for PIN, Password, MFA, and 
 ## What It Creates
 
 ### Security Policies
-For each channel (MOBILE_BANKING, INTERNET_BANKING, BACKOFFICE), the seeder creates:
+The seeder creates policies with channel-specific rules:
 
-1. **PIN Policy**
+1. **PIN Policy** - Only for MOBILE_BANKING and INTERNET_BANKING
    - PolicyEntity with type PIN_POLICY
-   - PinPolicyEntity with default settings (min 4, max 6, etc.)
+   - PinPolicyEntity with default settings (min 4, max 6, etc.) for each channel
 
-2. **Password Policy**
+2. **Password Policy** - Only for INTERNET_BANKING and BACKOFFICE
    - PolicyEntity with type PASSWORD_POLICY
-   - PasswordPolicyEntity with default settings (min 12, max 128, etc.)
+   - PasswordPolicyEntity with default settings (min 12, max 128, etc.) for each channel
 
-3. **MFA Policy**
+3. **MFA Policy** - For all channels (MOBILE_BANKING, INTERNET_BANKING, BACKOFFICE)
    - PolicyEntity with type MFA_POLICY
-   - MfaPolicyEntity with default settings (MFA enabled for IB and Backoffice, etc.)
+   - MfaPolicyEntity with default settings (MFA enabled for IB and Backoffice, etc.) for each channel
 
-4. **Security Question Policy**
+4. **Security Question Policy** - For all channels (MOBILE_BANKING, INTERNET_BANKING, BACKOFFICE)
    - PolicyEntity with type SEC_QN_POLICY
-   - SecurityQuestionPolicyEntity with default settings (disabled by default)
+   - SecurityQuestionPolicyEntity with default settings (disabled by default) for each channel
 
 ### Features and Feature Policy
 1. **FeatureEntity**: LOGIN and TRANSFER features
@@ -126,7 +126,34 @@ The seeder is idempotent:
 
 ## Global Feature Policy
 - Name: "Global Feature Policy"
-- Contains LOGIN and TRANSFER features
+- Contains feature IDs for LOGIN and TRANSFER (stored as Set<Long>)
 - Scope: GLOBAL
 - Channel: BACKOFFICE (default for global)
 - Active: true
+
+## Important Implementation Details
+
+### Policy Type Consolidation
+The seeder ensures **one policy row per PolicyType** by:
+1. Checking if any policy of the given type already contains the channel
+2. If found, skipping (policy already configured for that channel)
+3. If not found but a policy of that type exists, adding the channel to the existing policy's channels array
+4. If no policy of that type exists, creating a new policy with the channel
+
+This means after running the seeder, you will have:
+- 1 PIN_POLICY row with channels: [MOBILE_BANKING, INTERNET_BANKING]
+- 1 PASSWORD_POLICY row with channels: [INTERNET_BANKING, BACKOFFICE]
+- 1 MFA_POLICY row with channels: [MOBILE_BANKING, INTERNET_BANKING, BACKOFFICE]
+- 1 SEC_QN_POLICY row with channels: [MOBILE_BANKING, INTERNET_BANKING, BACKOFFICE]
+
+### Channel-Specific Policy Rules
+- **PIN Policy**: Only available for MOBILE_BANKING and INTERNET_BANKING
+- **Password Policy**: Only available for INTERNET_BANKING and BACKOFFICE
+- **MFA Policy**: Available for all channels
+- **Security Question Policy**: Available for all channels
+
+### Sub-Policy Creation
+The specific policy entities (PinPolicyEntity, PasswordPolicyEntity, etc.) are created once per channel:
+- Each sub-policy checks if it already exists for the specific PolicyEntity and Channel combination before creation
+- This prevents duplicate sub-policies even when the seeder runs multiple times
+

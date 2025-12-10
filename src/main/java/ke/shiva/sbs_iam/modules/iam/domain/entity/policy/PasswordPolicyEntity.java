@@ -23,15 +23,16 @@ public class PasswordPolicyEntity extends BaseEntity {
     @JoinColumn(name = "policy_id", nullable = false)
     private PolicyEntity policy;
 
+    @NotNull
     @Column(name = "channel", length = 50)
     @Enumerated(EnumType.STRING)
     private Channel channel;
 
-    @ColumnDefault("12")
+    @ColumnDefault("8")
     @Column(name = "min_length")
     private Short minLength;
 
-    @ColumnDefault("128")
+    @ColumnDefault("32")
     @Column(name = "max_length")
     private Short maxLength;
 

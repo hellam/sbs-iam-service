@@ -22,7 +22,7 @@ public class PostLoginController {
     @PostMapping("/password/change")
     public ResponseEntity<Void> changePassword(
             @RequestBody @Valid PasswordChangeRequest req
-    ) throws AuthException {
+    ) {
         postLoginService.changePassword(req);
         return ResponseEntity.ok().build();
     }
@@ -30,7 +30,7 @@ public class PostLoginController {
     @PostMapping("/security-questions")
     public ResponseEntity<Void> submitQuestions(
             @RequestBody @Valid SecurityQuestionsRequest req
-    ) throws AuthException {
+    ) {
         postLoginService.handleQuestions(req);
         return ResponseEntity.ok().build();
     }

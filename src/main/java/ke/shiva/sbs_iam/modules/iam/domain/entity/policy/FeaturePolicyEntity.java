@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PartyEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.system.FeatureEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.policy.PolicyScope;
 import lombok.Getter;
@@ -15,6 +14,7 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Type;
 
 import java.util.Map;
+import java.util.Set;
 
 @Setter
 @Getter
@@ -38,7 +38,7 @@ public class FeaturePolicyEntity {
     @NotNull
     @Type(JsonType.class)
     @Column(name = "features", columnDefinition = "jsonb")
-    private Map<Long, FeatureEntity> features;
+    private Set<Long> features;
 
     @NotNull
     @Column(name = "channel", nullable = false, length = 50)
