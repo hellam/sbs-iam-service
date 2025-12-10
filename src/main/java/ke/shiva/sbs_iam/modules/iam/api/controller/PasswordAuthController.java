@@ -5,6 +5,8 @@ import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.modules.iam.api.request.PasswordLoginRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.PasswordStepResponse;
 import ke.shiva.sbs_iam.modules.iam.app.service.PasswordAuthService;
+import ke.shiva.shivacorestarter.dto.ApiResponse;
+import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,9 +22,9 @@ public class PasswordAuthController {
     private final PasswordAuthService passwordAuthService;
 
     @PostMapping("/password")
-    public ResponseEntity<PasswordStepResponse> passwordStep(
+    public ResponseEntity<ApiResponse<PasswordStepResponse>> passwordStep(
             @RequestBody @Valid PasswordLoginRequest request
     ) throws AuthException {
-        return ResponseEntity.ok(passwordAuthService.handle(request));
+        return ResponseBuilder.success(passwordAuthService.handle(request));
     }
 }

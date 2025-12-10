@@ -27,10 +27,8 @@ public class IdentifierService {
         Channel channel = req.getChannel();
 
         LoginIdentifierEntity identifier = identifierRepo
-                .findByIdentifierAndChannelAndStatus(req.getIdentifier(), channel, IamStatus.ACTIVE);
-        if (identifier == null) {
-            throw new AuthException("Identifier not allowed for this channel");
-        }
+                .findByIdentifierAndChannelAndStatus(req.getIdentifier(), channel, IamStatus.ACTIVE)
+                .orElseThrow(() -> new AuthException("Identifier not found"));
 
         IamUserEntity user = identifier.getIamUser();
 

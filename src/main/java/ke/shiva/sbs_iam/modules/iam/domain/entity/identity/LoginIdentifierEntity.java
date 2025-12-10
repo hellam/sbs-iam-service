@@ -26,7 +26,6 @@ public class LoginIdentifierEntity extends BaseEntity {
     @JoinColumn(name = "iam_user_id", nullable = false)
     private IamUserEntity iamUser;
 
-    @Size(max = 50)
     @NotNull
     @Column(name = "channel", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
@@ -42,7 +41,6 @@ public class LoginIdentifierEntity extends BaseEntity {
     @Column(name = "identifier", nullable = false)
     private String identifier;
 
-    @Size(max = 50)
     @NotNull
     @ColumnDefault("ACTIVE")
     @Column(name = "status", nullable = false, length = 50)

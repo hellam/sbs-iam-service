@@ -24,27 +24,19 @@
                 <constraints nullable="false" unique="true"/>
             </column>
 
+            <!-- channel is an array of VARCHAR to support multiple channels -->
+            <column name="channels" type="JSONB">
+                <constraints nullable="false"/>
+            </column>
+
             <!-- password, pin, mfa, transaction, approval, etc -->
             <column name="policy_type" type="VARCHAR(50)">
                 <constraints nullable="false"/>
             </column>
 
-            <column name="name" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="name" type="VARCHAR(255)"/>
 
             <column name="description" type="TEXT"/>
-
-            <!-- GLOBAL, ORGANIZATION, USER -->
-            <column name="scope" type="VARCHAR(20)" defaultValue="GLOBAL">
-                <constraints nullable="false"/>
-            </column>
-
-            <!-- If scope = ORG or USER -->
-            <column name="organization_id" type="BIGINT"/>
-            <column name="iam_user_id" type="BIGINT"/>
-
-            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
 
             <column name="created_at" type="TIMESTAMPTZ"
                     defaultValueDate="CURRENT_TIMESTAMP"/>
@@ -52,18 +44,6 @@
                     defaultValueDate="CURRENT_TIMESTAMP"/>
 
         </createTable>
-
-        <addForeignKeyConstraint
-                baseTableName="policies" baseColumnNames="organization_id"
-                referencedTableName="party" referencedColumnNames="id"
-                constraintName="fk_policy_org"
-                deferrable="true" initiallyDeferred="true"/>
-
-        <addForeignKeyConstraint
-                baseTableName="policies" baseColumnNames="iam_user_id"
-                referencedTableName="iam_user" referencedColumnNames="id"
-                constraintName="fk_policy_user"
-                deferrable="true" initiallyDeferred="true"/>
 
         <createIndex tableName="policies" indexName="idx_policy_type">
             <column name="policy_type"/>

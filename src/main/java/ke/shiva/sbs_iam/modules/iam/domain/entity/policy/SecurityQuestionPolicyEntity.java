@@ -3,6 +3,7 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.policy;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,10 +23,10 @@ public class SecurityQuestionPolicyEntity extends BaseEntity {
     @JoinColumn(name = "policy_id", nullable = false)
     private PolicyEntity policy;
 
-    @Size(max = 50)
     @NotNull
     @Column(name = "channel", nullable = false, length = 50)
-    private String channel;
+    @Enumerated(EnumType.STRING)
+    private Channel channel;
 
     @ColumnDefault("false")
     @Column(name = "enabled")

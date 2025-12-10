@@ -2,6 +2,7 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.policy;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,6 +23,10 @@ public class MfaPolicyEntity extends BaseEntity {
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "policy_id", nullable = false)
     private PolicyEntity policy;
+
+    @Column(name = "channel", length = 50)
+    @Enumerated(EnumType.STRING)
+    private Channel channel;
 
     @ColumnDefault("true")
     @Column(name = "require_mfa_ib")

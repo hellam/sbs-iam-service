@@ -32,7 +32,6 @@ public class BranchEntity extends BaseEntity {
     @Column(name = "branch_name", nullable = false)
     private String branchName;
 
-    @Size(max = 50)
     @NotNull
     @ColumnDefault("'BRANCH'")
     @Column(name = "branch_type", nullable = false, length = 50)

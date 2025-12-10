@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.employee.EmploymentStatus;
-import ke.shiva.sbs_iam.modules.reference.domain.entity.BranchEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,7 +39,6 @@ public class EmployeeProfileEntity {
     @Column(name = "department")
     private String department;
 
-    @Size(max = 50)
     @NotNull
     @ColumnDefault("'ACTIVE'")
     @Column(name = "employment_status", nullable = false, length = 50)

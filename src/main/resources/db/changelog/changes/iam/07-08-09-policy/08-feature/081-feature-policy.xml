@@ -13,23 +13,45 @@
                 <constraints primaryKey="true"/>
             </column>
 
-            <column name="feature_id" type="BIGINT">
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+
+            <column name="features" type="JSONB">
                 <constraints nullable="false"/>
             </column>
 
-            <!-- ALLOW / BLOCK -->
-            <column name="enabled" type="BOOLEAN" defaultValue="true">
+            <!-- e.g. INTERNET_BANKING, MOBILE_BANKING, API -->
+            <column name="channel" type="VARCHAR(50)">
                 <constraints nullable="false"/>
             </column>
+
+            <!-- eg GLOBAL, ORG, USER -->
+            <column name="policy_scope" type="VARCHAR(50)" defaultValue="GLOBAL">
+                <constraints nullable="false"/>
+            </column>
+            <!-- If scope = ORG or USER -->
+            <column name="organization_id" type="BIGINT"/>
+            <column name="iam_user_id" type="BIGINT"/>
+
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
 
             <column name="created_at" type="TIMESTAMPTZ"
                     defaultValueDate="CURRENT_TIMESTAMP"/>
         </createTable>
 
-        <addForeignKeyConstraint baseTableName="feature_policy" baseColumnNames="feature_id"
-                                 referencedTableName="features" referencedColumnNames="id"
-                                 constraintName="fk_feature_policy_feature"/>
+        <addForeignKeyConstraint
+                baseTableName="feature_policy" baseColumnNames="organization_id"
+                referencedTableName="party" referencedColumnNames="id"
+                constraintName="fk_policy_org"
+                deferrable="true" initiallyDeferred="true"/>
 
+        <addForeignKeyConstraint
+                baseTableName="feature_policy" baseColumnNames="iam_user_id"
+                referencedTableName="iam_user" referencedColumnNames="id"
+                constraintName="fk_policy_user"
+                deferrable="true" initiallyDeferred="true"/>
     </changeSet>
 
 </databaseChangeLog>

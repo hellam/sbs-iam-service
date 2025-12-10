@@ -34,7 +34,8 @@ public class DomainGuard {
 
         if (!match) {
             throw new DomainNotAllowedException(
-                    "Host " + host + " is not allowed for channel " + channel);
+                    "Host " + host + " is not allowed for channel " + channel
+            + ". Allowed domains: " + String.join(", ", allowed));
         }
     }
 }

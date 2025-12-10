@@ -87,8 +87,6 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/iam/07-08-09-policy/08-feature/081-feature-policy.xml
   - include:
-      file: db/changelog/changes/iam/07-08-09-policy/08-feature/082-feature-policy-assignment.xml
-  - include:
       file: db/changelog/changes/iam/10-session/111-refresh-tokens.xml
   - include:
       file: db/changelog/changes/iam/10-session/112-trusted-devices.xml

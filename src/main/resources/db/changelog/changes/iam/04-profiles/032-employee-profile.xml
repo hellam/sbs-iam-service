@@ -64,12 +64,6 @@
                 referencedTableName="iam_user" referencedColumnNames="id"
                 constraintName="fk_employee_profile_iam_user"/>
 
-        <!-- FK to branches (from your existing branches table) -->
-        <addForeignKeyConstraint
-                baseTableName="employee_profile" baseColumnNames="branch_id"
-                referencedTableName="branches" referencedColumnNames="id"
-                constraintName="fk_employee_profile_branch"/>
-
         <createIndex tableName="employee_profile" indexName="idx_employee_profile_branch">
             <column name="branch_id"/>
         </createIndex>

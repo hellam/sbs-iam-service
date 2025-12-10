@@ -18,11 +18,21 @@
                 <constraints nullable="false" unique="true"/>
             </column>
 
-            <column name="name" type="VARCHAR(255)">
+            <!-- e.g. INTERNET_BANKING, MOBILE_BANKING, API -->
+            <column name="channel" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="name" type="VARCHAR(100)">
                 <constraints nullable="false"/>
             </column>
             <column name="description" type="TEXT"/>
-            <column name="category" type="VARCHAR(100)"/>
+            <column name="category" type="VARCHAR(50)"/>
+
+            <!-- ALLOW / BLOCK -->
+            <column name="enabled" type="BOOLEAN" defaultValue="true">
+                <constraints nullable="false"/>
+            </column>
 
             <column name="created_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
         </createTable>

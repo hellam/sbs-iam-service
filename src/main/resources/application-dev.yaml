@@ -21,19 +21,23 @@ management:
   endpoint:
     health:
       show-details: always
-logging:
-  level:
-    org.hibernate.orm.mapping: DEBUG
-    org.hibernate.boot.model.internal: DEBUG
+#logging:
+#  level:
+#    org.hibernate.orm.mapping: DEBUG
+#    org.hibernate.boot.model.internal: DEBUG
 
 server:
   port: 9001
+
+seeder:
+  employee:
+    enabled: true
 
 security:
   allowed-domains:
     map:
       BACKOFFICE:
-        - "localhost:42000"
+        - "localhost"
       INTERNET_BANKING:
         - "localhost:43000"
       MOBILE_BANKING:

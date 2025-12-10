@@ -32,7 +32,7 @@ spring:
     #The open-in-view setting controls whether the Hibernate session is kept open during the entire request. This is useful for lazy loading.
     #$user = User::first();
     #$user->posts;
-    open-in-view: false # Don't keep DB session open across the whole request
+#    open-in-view: false # Don't keep DB session open across the whole request
     properties:
       hibernate:
         default_schema: iam_service
@@ -71,6 +71,3 @@ management:
   health:
     redis:
       enabled: false
-
-    livenessstate.enabled: true
-    readinessstate.enabled: true

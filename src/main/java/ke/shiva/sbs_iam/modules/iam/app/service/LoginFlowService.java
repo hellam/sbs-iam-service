@@ -129,7 +129,19 @@ public class LoginFlowService {
     // ----------------------------
     public LoginRequirements getRequirements(SessionEntity s) {
         Object obj = s.getMetadata().get("requirements");
-        return (LoginRequirements) obj;
+        if (obj instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> map = (Map<String, Object>) obj;
+            LoginRequirements reqs = new LoginRequirements();
+            reqs.setFirstLogin(Boolean.TRUE.equals(map.get("firstLogin")));
+            reqs.setMfaRequired(Boolean.TRUE.equals(map.get("mfaRequired")));
+            reqs.setPasswordExpired(Boolean.TRUE.equals(map.get("passwordExpired")));
+            reqs.setQuestionsRequired(Boolean.TRUE.equals(map.get("questionsRequired")));
+            reqs.setProfileSelectionRequired(Boolean.TRUE.equals(map.get("profileSelectionRequired")));
+            return reqs;
+        } else {
+            return (LoginRequirements) obj;
+        }
     }
 
     public void save(SessionEntity s) {
@@ -137,5 +149,3 @@ public class LoginFlowService {
     }
 
 }
-
-

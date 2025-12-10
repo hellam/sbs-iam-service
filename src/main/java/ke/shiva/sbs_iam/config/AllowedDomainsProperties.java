@@ -29,4 +29,8 @@ public class AllowedDomainsProperties {
      */
     private Map<Channel, List<String>> map = new EnumMap<>(Channel.class);
 
+    public Map<Channel, List<String>> getMap() {
+        return map;
+    }
+
 }

@@ -32,12 +32,12 @@ public class PasswordManager {
 
         // 2. Hash new password
         String hash = HashUtil.bcrypt(newPassword);
-        PasswordPolicyEntity passwordPolicy = passwordPolicyService.resolvePolicy(user);
+//        PasswordPolicyEntity passwordPolicy = passwordPolicyService.resolvePolicy(user);
 
         OffsetDateTime expiry = null;
-        if (passwordPolicy.getExpirationEnabled() && passwordPolicy.getExpirationDays() > 0) {
-            expiry = OffsetDateTime.now().plusDays(passwordPolicy.getExpirationDays());
-        }
+//        if (passwordPolicy.getExpirationEnabled() && passwordPolicy.getExpirationDays() > 0) {
+//            expiry = OffsetDateTime.now().plusDays(passwordPolicy.getExpirationDays());
+//        }
 
         // 3. Update correct credentials table
         switch (session.getChannel()) {

@@ -54,7 +54,6 @@ public class IamUserEntity {
     @Column(name = "auth_provider", nullable = false, length = 50)
     private String authProvider;
 
-    @Size(max = 50)
     @NotNull
     @ColumnDefault("'ACTIVE'")
     @Column(name = "status", nullable = false, length = 50)

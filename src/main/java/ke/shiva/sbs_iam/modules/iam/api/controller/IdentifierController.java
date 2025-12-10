@@ -8,6 +8,8 @@ import ke.shiva.sbs_iam.modules.iam.api.response.IdentifierResponse;
 import ke.shiva.sbs_iam.modules.iam.app.service.DomainGuard;
 import ke.shiva.sbs_iam.modules.iam.app.service.IdentifierService;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
+import ke.shiva.shivacorestarter.dto.ApiResponse;
+import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,24 +18,24 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/oauth")
+@RequestMapping("/oauth/identifier")
 @RequiredArgsConstructor
 public class IdentifierController {
 
     private final IdentifierService identifierService;
     private final DomainGuard domainGuard;
 
-    @PostMapping("/identifier/backoffice")
-    public ResponseEntity<IdentifierResponse> identifyBackoffice(
+    @PostMapping("/backoffice")
+    public ResponseEntity<ApiResponse<IdentifierResponse>> identifyBackoffice(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
     ) throws AuthException {
         domainGuard.validate(Channel.BACKOFFICE, http);
         req.setChannel(Channel.BACKOFFICE);
-        return ResponseEntity.ok(identifierService.handle(req));
+        return ResponseBuilder.success("User identified successfully", identifierService.handle(req));
     }
 
-    @PostMapping("/identifier/mobile")
+    @PostMapping("/mobile")
     public ResponseEntity<IdentifierResponse> identifyMobile(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
@@ -43,7 +45,7 @@ public class IdentifierController {
         return ResponseEntity.ok(identifierService.handle(req));
     }
 
-    @PostMapping("/identifier/internet-banking")
+    @PostMapping("/internet-banking")
     public ResponseEntity<IdentifierResponse> identifyIB(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http

@@ -40,7 +40,6 @@ public class SessionEntity {
     @Column(name = "session_id", nullable = false, length = 100)
     private String sessionId;
 
-    @Size(max = 50)
     @Column(name = "channel", length = 50)
     @Enumerated(EnumType.STRING)
     private Channel channel;
@@ -56,7 +55,6 @@ public class SessionEntity {
     @Column(name = "user_agent", length = Integer.MAX_VALUE)
     private String userAgent;
 
-    @Size(max = 20)
     @NotNull
     @ColumnDefault("'ACTIVE'")
     @Column(name = "status", nullable = false, length = 20)
@@ -79,7 +77,6 @@ public class SessionEntity {
     @Column(name = "revoked_reason", length = Integer.MAX_VALUE)
     private String revokedReason;
 
-    @Size(max = 50)
     @NotNull
     @Column(name = "session_type", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
@@ -98,7 +95,6 @@ public class SessionEntity {
     @OneToMany(mappedBy = "session")
     private Set<SessionEventEntity> sessionEvents = new LinkedHashSet<>();
 
-    @Size(max = 50)
     @Column(name = "profile_type", length = 50)
     @Enumerated(EnumType.STRING)
     private ProfileType profileType;

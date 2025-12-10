@@ -3,6 +3,7 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.policy;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,6 +22,10 @@ public class PinPolicyEntity extends BaseEntity {
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "policy_id", nullable = false)
     private PolicyEntity policy;
+
+    @Column(name = "channel", length = 50)
+    @Enumerated(EnumType.STRING)
+    private Channel channel;
 
     @ColumnDefault("4")
     @Column(name = "min_length")
