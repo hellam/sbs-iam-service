@@ -10,6 +10,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +37,7 @@ public class PostLoginService {
         loginFlowService.save(session);
     }
 
+    @Transactional
     public void handleQuestions(SecurityQuestionsRequest req) {
         SessionEntity session = loginFlowService.requireAtLeast(req.getFlowId(), LoginStage.PASSWORD_OK);
         IamUserEntity user = session.getIamUser();

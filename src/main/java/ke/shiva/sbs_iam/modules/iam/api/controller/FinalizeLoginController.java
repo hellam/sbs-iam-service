@@ -14,12 +14,14 @@ import ke.shiva.shivacorestarter.dto.ApiResponse;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequestMapping("/oauth")
 @RequiredArgsConstructor
@@ -39,6 +41,7 @@ public class FinalizeLoginController {
                 loginFlowService.getRequirements(session);
 
         if (reqs.hasPostLoginSteps()) {
+            log.error("Attempt to finalize login with pending post-login steps, flowId={}", req.getFlowId());
             throw BaseException.forbidden("Access denied");
         }
 
