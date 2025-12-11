@@ -40,6 +40,12 @@
             <column name="allow_push" type="BOOLEAN" defaultValueBoolean="false"/>
             <column name="allow_webauthn" type="BOOLEAN" defaultValueBoolean="false"/>
 
+            <column name="max_verify_attempts" type="SMALLINT" defaultValueNumeric="3"/>
+
+            <!-- NUMERIC, ALPHANUMERIC -->
+            <column name="otp_type" type="VARCHAR(15)" defaultValue="NUMERIC"/>
+            <column name="otp_length" type="SMALLINT" defaultValueNumeric="6"/>
+
             <!-- OTP settings -->
             <column name="otp_expiry_seconds" type="INTEGER" defaultValueNumeric="120"/>
             <column name="otp_daily_limit" type="SMALLINT" defaultValueNumeric="10"/>
