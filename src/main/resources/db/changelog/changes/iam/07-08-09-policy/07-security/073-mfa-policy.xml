@@ -27,18 +27,11 @@
                 <constraints nullable="false"/>
             </column>
 
-            <!-- Channel activation -->
-            <column name="require_mfa_ib" type="BOOLEAN" defaultValueBoolean="true"/>
-            <column name="require_mfa_mb" type="BOOLEAN" defaultValueBoolean="false"/>
-            <column name="require_mfa_backoffice" type="BOOLEAN" defaultValueBoolean="true"/>
+            <!-- Allowed Channels -->
+            <column name="allowed_channels" type="jsonb" defaultValueComputed="'[\&quot;SMS\&quot;]'::jsonb"/>
 
-            <!-- Allowed MFA types -->
-            <column name="allow_totp" type="BOOLEAN" defaultValueBoolean="true"/>
-            <column name="allow_sms_otp" type="BOOLEAN" defaultValueBoolean="true"/>
-            <column name="allow_email_otp" type="BOOLEAN" defaultValueBoolean="true"/>
-            <column name="allow_whatsapp_otp" type="BOOLEAN" defaultValueBoolean="true"/>
-            <column name="allow_push" type="BOOLEAN" defaultValueBoolean="false"/>
-            <column name="allow_webauthn" type="BOOLEAN" defaultValueBoolean="false"/>
+            <!-- Allow TOTP - true/false -->
+            <column name="allow_totp" type="BOOLEAN" defaultValueBoolean="false"/>
 
             <column name="max_verify_attempts" type="SMALLINT" defaultValueNumeric="3"/>
 
