@@ -31,8 +31,8 @@ public class SecurityConfig {
                                 "/oauth/mfa/**",
                                 "/oauth/finalize/**",
                                 "/oauth/password/**",
-                                "/v3/api-docs",
-                                "/swagger-ui.html"
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 );
