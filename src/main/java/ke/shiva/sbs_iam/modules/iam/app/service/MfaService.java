@@ -9,6 +9,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,9 +20,9 @@ import java.util.UUID;
 public class MfaService {
 
     private final LoginFlowService loginFlowService;
-//    private final TotpVerifier totpVerifier;
-//    private final OtpService otpService;
-//    private final SecurityEventService securityEventService;
+    private final OtpService otpService;
+    private final TotpVerifier totpVerifier;
+    private final SecurityEventService securityEventService;
 
     // Optional: if using OTP, trigger it here
     public MfaInitResponse initiate(MfaInitRequest req)  {
@@ -30,14 +31,15 @@ public class MfaService {
 
         LoginRequirements reqs = loginFlowService.getRequirements(session);
 
-        if (!reqs.isMfaRequired()) {
-            new MfaInitResponse(req.getFlowId());
+        if (reqs.isTotpRequired()) {
+            return new MfaInitResponse(req.getFlowId());
         }
 
-        // If TOTP is enabled, no need to send OTP
-//        if (!session.getIamUser().hasTotpSecret()) {
-//            otpService.sendOtp(session);
-//        }
+
+        // If OTP is required, send it
+        if (reqs.isOtpRequired()) {
+            otpService.sendOtp(session);
+        }
 
         return new MfaInitResponse(req.getFlowId());
     }
@@ -46,21 +48,22 @@ public class MfaService {
 
         SessionEntity session = loginFlowService.requireStage(req.getFlowId(), LoginStage.PASSWORD_OK);
         IamUserEntity user = session.getIamUser();
+        LoginRequirements reqs = loginFlowService.getRequirements(session);
 
         boolean ok;
 
-//        if (user.hasTotpSecret()) {
-//            ok = totpVerifier.verify(user, req.getCode());
-//        } else {
-//            ok = otpService.verify(req.getFlowId(), req.getCode());
-//        }
-//
-//        if (!ok) {
-//            securityEventService.onLoginFailure(user, "MFA_INVALID", session);
-//            throw new AuthException("Invalid MFA code");
-//        }
-//
-//        securityEventService.onLoginSuccess(user, "MFA_SUCCESS", session);
+        if (reqs.isTotpRequired()) {
+            ok = totpVerifier.verify(user, req.getCode());
+        } else {
+            ok = otpService.verify(req.getFlowId().toString(), req.getCode());
+        }
+
+        if (!ok) {
+            securityEventService.onLoginFailure(user, "MFA_INVALID", session);
+            throw BaseException.badRequest("Invalid code");
+        }
+
+        securityEventService.onLoginSuccess(user, "MFA_SUCCESS", session);
 
         loginFlowService.updateStage(session, LoginStage.MFA_OK);
 

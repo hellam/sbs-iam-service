@@ -1,4 +1,4 @@
-package ke.shiva.sbs_iam;
+package ke.shiva.sbs_iam.modules.iam.domain.entity.security;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -19,7 +19,7 @@ import java.time.OffsetDateTime;
                 column = @Column),
         @AttributeOverride(name = "updatedAt",
                 column = @Column)})
-public class OtpRecord extends BaseEntity {
+public class OtpRecordEntity extends BaseEntity {
     @Size(max = 50)
     @NotNull
     @Column(name = "channel", nullable = false, length = 50)

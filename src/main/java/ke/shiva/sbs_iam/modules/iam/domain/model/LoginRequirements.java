@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LoginRequirements {
 
-    private boolean mfaRequired;
+    private boolean otpRequired;
+    private boolean totpRequired;
     private boolean passwordExpired;
     private boolean firstLogin;
     private boolean questionsRequired;
