@@ -38,7 +38,7 @@
 
             <column name="verify_attempts" type="SMALLINT" defaultValueNumeric="0"/>
 
-            <!-- Status: PENDING, VERIFIED, EXPIRED, LOCKED -->
+            <!-- Status: PENDING, VERIFIED -->
             <column name="status" type="VARCHAR(20)" defaultValue="PENDING"/>
 
             <column name="created_at" type="TIMESTAMPTZ"

@@ -28,7 +28,7 @@
             </column>
 
             <!-- Allowed Channels -->
-            <column name="allowed_channels" type="jsonb" defaultValueComputed="'[\&quot;SMS\&quot;]'::jsonb"/>
+            <column name="allowed_channels" type="JSONB" defaultValueComputed="'[\&quot;SMS\&quot;]'::jsonb"/>
 
             <!-- Allow TOTP - true/false -->
             <column name="allow_totp" type="BOOLEAN" defaultValueBoolean="false"/>
@@ -42,10 +42,6 @@
             <!-- OTP settings -->
             <column name="otp_expiry_seconds" type="INTEGER" defaultValueNumeric="120"/>
             <column name="otp_daily_limit" type="SMALLINT" defaultValueNumeric="10"/>
-
-            <!-- Transaction-level MFA -->
-            <column name="require_mfa_high_value_txn" type="BOOLEAN" defaultValueBoolean="true"/>
-            <column name="high_value_threshold" type="DECIMAL(18,2)" defaultValueNumeric="5000"/>
 
             <!-- Suspicious login MFA -->
             <column name="enforce_on_new_device" type="BOOLEAN" defaultValueBoolean="true"/>
