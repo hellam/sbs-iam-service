@@ -2,6 +2,7 @@ package ke.shiva.sbs_iam.modules.iam.api.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import ke.shiva.shivacorestarter.validation.annotations.Password;
 import lombok.Data;
 
 import java.util.UUID;
@@ -15,6 +16,7 @@ public class PasswordChangeRequest {
     private String oldPassword; // optional depending on policy
 
     @NotBlank
+    @Password
     private String newPassword;
 
     @NotBlank

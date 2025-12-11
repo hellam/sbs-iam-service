@@ -42,7 +42,7 @@ public class MfaService {
         return new MfaInitResponse(req.getFlowId());
     }
 
-    public MfaVerifyResponse verify(MfaVerifyRequest req) throws AuthException {
+    public MfaVerifyResponse verify(MfaVerifyRequest req) {
 
         SessionEntity session = loginFlowService.requireStage(req.getFlowId(), LoginStage.PASSWORD_OK);
         IamUserEntity user = session.getIamUser();

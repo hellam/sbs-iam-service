@@ -24,12 +24,12 @@ public class MfaController {
     private final MfaService mfaService;
 
     @PostMapping("/mfa/init")
-    public ResponseEntity<ApiResponse<MfaInitResponse>> initiate(@Valid @RequestBody MfaInitRequest req) throws AuthException {
+    public ResponseEntity<ApiResponse<MfaInitResponse>> initiate(@Valid @RequestBody MfaInitRequest req) {
         return ResponseBuilder.success(mfaService.initiate(req));
     }
 
     @PostMapping("/mfa/verify")
-    public ResponseEntity<ApiResponse<MfaVerifyResponse>> verify(@Valid @RequestBody MfaVerifyRequest req) throws AuthException {
+    public ResponseEntity<ApiResponse<MfaVerifyResponse>> verify(@Valid @RequestBody MfaVerifyRequest req) {
         return ResponseBuilder.success(mfaService.verify(req));
     }
 }

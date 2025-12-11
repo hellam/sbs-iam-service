@@ -50,9 +50,9 @@ spring:
     default-schema: iam_service
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
-  web:
-    resources:
-      add-mappings: true # Enable static resource handling for Swagger UI
+#  web:
+#    resources:
+#      add-mappings: true # Enable static resource handling for Swagger UI
 
 encryption:
   key: ${APP_KEY}

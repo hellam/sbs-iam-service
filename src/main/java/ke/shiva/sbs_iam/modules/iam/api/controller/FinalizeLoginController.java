@@ -31,7 +31,7 @@ public class FinalizeLoginController {
     @PostMapping("/finalize")
     public ResponseEntity<ApiResponse<OidcTokenResponse>> finalize(
             @RequestBody @Valid FinalizeLoginRequest req
-    ) throws AuthException {
+    ) {
         SessionEntity session =
                 loginFlowService.requireStage(req.getFlowId(), LoginStage.MFA_OK);
 
