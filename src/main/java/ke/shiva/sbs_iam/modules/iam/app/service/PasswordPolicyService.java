@@ -23,11 +23,21 @@ public class PasswordPolicyService {
 
     private final PolicyRepository policyRepo;
     private final PasswordHistoryRepository historyRepo;
+    private final PasswordVerifier passwordVerifier;
 
     /**
      * Main entry point for validating a password change attempt.
      */
-    public void validatePasswordChange(SessionEntity session, String newPassword) {
+    public void validatePasswordChange(SessionEntity session, String oldPassword, String newPassword) {
+
+        //Validate old password
+        // 2. Verify password against correct credentials table
+        boolean ok = passwordVerifier.verify(session, oldPassword);
+
+        if (!ok) {
+//            securityEventService.onLoginFailure(user, "PASSWORD_INVALID", session);
+            throw BaseException.unauthorized("Invalid current password");
+        }
 
         PasswordPolicyEntity policy = resolvePolicy(session.getChannel());
 

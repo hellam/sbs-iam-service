@@ -28,7 +28,7 @@ public class PasswordPolicyValidator implements ConstraintValidator<ValidPasswor
             SessionEntity session = loginFlowService.requireAtLeast(request.getFlowId(), LoginStage.IDENTIFIER_OK);
 
             // 2. Delegate to the existing service
-            passwordPolicyService.validatePasswordChange(session, request.getNewPassword());
+            passwordPolicyService.validatePasswordChange(session, request.getOldPassword(), request.getNewPassword());
 
         } catch (Exception e) {
             // If validation fails, the service throws an exception. We catch it and build a constraint violation.

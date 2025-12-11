@@ -1,6 +1,7 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
 import jakarta.security.auth.message.AuthException;
+import ke.shiva.sbs_iam.modules.iam.api.request.PasswordChangeRequest;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.EmployeeAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.PasswordHistoryEntity;
@@ -25,11 +26,12 @@ public class PasswordManager {
     private final PasswordHistoryRepository historyRepo;
     private final PasswordPolicyService passwordPolicyService;
 
-    public void changePassword(SessionEntity session, String newPassword) {
+    public void changePassword(SessionEntity session, PasswordChangeRequest request) {
 
         IamUserEntity user = session.getIamUser();
+        String newPassword = request.getNewPassword();
         // 1. Validate against policy
-        passwordPolicyService.validatePasswordChange(session, newPassword);
+        passwordPolicyService.validatePasswordChange(session, request.getOldPassword(), newPassword);
 
         // 2. Hash new password
         String hash = HashUtil.bcrypt(newPassword);

@@ -26,7 +26,7 @@ public class PostLoginService {
         }
         SessionEntity session = loginFlowService.requireAtLeast(req.getFlowId(), LoginStage.PASSWORD_OK);
 
-        passwordManager.changePassword(session, req.getNewPassword());
+        passwordManager.changePassword(session, req);
 
         // Update requirement flag
         LoginRequirements reqs = loginFlowService.getRequirements(session);
