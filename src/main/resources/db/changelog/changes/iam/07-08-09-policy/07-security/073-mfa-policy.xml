@@ -28,7 +28,7 @@
             </column>
 
             <!-- Allowed Channels -->
-            <column name="allowed_channels" type="JSONB" defaultValueComputed="'[\&quot;SMS\&quot;]'::jsonb"/>
+            <column name="allowed_channels" type="JSONB" defaultValueComputed="'[&quot;SMS&quot;]'::jsonb"/>
 
             <!-- Allow TOTP - true/false -->
             <column name="allow_totp" type="BOOLEAN" defaultValueBoolean="false"/>

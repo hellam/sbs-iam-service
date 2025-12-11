@@ -45,6 +45,8 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/iam/05-auth/053-iam-user-security-question.xml
   - include:
+      file: db/changelog/changes/iam/05-auth/054-otp-record.xml
+  - include:
       file: db/changelog/changes/iam/05-rbac/employee/050-employee-permission.xml
   - include:
       file: db/changelog/changes/iam/05-rbac/employee/051-employee-role.xml

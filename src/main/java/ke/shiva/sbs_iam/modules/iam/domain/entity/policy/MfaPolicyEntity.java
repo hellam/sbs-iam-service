@@ -2,13 +2,16 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.policy;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.OtpType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 @Setter
 @Getter
@@ -29,41 +32,27 @@ public class MfaPolicyEntity extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Channel channel;
 
-    @ColumnDefault("true")
-    @Column(name = "require_mfa_ib")
-    private Boolean requireMfaIb;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "allowed_channels", columnDefinition = "jsonb")
+    @ColumnDefault("'[\"SMS\"]'")
+    private List<String> allowedNotificationChannels;
 
     @ColumnDefault("false")
-    @Column(name = "require_mfa_mb")
-    private Boolean requireMfaMb;
-
-    @ColumnDefault("true")
-    @Column(name = "require_mfa_backoffice")
-    private Boolean requireMfaBackoffice;
-
-    @ColumnDefault("true")
     @Column(name = "allow_totp")
     private Boolean allowTotp;
 
-    @ColumnDefault("true")
-    @Column(name = "allow_sms_otp")
-    private Boolean allowSmsOtp;
+    @ColumnDefault("3")
+    @Column(name = "max_verify_attempts")
+    private Short maxVerifyAttempts;
 
-    @ColumnDefault("true")
-    @Column(name = "allow_email_otp")
-    private Boolean allowEmailOtp;
+    @ColumnDefault("'NUMERIC'")
+    @Column(name = "otp_type", length = 15)
+    @Enumerated(EnumType.STRING)
+    private OtpType otpType;
 
-    @ColumnDefault("true")
-    @Column(name = "allow_whatsapp_otp")
-    private Boolean allowWhatsappOtp;
-
-    @ColumnDefault("false")
-    @Column(name = "allow_push")
-    private Boolean allowPush;
-
-    @ColumnDefault("false")
-    @Column(name = "allow_webauthn")
-    private Boolean allowWebauthn;
+    @ColumnDefault("6")
+    @Column(name = "otp_length")
+    private Short otpLength;
 
     @ColumnDefault("120")
     @Column(name = "otp_expiry_seconds")
@@ -72,14 +61,6 @@ public class MfaPolicyEntity extends BaseEntity {
     @ColumnDefault("10")
     @Column(name = "otp_daily_limit")
     private Short otpDailyLimit;
-
-    @ColumnDefault("true")
-    @Column(name = "require_mfa_high_value_txn")
-    private Boolean requireMfaHighValueTxn;
-
-    @ColumnDefault("5000")
-    @Column(name = "high_value_threshold", precision = 18, scale = 2)
-    private BigDecimal highValueThreshold;
 
     @ColumnDefault("true")
     @Column(name = "enforce_on_new_device")
