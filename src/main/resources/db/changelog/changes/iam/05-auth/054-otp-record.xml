@@ -41,6 +41,8 @@
             <!-- Status: PENDING, VERIFIED -->
             <column name="status" type="VARCHAR(20)" defaultValue="PENDING"/>
 
+            <column name="to" type="VARCHAR(255)"/>
+
             <column name="created_at" type="TIMESTAMPTZ"
                     defaultValueDate="CURRENT_TIMESTAMP"/>
             <column name="updated_at" type="TIMESTAMPTZ"

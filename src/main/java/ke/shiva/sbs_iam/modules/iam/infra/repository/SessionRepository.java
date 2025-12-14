@@ -8,5 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface SessionRepository extends JpaRepository<SessionEntity, UUID> {
-    SessionEntity findBySessionId(String flowId);
+    SessionEntity findBySessionId(String sessionId);
 }

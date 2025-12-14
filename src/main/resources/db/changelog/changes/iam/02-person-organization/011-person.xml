@@ -51,8 +51,6 @@
 
             <!-- ISO3 country code -->
             <column name="country_code" type="VARCHAR(3)"/>
-            <column name="phone" type="VARCHAR(20)"/>
-            <column name="email" type="VARCHAR(255)"/>
             <column name="address" type="VARCHAR(255)"/>
             <column name="city" type="VARCHAR(100)"/>
 

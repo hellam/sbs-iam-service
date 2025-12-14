@@ -3,6 +3,7 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.identity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.security.OtpRecordEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.SecurityEventEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.SessionEventEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
@@ -94,6 +95,9 @@ public class SessionEntity {
 
     @OneToMany(mappedBy = "session")
     private Set<SessionEventEntity> sessionEvents = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "sessionId")
+    private Set<OtpRecordEntity> otpRecordEntities = new LinkedHashSet<>();
 
     @Column(name = "profile_type", length = 50)
     @Enumerated(EnumType.STRING)

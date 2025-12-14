@@ -3,6 +3,9 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.security;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.NotificationChannel;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,15 +23,16 @@ import java.time.OffsetDateTime;
         @AttributeOverride(name = "updatedAt",
                 column = @Column)})
 public class OtpRecordEntity extends BaseEntity {
-    @Size(max = 50)
+
     @NotNull
     @Column(name = "channel", nullable = false, length = 50)
-    private String channel;
+    @Enumerated(EnumType.STRING)
+    private Channel channel;
 
-    @Size(max = 50)
     @NotNull
     @Column(name = "notification_channel", nullable = false, length = 50)
-    private String notificationChannel;
+    @Enumerated(EnumType.STRING)
+    private NotificationChannel notificationChannel;
 
     @Size(max = 100)
     @NotNull
@@ -53,5 +57,7 @@ public class OtpRecordEntity extends BaseEntity {
     @Column(name = "status", length = 20)
     private String status;
 
-
+    @Size(max = 255)
+    @Column(name = "to", length = 255)
+    private String to;
 }

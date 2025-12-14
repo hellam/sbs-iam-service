@@ -56,14 +56,6 @@ public class PersonEntity {
     @JoinColumn(name = "country_code", referencedColumnName = "country_code")
     private CountryEntity countryCode;
 
-    @Size(max = 20)
-    @Column(name = "phone", length = 20)
-    private String phone;
-
-    @Size(max = 255)
-    @Column(name = "email")
-    private String email;
-
     @Size(max = 255)
     @Column(name = "address")
     private String address;

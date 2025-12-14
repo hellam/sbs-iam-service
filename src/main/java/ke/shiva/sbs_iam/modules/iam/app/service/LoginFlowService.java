@@ -135,7 +135,8 @@ public class LoginFlowService {
             Map<String, Object> map = (Map<String, Object>) obj;
             LoginRequirements reqs = new LoginRequirements();
             reqs.setFirstLogin(Boolean.TRUE.equals(map.get("firstLogin")));
-            reqs.setMfaRequired(Boolean.TRUE.equals(map.get("mfaRequired")));
+            reqs.setTotpRequired(Boolean.TRUE.equals(map.get("totpRequired")));
+            reqs.setOtpRequired(Boolean.TRUE.equals(map.get("otpRequired")));
             reqs.setPasswordExpired(Boolean.TRUE.equals(map.get("passwordExpired")));
             reqs.setQuestionsRequired(Boolean.TRUE.equals(map.get("questionsRequired")));
             reqs.setProfileSelectionRequired(Boolean.TRUE.equals(map.get("profileSelectionRequired")));
