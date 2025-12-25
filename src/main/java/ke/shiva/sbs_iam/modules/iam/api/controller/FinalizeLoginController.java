@@ -1,9 +1,10 @@
 package ke.shiva.sbs_iam.modules.iam.api.controller;
 
-import jakarta.security.auth.message.AuthException;
-import jakarta.validation.Valid;
-import ke.shiva.sbs_iam.modules.iam.api.request.FinalizeLoginRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import ke.shiva.sbs_iam.modules.iam.api.response.OidcTokenResponse;
+import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
+import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
 import ke.shiva.sbs_iam.modules.iam.app.service.LoginFlowService;
 import ke.shiva.sbs_iam.modules.iam.app.service.OidcTokenService;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
@@ -15,33 +16,38 @@ import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 @Slf4j
 @RestController
 @RequestMapping("/oauth")
 @RequiredArgsConstructor
+@Tag(name = "Authentication Flow")
 public class FinalizeLoginController {
 
     private final LoginFlowService loginFlowService;
     private final OidcTokenService oidcTokenService;
 
     @PostMapping("/finalize")
+    @RequiresStage(LoginStage.MFA_OK)
+    @Operation(summary = "9. Finalize Login")
     public ResponseEntity<ApiResponse<OidcTokenResponse>> finalize(
-            @RequestBody @Valid FinalizeLoginRequest req
+            @FlowId UUID flowId
     ) {
         SessionEntity session =
-                loginFlowService.requireStage(req.getFlowId(), LoginStage.MFA_OK);
+                loginFlowService.requireStage(flowId, LoginStage.MFA_OK);
 
         LoginRequirements reqs =
                 loginFlowService.getRequirements(session);
 
         if (reqs.hasPostLoginSteps()) {
-            log.error("Attempt to finalize login with pending post-login steps, flowId={}", req.getFlowId());
+            log.error("Attempt to finalize login with pending post-login steps, flowId={}", flowId);
             throw BaseException.forbidden("Access denied");
         }
 
@@ -51,8 +57,8 @@ public class FinalizeLoginController {
         session.setSessionType(SessionType.LOGIN_ACTIVE);
 
         loginFlowService.updateStage(session, LoginStage.ACTIVE);
+        loginFlowService.extend(session);
 
         return ResponseBuilder.success(oidcTokenService.issueTokens(session));
     }
 }
-

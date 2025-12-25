@@ -35,12 +35,12 @@ public class PasswordManager {
 
         // 2. Hash new password
         String hash = HashUtil.bcrypt(newPassword);
-//        PasswordPolicyEntity passwordPolicy = passwordPolicyService.resolvePolicy(user);
+        PasswordPolicyEntity passwordPolicy = passwordPolicyService.resolvePolicy(session.getChannel());
 
         OffsetDateTime expiry = null;
-//        if (passwordPolicy.getExpirationEnabled() && passwordPolicy.getExpirationDays() > 0) {
-//            expiry = OffsetDateTime.now().plusDays(passwordPolicy.getExpirationDays());
-//        }
+        if (passwordPolicy.getExpirationEnabled() && passwordPolicy.getExpirationDays() > 0) {
+            expiry = OffsetDateTime.now().plusDays(passwordPolicy.getExpirationDays());
+        }
 
         // 3. Update correct credentials table
         switch (session.getChannel()) {
@@ -50,6 +50,7 @@ public class PasswordManager {
                         .orElseThrow(() -> BaseException.channelNotAllowed("CustomerAuth missing"));
                 auth.setInternetPasswordHash(hash);
                 auth.setInternetPasswordExpiry(expiry);
+                auth.setInternetFirstTimeLogin(false);
                 customerAuthRepo.save(auth);
             }
 
@@ -58,6 +59,7 @@ public class PasswordManager {
                         .orElseThrow(() -> BaseException.channelNotAllowed("EmployeeAuth missing"));
                 auth.setStaffPasswordHash(hash);
                 auth.setStaffPasswordExpiry(expiry);
+                auth.setFirstTimeLogin(false);
                 employeeAuthRepo.save(auth);
             }
 

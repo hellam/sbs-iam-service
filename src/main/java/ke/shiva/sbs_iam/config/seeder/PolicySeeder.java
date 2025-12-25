@@ -2,6 +2,7 @@ package ke.shiva.sbs_iam.config.seeder;
 
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.*;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.system.FeatureEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.OtpType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.policy.PolicyScope;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.policy.PolicyType;
@@ -150,7 +151,16 @@ public class PolicySeeder implements CommandLineRunner {
             MfaPolicyEntity mfaPolicy = new MfaPolicyEntity();
             mfaPolicy.setPolicy(policy);
             mfaPolicy.setChannel(channel);
-            // Use default values
+            // Set specific MFA policy values
+            mfaPolicy.setAllowedNotificationChannels(List.of("SMS"));
+            mfaPolicy.setAllowTotp(false);
+            mfaPolicy.setMaxVerifyAttempts((short) 3);
+            mfaPolicy.setOtpType(OtpType.NUMERIC);
+            mfaPolicy.setOtpLength((short) 6);
+            mfaPolicy.setOtpExpirySeconds(120);
+            mfaPolicy.setOtpDailyLimit((short) 10);
+            mfaPolicy.setEnforceOnNewDevice(true);
+            mfaPolicy.setEnforceOnNewLocation(true);
             mfaPolicyRepository.save(mfaPolicy);
         } else {
             log.info("MfaPolicyEntity for channel {} already exists", channel);

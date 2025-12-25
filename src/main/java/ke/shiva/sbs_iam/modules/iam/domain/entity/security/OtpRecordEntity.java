@@ -3,7 +3,6 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.security;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.NotificationChannel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
@@ -58,6 +57,6 @@ public class OtpRecordEntity extends BaseEntity {
     private String status;
 
     @Size(max = 255)
-    @Column(name = "to", length = 255)
+    @Column(name = "\"to\"", length = 255)
     private String to;
 }

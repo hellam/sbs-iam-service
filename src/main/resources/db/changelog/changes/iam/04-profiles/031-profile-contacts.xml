@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="pg-iam-031-profile-contacts" author="hellamimbosa">
+
+        <comment>
+            Links a specific user contact to a user profile (e.g., CUSTOMER, EMPLOYEE).
+            This allows a user to use different contacts for different contexts.
+        </comment>
+
+        <createTable tableName="profile_contact">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_profile_contact"/>
+            </column>
+
+            <!-- The user who owns the profile and contact -->
+            <column name="iam_user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- The specific contact to be used for the profile -->
+            <column name="user_contact_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- The type of profile (e.g., CUSTOMER, EMPLOYEE) -->
+            <column name="profile_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- The type of contact (e.g., EMAIL, PHONE) for easy querying -->
+            <column name="contact_type" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <!-- Foreign Keys -->
+        <addForeignKeyConstraint
+                baseTableName="profile_contact" baseColumnNames="iam_user_id"
+                referencedTableName="iam_user" referencedColumnNames="id"
+                constraintName="fk_profile_contact_iam_user"/>
+
+        <addForeignKeyConstraint
+                baseTableName="profile_contact" baseColumnNames="user_contact_id"
+                referencedTableName="iam_user_contact" referencedColumnNames="id"
+                constraintName="fk_profile_contact_user_contact"/>
+
+        <!-- Unique constraint to ensure one contact type per profile -->
+        <addUniqueConstraint
+                tableName="profile_contact"
+                columnNames="iam_user_id, profile_type, contact_type"
+                constraintName="uq_profile_contact_user_profile_contact_type"/>
+
+    </changeSet>
+
+</databaseChangeLog>

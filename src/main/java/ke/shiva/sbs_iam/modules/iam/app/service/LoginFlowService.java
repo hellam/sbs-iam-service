@@ -1,7 +1,6 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
-import jakarta.security.auth.message.AuthException;
-import ke.shiva.sbs_iam.modules.iam.api.request.ProfileSummary;
+import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSummary;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.SessionEventEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
@@ -150,4 +149,9 @@ public class LoginFlowService {
         sessionRepository.save(s);
     }
 
+    public void extend(SessionEntity s) {
+        s.setExpiresAt(OffsetDateTime.now().plus(Duration.ofMinutes(15)));
+        sessionRepo.save(s);
+        logEvent(s, "SESSION_EXTENDED");
+    }
 }

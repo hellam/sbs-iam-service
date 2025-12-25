@@ -1,14 +1,20 @@
 package ke.shiva.sbs_iam.config.seeder;
 
+import ke.shiva.sbs_iam.modules.iam.infra.repository.ProfileContactRepository;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.EmployeeAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.LoginIdentifierEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.UserContact;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.EmployeeProfileEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PartyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PersonEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.ProfileContact;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.ContactType;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginProfiles;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.employee.EmploymentStatus;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.UserContactRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.BranchEntity;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.CountryEntity;
@@ -40,6 +46,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class EmployeeSeeder implements CommandLineRunner {
 
+    private final ProfileContactRepository profileContactRepository;
     @Value("${seeder.employee.enabled:false}")
     private boolean seederEnabled;
 
@@ -48,6 +55,7 @@ public class EmployeeSeeder implements CommandLineRunner {
     private final PartyRepository partyRepository;
     private final PersonRepository personRepository;
     private final IamUserRepository iamUserRepository;
+    private final UserContactRepository userContactRepository;
     private final LoginIdentifierRepository loginIdentifierRepository;
     private final EmployeeProfileRepository employeeProfileRepository;
     private final EmployeeAuthRepository employeeAuthRepository;
@@ -115,8 +123,6 @@ public class EmployeeSeeder implements CommandLineRunner {
             person.setNationalId("12345678");
             person.setGender("MALE");
             person.setCountryCode(country);
-            person.setPhone("+254712345678");
-            person.setEmail("admin@shiva-banking.ke");
             person.setAddress("Nairobi");
             person.setCity("Nairobi");
             person.setCreatedAt(OffsetDateTime.now());
@@ -133,6 +139,56 @@ public class EmployeeSeeder implements CommandLineRunner {
             iamUser.setCreatedAt(OffsetDateTime.now());
             iamUser.setUpdatedAt(OffsetDateTime.now());
             iamUser = iamUserRepository.save(iamUser);
+
+            //Create IAM User Contacts
+            log.info("Creating IAM user contacts");
+            UserContact userContact = new UserContact();
+            userContact.setIamUser(iamUser);
+            userContact.setContactType(ContactType.PHONE);
+            userContact.setContactValue("+254700000000");
+            userContact.setPrimary(true);
+            userContact.setCreatedAt(OffsetDateTime.now());
+            userContact.setUpdatedAt(OffsetDateTime.now());
+            userContact = userContactRepository.save(userContact);
+
+            userContact = new UserContact();
+            userContact.setIamUser(iamUser);
+            userContact.setContactType(ContactType.EMAIL);
+            userContact.setContactValue("admin@sbanking.com");
+            userContact.setPrimary(true);
+            userContact.setCreatedAt(OffsetDateTime.now());
+            userContact.setUpdatedAt(OffsetDateTime.now());
+            userContactRepository.save(userContact);
+
+            //Link contacts to profile
+            log.info("Linking contacts to employee profile");
+            UserContact userConsent1 = userContactRepository.findByIamUserAndContactTypeAndPrimaryIsTrue(iamUser, ContactType.PHONE).orElse(
+                    null
+            );
+            if (userConsent1 == null) {
+                throw new RuntimeException("Primary phone contact not found for IAM user");
+            }
+            // Phone Contact
+            ProfileContact phoneProfileContact = new ProfileContact();
+            phoneProfileContact.setIamUser(iamUser);
+            phoneProfileContact.setUserContact(userConsent1);
+            phoneProfileContact.setProfileType(LoginProfiles.EMPLOYEE);
+            phoneProfileContact.setContactType(ContactType.PHONE);
+            profileContactRepository.save(phoneProfileContact);
+
+            UserContact userConsent2 = userContactRepository.findByIamUserAndContactTypeAndPrimaryIsTrue(iamUser, ContactType.EMAIL).orElse(
+                    null
+            );
+            if (userConsent2 == null) {
+                throw new RuntimeException("Primary email contact not found for IAM user");
+            }
+            // Email Contact
+            ProfileContact emailProfileContact = new ProfileContact();
+            emailProfileContact.setIamUser(iamUser);
+            emailProfileContact.setUserContact(userConsent2);
+            emailProfileContact.setProfileType(LoginProfiles.EMPLOYEE);
+            emailProfileContact.setContactType(ContactType.EMAIL);
+            profileContactRepository.save(emailProfileContact);
 
             // Create Login Identifier (username)
             log.info("Creating login identifier: admin");

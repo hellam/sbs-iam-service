@@ -8,6 +8,7 @@ import ke.shiva.sbs_iam.modules.iam.api.response.MfaVerifyResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.NotificationChannel;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
@@ -25,28 +26,28 @@ public class MfaService {
     private final SecurityEventService securityEventService;
 
     // Optional: if using OTP, trigger it here
-    public MfaInitResponse initiate(MfaInitRequest req)  {
+    public MfaInitResponse initiate(MfaInitRequest req, UUID flowId)  {
 
-        SessionEntity session = loginFlowService.requireStage(req.getFlowId(), LoginStage.PASSWORD_OK);
+        SessionEntity session = loginFlowService.requireStage(flowId, LoginStage.PASSWORD_OK);
 
         LoginRequirements reqs = loginFlowService.getRequirements(session);
 
         if (reqs.isTotpRequired()) {
-            return new MfaInitResponse(req.getFlowId());
+            return new MfaInitResponse(flowId);
         }
 
 
         // If OTP is required, send it
         if (reqs.isOtpRequired()) {
-            otpService.sendOtp(session);
+            otpService.sendOtp(session, req.getChannel());
         }
 
-        return new MfaInitResponse(req.getFlowId());
+        return new MfaInitResponse(flowId);
     }
 
-    public MfaVerifyResponse verify(MfaVerifyRequest req) {
+    public MfaVerifyResponse verify(MfaVerifyRequest req, UUID flowId) {
 
-        SessionEntity session = loginFlowService.requireStage(req.getFlowId(), LoginStage.PASSWORD_OK);
+        SessionEntity session = loginFlowService.requireStage(flowId, LoginStage.PASSWORD_OK);
         IamUserEntity user = session.getIamUser();
         LoginRequirements reqs = loginFlowService.getRequirements(session);
 
@@ -55,7 +56,7 @@ public class MfaService {
         if (reqs.isTotpRequired()) {
             ok = totpVerifier.verify(user, req.getCode());
         } else {
-            ok = otpService.verify(req.getFlowId().toString(), req.getCode());
+            ok = otpService.verify(flowId.toString(), req.getCode());
         }
 
         if (!ok) {
@@ -66,6 +67,7 @@ public class MfaService {
         securityEventService.onLoginSuccess(user, "MFA_SUCCESS", session);
 
         loginFlowService.updateStage(session, LoginStage.MFA_OK);
+        loginFlowService.extend(session);
 
         MfaVerifyResponse resp = new MfaVerifyResponse();
         resp.setFlowId(UUID.fromString(session.getSessionId()));

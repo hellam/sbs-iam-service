@@ -5,10 +5,13 @@ import jakarta.validation.ConstraintValidatorContext;
 import ke.shiva.sbs_iam.modules.iam.api.request.PasswordChangeRequest;
 import ke.shiva.sbs_iam.modules.iam.app.service.LoginFlowService;
 import ke.shiva.sbs_iam.modules.iam.app.service.PasswordPolicyService;
+import ke.shiva.sbs_iam.modules.iam.app.util.FlowIdProvider;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -16,16 +19,18 @@ public class PasswordPolicyValidator implements ConstraintValidator<ValidPasswor
 
     private final PasswordPolicyService passwordPolicyService;
     private final LoginFlowService loginFlowService;
+    private final FlowIdProvider flowIdProvider;
 
     @Override
     public boolean isValid(PasswordChangeRequest request, ConstraintValidatorContext context) {
-        if (request == null || request.getFlowId() == null || request.getNewPassword() == null) {
+        if (request == null || request.getNewPassword() == null) {
             return true; // Let other validators handle null checks
         }
 
         try {
+            UUID flowId = flowIdProvider.getFlowId();
             // 1. Load the session to get the context (especially the channel)
-            SessionEntity session = loginFlowService.requireAtLeast(request.getFlowId(), LoginStage.IDENTIFIER_OK);
+            SessionEntity session = loginFlowService.requireAtLeast(flowId, LoginStage.IDENTIFIER_OK);
 
             // 2. Delegate to the existing service
             passwordPolicyService.validatePasswordChange(session, request.getOldPassword(), request.getNewPassword());

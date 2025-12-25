@@ -7,7 +7,8 @@ import java.util.UUID;
 @Data
 public class PasswordStepResponse {
     private UUID flowId;
-    private boolean mfaRequired;
+    private boolean otpRequired;
+    private boolean totpRequired;
     private boolean passwordChangeRequired;
     private boolean securityQuestionsRequired;
     private boolean profileSelectionRequired;

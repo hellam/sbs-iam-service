@@ -48,7 +48,8 @@ public class IdentifierService {
         IdentifierResponse resp = new IdentifierResponse();
         resp.setFlowId(UUID.fromString(session.getSessionId()));
         resp.setPasswordRequired(true);
-        resp.setMfaRequired(requirements.isMfaRequired());
+        resp.setOtpRequired(requirements.isOtpRequired());
+        resp.setTotpRequired(requirements.isTotpRequired());
         resp.setPasswordExpired(requirements.isPasswordExpired());
         resp.setFirstLogin(requirements.isFirstLogin());
         resp.setSecurityQuestionsRequired(requirements.isQuestionsRequired());

@@ -50,6 +50,11 @@
 
             <column name="staff_last_login_at" type="TIMESTAMPTZ"/>
 
+
+            <!-- Set first time true by default -->
+            <column name="first_time_login" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
             <!-- ========================= -->
             <!-- MFA                       -->
             <!-- ========================= -->

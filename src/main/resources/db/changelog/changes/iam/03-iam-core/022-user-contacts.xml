@@ -6,7 +6,7 @@
             http://www.liquibase.org/xml/ns/dbchangelog
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
-    <changeSet id="pg-iam-012-user-contacts" author="hellamimbosa">
+    <changeSet id="pg-iam-022-user-contacts" author="hellamimbosa">
 
         <comment>
             Creates a table to hold user contacts (email, phone) that can be linked to different profiles.

@@ -11,11 +11,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.EmployeeAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.PasswordHistoryEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.FeaturePolicyEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PolicyEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.CustomerProfileEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.EmployeeProfileEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PartyEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.*;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.*;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
 import lombok.Getter;
@@ -100,6 +96,9 @@ public class IamUserEntity {
     @OneToMany(mappedBy = "iamUser")
     private Set<LoginIdentifierEntity> loginIdentifiers = new LinkedHashSet<>();
 
+    @OneToMany(mappedBy = "iamUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserContact> contacts = new LinkedHashSet<>();
+
     @OneToMany(mappedBy = "iamUser")
     private Set<OrganizationUserEntity> organizationUsers = new LinkedHashSet<>();
 
@@ -124,4 +123,8 @@ public class IamUserEntity {
     @OneToMany(mappedBy = "iamUser")
     private Set<UserConsentEntity> userConsents = new LinkedHashSet<>();
 
+    @OneToMany(mappedBy = "iamUser")
+    private Set<ProfileContact> profileContacts = new LinkedHashSet<>();
+
 }
+

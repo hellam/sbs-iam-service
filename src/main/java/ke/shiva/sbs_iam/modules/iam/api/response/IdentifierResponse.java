@@ -9,7 +9,8 @@ public class IdentifierResponse {
     private UUID flowId;
 
     private boolean passwordRequired;
-    private boolean mfaRequired;
+    private boolean otpRequired;
+    private boolean totpRequired;
     private boolean passwordExpired;
     private boolean firstLogin;
     private boolean securityQuestionsRequired;

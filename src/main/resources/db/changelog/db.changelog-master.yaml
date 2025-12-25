@@ -33,6 +33,8 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/iam/03-iam-core/022-user-contacts.xml
   - include:
+      file: db/changelog/changes/iam/04-profiles/031-profile-contacts.xml
+  - include:
       file: db/changelog/changes/iam/04-profiles/030-customer-profile.xml
   - include:
       file: db/changelog/changes/iam/04-profiles/031-organization-user.xml

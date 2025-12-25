@@ -8,20 +8,15 @@
 
     <!-- ============================================================= -->
     <!-- CUSTOMER PROFILE                                              -->
-    <!-- Retail personal customers ONLY                                -->
-    <!-- (Corporate users DO NOT require this profile)                 -->
+    <!-- Retail personal customers and Corporate Users                 -->
     <!-- ============================================================= -->
 
     <changeSet id="pg-iam-030-customer-profile" author="hellamimbosa">
 
         <comment>
-            CUSTOMER_PROFILE represents a retail customer's profile.
-            This is ONLY for personal / retail customers who own accounts
-            in their own name.
-
-            Corporate users (directors, signatories, accountants) DO NOT
-            need a customer_profile unless they ALSO have a separate
-            retail banking relationship.
+            CUSTOMER_PROFILE represents retail customers and corporate users
+            Retail customers have a core banking customer ID (CIF) linked here.
+            Corporate users do NOT have core banking customer IDs; they use organization_user instead.
 
             Authentication details (IB password, mobile PIN, MFA) are
             stored in customer_auth, not here.

@@ -36,7 +36,7 @@ public class SecurityQuestionManager {
             entity.setIamUser(user);
             entity.setSecurityQuestion(securityQuestionEntity);
             entity.setAnswerHash(HashUtil.bcrypt(qa.getAnswer()));
-            entity.setCreatedAt(OffsetDateTime.now().toLocalDateTime());
+            entity.setCreatedAt(OffsetDateTime.now());
 
             userQuestionRepo.save(entity);
         }

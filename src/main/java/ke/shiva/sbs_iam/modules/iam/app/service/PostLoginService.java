@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class PostLoginService {
@@ -20,11 +22,11 @@ public class PostLoginService {
     private final PasswordManager passwordManager;
     private final SecurityQuestionManager questionManager;
 
-    public void changePassword(PasswordChangeRequest req) {
+    public void changePassword(PasswordChangeRequest req, UUID flowId) {
         if (!req.getNewPassword().equals(req.getNewPasswordConfirmation())) {
             throw BaseException.badRequest("Password confirmation does not match");
         }
-        SessionEntity session = loginFlowService.requireAtLeast(req.getFlowId(), LoginStage.PASSWORD_OK);
+        SessionEntity session = loginFlowService.requireAtLeast(flowId, LoginStage.MFA_OK);
 
         passwordManager.changePassword(session, req);
 
@@ -35,11 +37,12 @@ public class PostLoginService {
 
         session.getMetadata().put("requirements", reqs);
         loginFlowService.save(session);
+        loginFlowService.extend(session);
     }
 
     @Transactional
-    public void handleQuestions(SecurityQuestionsRequest req) {
-        SessionEntity session = loginFlowService.requireAtLeast(req.getFlowId(), LoginStage.PASSWORD_OK);
+    public void handleQuestions(SecurityQuestionsRequest req, UUID flowId) {
+        SessionEntity session = loginFlowService.requireAtLeast(flowId, LoginStage.MFA_OK);
         IamUserEntity user = session.getIamUser();
 
         questionManager.save(user, req.getQuestions());
@@ -49,7 +52,6 @@ public class PostLoginService {
 
         session.getMetadata().put("requirements", reqs);
         loginFlowService.save(session);
+        loginFlowService.extend(session);
     }
 }
-
-

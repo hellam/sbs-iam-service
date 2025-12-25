@@ -13,9 +13,6 @@ import java.util.UUID;
 @ValidPasswordPolicy(message = "Password does not meet the policy requirements.")
 public class PasswordChangeRequest {
 
-    @NotNull
-    private UUID flowId;
-
     private String oldPassword; // optional depending on policy
 
     @NotBlank

@@ -1,8 +1,7 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
-import jakarta.security.auth.message.AuthException;
 import ke.shiva.sbs_iam.modules.iam.api.request.ProfileSelectRequest;
-import ke.shiva.sbs_iam.modules.iam.api.request.ProfileSummary;
+import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSummary;
 import ke.shiva.sbs_iam.modules.iam.api.response.OidcTokenResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSelectionResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
@@ -46,10 +45,10 @@ public class ProfileService {
         return resp;
     }
 
-    public OidcTokenResponse selectProfile(ProfileSelectRequest req) {
+    public OidcTokenResponse selectProfile(ProfileSelectRequest req, UUID flowId) {
 
         SessionEntity session =
-                loginFlowService.requireStage(req.getFlowId(), LoginStage.MFA_OK);
+                loginFlowService.requireStage(flowId, LoginStage.MFA_OK);
 
         loginFlowService.selectProfile(session, req.getProfileType(), req.getProfileId());
         loginFlowService.updateStage(session, LoginStage.ACTIVE);

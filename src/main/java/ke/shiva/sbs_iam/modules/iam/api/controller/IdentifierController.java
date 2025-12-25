@@ -1,6 +1,7 @@
 package ke.shiva.sbs_iam.modules.iam.api.controller;
 
-import jakarta.security.auth.message.AuthException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.modules.iam.api.request.IdentifierRequest;
@@ -20,12 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/oauth/identifier")
 @RequiredArgsConstructor
+@Tag(name = "Authentication Flow")
 public class IdentifierController {
 
     private final IdentifierService identifierService;
     private final DomainGuard domainGuard;
 
     @PostMapping("/backoffice")
+    @Operation(summary = "1. Identify User (Backoffice)")
     public ResponseEntity<ApiResponse<IdentifierResponse>> identifyBackoffice(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
@@ -36,6 +39,7 @@ public class IdentifierController {
     }
 
     @PostMapping("/mobile")
+    @Operation(summary = "1. Identify User (Mobile)")
     public ResponseEntity<IdentifierResponse> identifyMobile(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
@@ -46,6 +50,7 @@ public class IdentifierController {
     }
 
     @PostMapping("/internet-banking")
+    @Operation(summary = "1. Identify User (Internet Banking)")
     public ResponseEntity<IdentifierResponse> identifyIB(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http

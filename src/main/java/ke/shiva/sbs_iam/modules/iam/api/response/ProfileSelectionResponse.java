@@ -1,6 +1,5 @@
 package ke.shiva.sbs_iam.modules.iam.api.response;
 
-import ke.shiva.sbs_iam.modules.iam.api.request.ProfileSummary;
 import lombok.Data;
 
 import java.util.List;
