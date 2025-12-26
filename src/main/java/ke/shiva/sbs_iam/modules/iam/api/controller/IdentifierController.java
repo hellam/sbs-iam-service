@@ -27,8 +27,8 @@ public class IdentifierController {
     private final IdentifierService identifierService;
     private final DomainGuard domainGuard;
 
-    @PostMapping("/backoffice")
     @Operation(summary = "1. Identify User (Backoffice)")
+    @PostMapping("/backoffice")
     public ResponseEntity<ApiResponse<IdentifierResponse>> identifyBackoffice(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
@@ -38,8 +38,8 @@ public class IdentifierController {
         return ResponseBuilder.success("User identified successfully", identifierService.handle(req));
     }
 
-    @PostMapping("/mobile")
     @Operation(summary = "1. Identify User (Mobile)")
+    @PostMapping("/mobile")
     public ResponseEntity<IdentifierResponse> identifyMobile(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
@@ -49,8 +49,8 @@ public class IdentifierController {
         return ResponseEntity.ok(identifierService.handle(req));
     }
 
-    @PostMapping("/internet-banking")
     @Operation(summary = "1. Identify User (Internet Banking)")
+    @PostMapping("/internet-banking")
     public ResponseEntity<IdentifierResponse> identifyIB(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http

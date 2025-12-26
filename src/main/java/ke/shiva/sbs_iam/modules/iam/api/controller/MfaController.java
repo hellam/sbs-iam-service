@@ -30,16 +30,16 @@ public class MfaController {
 
     private final MfaService mfaService;
 
+    @Operation(summary = "3. Initiate MFA")
     @PostMapping("/initiate")
     @RequiresStage(LoginStage.PASSWORD_OK)
-    @Operation(summary = "3. Initiate MFA")
     public ResponseEntity<ApiResponse<MfaInitResponse>> initiate(@Valid @RequestBody MfaInitRequest req, @FlowId UUID flowId) {
         return ResponseBuilder.success("MFA initiated successfully", mfaService.initiate(req, flowId));
     }
 
+    @Operation(summary = "4. Verify MFA")
     @PostMapping("/verify")
     @RequiresStage(LoginStage.PASSWORD_OK)
-    @Operation(summary = "4. Verify MFA")
     public ResponseEntity<ApiResponse<MfaVerifyResponse>> verify(@Valid @RequestBody MfaVerifyRequest req, @FlowId UUID flowId) {
         return ResponseBuilder.success("MFA verified successfully", mfaService.verify(req, flowId));
     }

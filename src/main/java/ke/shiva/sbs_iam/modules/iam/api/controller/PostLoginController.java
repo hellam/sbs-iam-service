@@ -26,9 +26,9 @@ public class PostLoginController {
 
     private final PostLoginService postLoginService;
 
+    @Operation(summary = "5. Change Password")
     @PostMapping("/password/change")
     @RequiresStage(LoginStage.MFA_OK)
-    @Operation(summary = "5. Change Password")
     public ResponseEntity<Void> changePassword(
             @RequestBody @Valid PasswordChangeRequest req, @FlowId UUID flowId
     ) {
@@ -36,9 +36,9 @@ public class PostLoginController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "6. Submit Security Questions")
     @PostMapping("/security-questions")
     @RequiresStage(LoginStage.MFA_OK)
-    @Operation(summary = "6. Submit Security Questions")
     public ResponseEntity<Void> submitQuestions(
             @RequestBody @Valid SecurityQuestionsRequest req, @FlowId UUID flowId
     ) {

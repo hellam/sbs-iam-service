@@ -26,16 +26,16 @@ public class ProfileController {
 
     private final ProfileService profileService;
 
+    @Operation(summary = "7. List Profiles")
     @GetMapping("/profiles")
     @RequiresStage(LoginStage.MFA_OK)
-    @Operation(summary = "7. List Profiles")
     public ResponseEntity<ApiResponse<ProfileSelectionResponse>> listProfiles(@FlowId UUID flowId) {
         return ResponseBuilder.success(profileService.listProfiles(flowId));
     }
 
+    @Operation(summary = "8. Select Profile")
     @PostMapping("/profiles/select")
     @RequiresStage(LoginStage.MFA_OK)
-    @Operation(summary = "8. Select Profile")
     public ResponseEntity<ApiResponse<OidcTokenResponse>> select(
             @Valid @RequestBody ProfileSelectRequest req, @FlowId UUID flowId
     ) {

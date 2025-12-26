@@ -29,9 +29,9 @@ public class PasswordAuthController {
 
     private final PasswordAuthService passwordAuthService;
 
+    @Operation(summary = "2. Submit Password")
     @PostMapping("/password")
     @RequiresStage(LoginStage.IDENTIFIER_OK)
-    @Operation(summary = "2. Submit Password")
     public ResponseEntity<ApiResponse<PasswordStepResponse>> passwordStep(
             @RequestBody @Valid PasswordLoginRequest request, @FlowId UUID flowId
     ) {

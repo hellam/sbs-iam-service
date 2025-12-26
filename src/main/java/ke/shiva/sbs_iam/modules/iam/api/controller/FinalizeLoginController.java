@@ -34,9 +34,9 @@ public class FinalizeLoginController {
     private final LoginFlowService loginFlowService;
     private final OidcTokenService oidcTokenService;
 
+    @Operation(summary = "9. Finalize Login")
     @PostMapping("/finalize")
     @RequiresStage(LoginStage.MFA_OK)
-    @Operation(summary = "9. Finalize Login")
     public ResponseEntity<ApiResponse<OidcTokenResponse>> finalize(
             @FlowId UUID flowId
     ) {
