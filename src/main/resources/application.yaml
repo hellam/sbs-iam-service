@@ -57,6 +57,10 @@ spring:
 encryption:
   key: ${APP_KEY}
 
+# GeoIP Configuration for IP geolocation
+geoip:
+  database:
+    path: ${GEOIP_DATABASE_PATH:/usr/local/share/GeoIP/GeoLite2-City.mmdb}
 
 
 management:

@@ -51,6 +51,10 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/iam/05-auth/054-otp-record.xml
   - include:
+      file: db/changelog/changes/iam/05-auth/055-add-customer-auth-lockout-columns.xml
+  - include:
+      file: db/changelog/changes/iam/05-auth/056-add-employee-auth-lockout-column.xml
+  - include:
       file: db/changelog/changes/iam/05-rbac/employee/050-employee-permission.xml
   - include:
       file: db/changelog/changes/iam/05-rbac/employee/051-employee-role.xml
@@ -98,5 +102,7 @@ databaseChangeLog:
       file: db/changelog/changes/iam/10-session/112-trusted-devices.xml
   - include:
       file: db/changelog/changes/iam/10-session/113-session-events.xml
+  - include:
+      file: db/changelog/changes/iam/10-session/114-revoked-tokens.xml
   - include:
       file: db/changelog/changes/iam/11-consent/120-user-consent.xml

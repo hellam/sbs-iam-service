@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ============================================================= -->
+    <!-- ADD LOCKOUT UNTIL COLUMN TO EMPLOYEE AUTH                     -->
+    <!-- ============================================================= -->
+
+    <changeSet id="pg-iam-056-add-employee-auth-lockout-column" author="hellamimbosa">
+
+        <comment>
+            Add lockout_until column to employee_auth table:
+            - staff_lockout_until: Timestamp until which staff/employee login is locked
+
+            This column supports temporary account lockouts after failed backoffice login attempts.
+            When current time exceeds lockout_until, the account is automatically unlocked.
+        </comment>
+
+        <!-- Add staff_lockout_until column -->
+        <addColumn tableName="employee_auth" schemaName="iam_service">
+            <column name="staff_lockout_until" type="TIMESTAMPTZ">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Add index for staff lockout queries -->
+        <createIndex tableName="employee_auth" indexName="idx_employee_auth_staff_lockout" schemaName="iam_service">
+            <column name="staff_lockout_until"/>
+            <column name="staff_locked"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
+

@@ -33,7 +33,7 @@ public class LoginFlowService {
     private final SessionRepository sessionRepository;
 
     // -------- CREATE LOGIN FLOW --------
-    public SessionEntity start(IamUserEntity user, Channel channel, LoginRequirements reqs) {
+    public SessionEntity start(IamUserEntity user, Channel channel, LoginRequirements reqs, String identifier) {
 
         SessionEntity s = new SessionEntity();
         s.setSessionId(String.valueOf(UUID.randomUUID()));
@@ -46,6 +46,7 @@ public class LoginFlowService {
         // store requirements as JSON in existing "metadata" column if you have it
         if (s.getMetadata() == null) s.setMetadata(new HashMap<>());
         s.getMetadata().put("requirements", reqs);
+        s.getMetadata().put("identifier", identifier);
 
         sessionRepo.save(s);
         logEvent(s, "LOGIN_FLOW_STARTED");
@@ -143,6 +144,17 @@ public class LoginFlowService {
         } else {
             return (LoginRequirements) obj;
         }
+    }
+
+    /**
+     * Extract identifier from session metadata if available
+     */
+    public String extractIdentifier(SessionEntity session) {
+        if (session.getMetadata() != null && session.getMetadata().containsKey("identifier")) {
+            return (String) session.getMetadata().get("identifier");
+        }
+        // Fallback to user's primary identifier or username
+        return session.getIamUser() != null ? String.valueOf(session.getIamUser().getId()) : "unknown";
     }
 
     public void save(SessionEntity s) {

@@ -9,12 +9,14 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.NotificationChannel;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.OtpRecordRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.UserContactRepository;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 @Slf4j
@@ -25,7 +27,7 @@ public class OtpService {
     private final OtpRecordRepository otpRecordRepository;
     private final SessionRepository sessionRepository;
     private final UserContactRepository userContactRepository;
-//    private final NotificationService notificationService;
+    //    private final NotificationService notificationService;
     private final OtpGenerator otpGenerator;
     private final PolicyService policyService;
 
@@ -33,6 +35,12 @@ public class OtpService {
     public void sendOtp(SessionEntity session, NotificationChannel notificationChannel) {
 
         MfaPolicyEntity mfaPolicy = policyService.getMfaPolicy(session.getChannel());
+        UserContact userContact = getContactForNotificationChannel(session, notificationChannel);
+
+        long otpCount = otpRecordRepository.countByToAndCreatedAtAfter(userContact.getContactValue(), OffsetDateTime.now().minusDays(1));
+        if (otpCount >= mfaPolicy.getOtpDailyLimit()) {
+            throw BaseException.tooManyRequests("You have reached the daily limit for OTP requests.");
+        }
 
         Optional<OtpRecordEntity> existingOtp = otpRecordRepository.findBySessionId(session.getSessionId());
         OtpRecordEntity otpRecord;
@@ -40,8 +48,8 @@ public class OtpService {
         if (existingOtp.isPresent()) {
             otpRecord = existingOtp.get();
             if ("PENDING".equals(otpRecord.getStatus()) &&
-                otpRecord.getExpiryTime().isAfter(OffsetDateTime.now()) &&
-                otpRecord.getVerifyAttempts() < mfaPolicy.getMaxVerifyAttempts()) {
+                    otpRecord.getExpiryTime().isAfter(OffsetDateTime.now()) &&
+                    otpRecord.getVerifyAttempts() < mfaPolicy.getMaxVerifyAttempts()) {
                 log.info("Reusing existing OTP for session: {}", session.getSessionId());
             } else {
                 // Update existing record with new OTP
@@ -72,17 +80,16 @@ public class OtpService {
         otpRecord.setExpiryTime(OffsetDateTime.now().plusSeconds(mfaPolicy.getOtpExpirySeconds()));
         otpRecord.setVerifyAttempts((short) 0);
         otpRecord.setStatus("PENDING");
-        otpRecord.setTo(getContactForNotificationChannel(session, notificationChannel));
+        otpRecord.setTo(getContactForNotificationChannel(session, notificationChannel).getContactValue());
         log.info("Generated OTP: {} for session: {}", otp, session.getSessionId());
     }
 
-    private String getContactForNotificationChannel(SessionEntity session, NotificationChannel notificationChannel) {
+    public UserContact getContactForNotificationChannel(SessionEntity session, NotificationChannel notificationChannel) {
         ContactType contactType = switch (notificationChannel) {
             case EMAIL -> ContactType.EMAIL;
             case SMS, WHATSAPP -> ContactType.PHONE;
         };
         return userContactRepository.findByIamUserAndContactTypeAndPrimaryIsTrue(session.getIamUser(), contactType)
-                .map(UserContact::getContactValue)
                 .orElseThrow(() -> new IllegalStateException("No primary contact found for notification channel: " + notificationChannel));
     }
 

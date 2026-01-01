@@ -8,4 +8,5 @@ public class OidcTokenResponse {
     private String refreshToken;
     private long expiresIn;
     private String tokenType = "Bearer";
+    private String idToken;
 }

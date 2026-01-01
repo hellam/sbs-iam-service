@@ -123,6 +123,12 @@
             <artifactId>hibernate-types-60</artifactId> <!-- If on Spring Boot 3 -->
             <version>2.21.1</version>
         </dependency>
+        <!-- MaxMind GeoIP2 for IP geolocation -->
+        <dependency>
+            <groupId>com.maxmind.geoip2</groupId>
+            <artifactId>geoip2</artifactId>
+            <version>4.2.0</version>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>

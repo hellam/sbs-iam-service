@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ============================================================= -->
+    <!-- ADD LOCKOUT UNTIL COLUMNS TO CUSTOMER AUTH                    -->
+    <!-- ============================================================= -->
+
+    <changeSet id="pg-iam-055-add-customer-auth-lockout-columns" author="hellamimbosa">
+
+        <comment>
+            Add lockout_until columns to customer_auth table:
+            - internet_lockout_until: Timestamp until which Internet Banking is locked
+            - mobile_lockout_until: Timestamp until which Mobile Banking is locked
+
+            These columns support temporary account lockouts after failed login attempts.
+            When current time exceeds lockout_until, the account is automatically unlocked.
+        </comment>
+
+        <!-- Add internet_lockout_until column -->
+        <addColumn tableName="customer_auth" schemaName="iam_service">
+            <column name="internet_lockout_until" type="TIMESTAMPTZ">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Add mobile_lockout_until column -->
+        <addColumn tableName="customer_auth" schemaName="iam_service">
+            <column name="mobile_lockout_until" type="TIMESTAMPTZ">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Add index for internet lockout queries -->
+        <createIndex tableName="customer_auth" indexName="idx_customer_auth_internet_lockout" schemaName="iam_service">
+            <column name="internet_lockout_until"/>
+            <column name="internet_locked"/>
+        </createIndex>
+
+        <!-- Add index for mobile lockout queries -->
+        <createIndex tableName="customer_auth" indexName="idx_customer_auth_mobile_lockout" schemaName="iam_service">
+            <column name="mobile_lockout_until"/>
+            <column name="mobile_locked"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
+

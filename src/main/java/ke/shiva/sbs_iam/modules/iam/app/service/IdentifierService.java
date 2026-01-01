@@ -1,6 +1,5 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
-import jakarta.security.auth.message.AuthException;
 import ke.shiva.sbs_iam.modules.iam.api.request.IdentifierRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.IdentifierResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
@@ -23,6 +22,7 @@ public class IdentifierService {
     private final LoginIdentifierRepository identifierRepo;
     private final PolicyEvaluationService policyService;
     private final LoginFlowService loginFlowService;
+    private final LoginHistoryService loginHistoryService;
 
     @Transactional(readOnly = false)
     public IdentifierResponse handle(IdentifierRequest req){
@@ -31,11 +31,25 @@ public class IdentifierService {
 
         LoginIdentifierEntity identifier = identifierRepo
                 .findByIdentifierAndChannelAndStatus(req.getIdentifier(), channel, IamStatus.ACTIVE)
-                .orElseThrow(() -> BaseException.unauthorized("Invalid credentials"));
+                .orElseThrow(() -> {
+                    // Log failed identifier verification
+                    loginHistoryService.logIdentifierFailure(
+                        req.getIdentifier(),
+                        channel.name(),
+                        "IDENTIFIER_NOT_FOUND"
+                    );
+                    return BaseException.unauthorized("Invalid credentials");
+                });
 
         IamUserEntity user = identifier.getIamUser();
 
         if (user.getStatus() != IamStatus.ACTIVE) {
+            // Log failed identifier verification due to inactive user
+            loginHistoryService.logIdentifierFailure(
+                req.getIdentifier(),
+                channel.name(),
+                "USER_INACTIVE"
+            );
             throw BaseException.unauthorized("Invalid credentials");
         }
 
@@ -43,7 +57,10 @@ public class IdentifierService {
         LoginRequirements requirements = policyService.evaluateRequirements(user, channel);
 
         // create temp session (flow)
-        var session = loginFlowService.start(user, channel, requirements);
+        var session = loginFlowService.start(user, channel, requirements,req.getIdentifier());
+
+        // Log successful identifier verification
+        loginHistoryService.logIdentifierSuccess(user, req.getIdentifier(), session);
 
         IdentifierResponse resp = new IdentifierResponse();
         resp.setFlowId(UUID.fromString(session.getSessionId()));

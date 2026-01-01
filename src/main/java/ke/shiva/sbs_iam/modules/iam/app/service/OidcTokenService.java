@@ -1,28 +1,55 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
+import jakarta.servlet.http.HttpServletRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.RefreshTokenRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.OidcTokenResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.RefreshTokenEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.security.RevokedTokenEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.NotificationChannel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.UserCategory;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.RefreshTokenRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.RevokedTokenRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.codec.Hex;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.time.OffsetDateTime;
+import java.util.Base64;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class OidcTokenService {
 
     private final JwtEncoder jwtEncoder;
+    private final JwtDecoder jwtDecoder;
+    private final SessionRepository sessionRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final RevokedTokenRepository revokedTokenRepository;
+    private final OtpService otpService;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     @Transactional
-    public OidcTokenResponse issueTokens(SessionEntity session) {
-
+    public OidcTokenResponse issueTokens(Long sessionId) {
+        SessionEntity session = sessionRepository.findByIdWithIamUser(sessionId).orElseThrow(
+                () -> new IllegalArgumentException("Session not found with ID: " + sessionId)
+        );
         IamUserEntity user = session.getIamUser();
         Channel channel = session.getChannel();
         UserCategory category = null;
@@ -33,16 +60,18 @@ public class OidcTokenService {
         }
 
         OffsetDateTime now = OffsetDateTime.now();
-        long expiresIn = 300L;
+        long accessTokenValidity = 300L; // 5 minutes
+        long refreshTokenValidity = 900L; // 15 minutes
 
         JwtClaimsSet accessClaims = JwtClaimsSet.builder()
                 .issuer("sbs-iam")
                 .issuedAt(now.toInstant())
-                .expiresAt(now.plusSeconds(expiresIn).toInstant())
+                .expiresAt(now.plusSeconds(accessTokenValidity).toInstant())
                 .subject(String.valueOf(user.getPublicId()))
                 .claim("channel", channel.name())
                 .claim("category", category.name())
                 .claim("scope", buildScopeFor(session))
+                .id(UUID.randomUUID().toString()) // JTI
                 .build();
 
         if (session.getProfileType() != null) {
@@ -54,12 +83,92 @@ public class OidcTokenService {
 
         String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(accessClaims)).getTokenValue();
 
-        // You can later add proper refresh token & ID token handling
+        String rawRefreshToken = generateRawRefreshToken();
+        String refreshTokenHash = hashToken(rawRefreshToken);
+
+        RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity();
+        refreshTokenEntity.setSession(session);
+        refreshTokenEntity.setTokenHash(refreshTokenHash);
+        refreshTokenEntity.setIssuedAt(now);
+        refreshTokenEntity.setExpiresAt(now.plusSeconds(refreshTokenValidity));
+        refreshTokenRepository.save(refreshTokenEntity);
+
         OidcTokenResponse resp = new OidcTokenResponse();
         resp.setAccessToken(accessToken);
-        resp.setRefreshToken(null); // TODO: implement refresh flow
-        resp.setExpiresIn(expiresIn);
+        resp.setRefreshToken(rawRefreshToken);
+        resp.setExpiresIn(accessTokenValidity);
+        resp.setIdToken(buildIdToken(session, user, now, accessTokenValidity));
         return resp;
+    }
+
+    @Transactional
+    public OidcTokenResponse refreshTokens(RefreshTokenRequest request) {
+        String refreshTokenHash = hashToken(request.getRefreshToken());
+        RefreshTokenEntity oldToken = refreshTokenRepository.findByTokenHash(refreshTokenHash)
+                .orElseThrow(() -> BaseException.unauthorized("Invalid refresh token"));
+
+        if (oldToken.getRevokedAt() != null || oldToken.getExpiresAt().isBefore(OffsetDateTime.now())) {
+            throw BaseException.unauthorized("Refresh token is revoked or expired");
+        }
+
+        // Revoke the old access token
+        try {
+            HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+            String authHeader = servletRequest.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                Jwt decodedJwt = jwtDecoder.decode(token);
+                String jti = decodedJwt.getId();
+                OffsetDateTime expiry = OffsetDateTime.ofInstant(decodedJwt.getExpiresAt(), java.time.ZoneId.systemDefault());
+
+                RevokedTokenEntity revokedToken = new RevokedTokenEntity();
+                revokedToken.setJti(jti);
+                revokedToken.setExpiryDate(expiry);
+                revokedTokenRepository.save(revokedToken);
+            }
+        } catch (Exception e) {
+            // Ignore if the token is invalid, it can't be used anyway
+        }
+
+
+        // Issue new tokens
+        OidcTokenResponse response = issueTokens(oldToken.getSession().getId());
+
+        // Revoke the old refresh token
+        oldToken.setRevokedAt(OffsetDateTime.now());
+        oldToken.setRevokedReason("Replaced by new token");
+        refreshTokenRepository.save(oldToken);
+
+        return response;
+    }
+
+    private String buildIdToken(SessionEntity session, IamUserEntity user, OffsetDateTime now, long expiresIn) {
+        JwtClaimsSet idClaims = JwtClaimsSet.builder()
+                .issuer("sbs-iam")
+                .issuedAt(now.toInstant())
+                .expiresAt(now.plusSeconds(expiresIn).toInstant())
+                .subject(String.valueOf(user.getPublicId()))
+                .claim("name", user.getParty().getPerson().getFullName())
+                .claim("email", otpService.getContactForNotificationChannel(session, NotificationChannel.EMAIL).getContactValue())
+                .claim("phone_number", otpService.getContactForNotificationChannel(session, NotificationChannel.SMS).getContactValue())
+                .build();
+        return jwtEncoder.encode(JwtEncoderParameters.from(idClaims)).getTokenValue();
+    }
+
+    private String generateRawRefreshToken() {
+        byte[] bytes = new byte[32];
+        secureRandom.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+            return new String(Hex.encode(hash));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to hash token", e);
+        }
     }
 
     private String buildScopeFor(SessionEntity session) {

@@ -58,6 +58,9 @@ public class CustomerAuthEntity extends BaseEntity {
     @Column(name = "internet_last_login_at")
     private OffsetDateTime internetLastLoginAt;
 
+    @Column(name = "internet_lockout_until")
+    private OffsetDateTime internetLockoutUntil;
+
     @Size(max = 255)
     @Column(name = "mobile_pin_hash")
     private String mobilePinHash;
@@ -87,6 +90,9 @@ public class CustomerAuthEntity extends BaseEntity {
 
     @Column(name = "mobile_last_login_at")
     private OffsetDateTime mobileLastLoginAt;
+
+    @Column(name = "mobile_lockout_until")
+    private OffsetDateTime mobileLockoutUntil;
 
     @NotNull
     @ColumnDefault("false")

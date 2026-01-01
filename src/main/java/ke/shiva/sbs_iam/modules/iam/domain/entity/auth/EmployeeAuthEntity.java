@@ -50,6 +50,9 @@ public class EmployeeAuthEntity extends BaseEntity {
     @Column(name = "staff_last_login_at")
     private OffsetDateTime staffLastLoginAt;
 
+    @Column(name = "staff_lockout_until")
+    private OffsetDateTime staffLockoutUntil;
+
     @ColumnDefault("true")
     @Column(name = "first_time_login", nullable = false)
     private Boolean firstTimeLogin = true;

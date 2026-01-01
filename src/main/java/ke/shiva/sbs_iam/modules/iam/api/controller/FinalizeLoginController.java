@@ -2,10 +2,12 @@ package ke.shiva.sbs_iam.modules.iam.api.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import ke.shiva.sbs_iam.modules.iam.api.request.RefreshTokenRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.OidcTokenResponse;
 import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
 import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
 import ke.shiva.sbs_iam.modules.iam.app.service.LoginFlowService;
+import ke.shiva.sbs_iam.modules.iam.app.service.LoginHistoryService;
 import ke.shiva.sbs_iam.modules.iam.app.service.OidcTokenService;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
@@ -16,9 +18,9 @@ import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,6 +35,7 @@ public class FinalizeLoginController {
 
     private final LoginFlowService loginFlowService;
     private final OidcTokenService oidcTokenService;
+    private final LoginHistoryService loginHistoryService;
 
     @Operation(summary = "9. Finalize Login")
     @PostMapping("/finalize")
@@ -51,14 +54,26 @@ public class FinalizeLoginController {
             throw BaseException.forbidden("Access denied");
         }
 
+        // Extract identifier from session metadata
+        String identifier = loginFlowService.extractIdentifier(session);
+
         // No profile selection required
         session.setProfileType(null);
         session.setProfileId(null);
         session.setSessionType(SessionType.LOGIN_ACTIVE);
+        loginFlowService.save(session);
 
-        loginFlowService.updateStage(session, LoginStage.ACTIVE);
-        loginFlowService.extend(session);
+        // Log successful login completion
+        loginHistoryService.logLoginSuccess(session.getIamUser(), identifier, session);
 
-        return ResponseBuilder.success(oidcTokenService.issueTokens(session));
+        return ResponseBuilder.success(oidcTokenService.issueTokens(session.getId()));
+    }
+
+    @Operation(summary = "Refresh OIDC tokens")
+    @PostMapping("/token")
+    public ResponseEntity<ApiResponse<OidcTokenResponse>> refreshToken(
+            @RequestBody RefreshTokenRequest request
+    ) {
+        return ResponseBuilder.success(oidcTokenService.refreshTokens(request));
     }
 }

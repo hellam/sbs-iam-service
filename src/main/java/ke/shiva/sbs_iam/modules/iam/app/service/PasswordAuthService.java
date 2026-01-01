@@ -1,7 +1,6 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
 
-import jakarta.security.auth.message.AuthException;
 import ke.shiva.sbs_iam.modules.iam.api.request.PasswordLoginRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.PasswordStepResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
@@ -20,23 +19,30 @@ public class PasswordAuthService {
 
     private final LoginFlowService loginFlowService;
     private final PasswordVerifier passwordVerifier;
-//    private final SecurityEventService securityEventService; // records LOGIN_FAILURE / SUCCESS
+    private final SecurityEventService securityEventService; // records LOGIN_FAILURE / SUCCESS
+    private final LoginHistoryService loginHistoryService;
 
     @Transactional
     public PasswordStepResponse handle(PasswordLoginRequest req, UUID flowId) {
 
         // 1. Load session & ensure correct stage (IDENTIFIER_OK)
         SessionEntity session = loginFlowService.requireStage(flowId, LoginStage.IDENTIFIER_OK);
+        IamUserEntity user = session.getIamUser();
+
+        // Extract identifier from session metadata or use a default value
+        String identifier = loginFlowService.extractIdentifier(session);
 
         // 2. Verify password against correct credentials table
         boolean ok = passwordVerifier.verify(session, req.getPassword());
 
         if (!ok) {
-//            securityEventService.onLoginFailure(user, "PASSWORD_INVALID", session);
+            securityEventService.onLoginFailure(user, "PASSWORD_INVALID", session);
+            loginHistoryService.logPasswordFailure(user, identifier, session, "PASSWORD_INVALID");
             throw BaseException.unauthorized("Invalid credentials");
         }
 
-//        securityEventService.onLoginSuccess(user, "PASSWORD_SUCCESS", session);
+        securityEventService.onLoginSuccess(user, "PASSWORD_SUCCESS", session);
+        loginHistoryService.logPasswordSuccess(user, identifier, session);
 
         // 3. Read requirements from metadata
         LoginRequirements reqs = loginFlowService.getRequirements(session);

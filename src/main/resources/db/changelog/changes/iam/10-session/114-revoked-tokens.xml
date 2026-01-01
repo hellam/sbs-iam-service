@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ============================================================= -->
+    <!-- REVOKED TOKENS                                                -->
+    <!-- Track revoked JWT tokens (access tokens) for security        -->
+    <!-- ============================================================= -->
+
+    <changeSet id="pg-iam-114-revoked-tokens" author="hellamimbosa">
+
+        <comment>
+            REVOKED_TOKENS stores JWT tokens (JTI) that have been revoked before expiry.
+            This allows immediate token invalidation for logout, security incidents, etc.
+
+            - Used by JwtRevocationFilter to check if a token is revoked
+            - Stores JTI (JWT ID) which is unique per token
+            - Expiry date allows cleanup of old entries after natural expiration
+        </comment>
+
+        <createTable tableName="revoked_tokens">
+
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"
+                             primaryKeyName="pk_revoked_tokens"/>
+            </column>
+
+            <!-- JWT ID (JTI) - unique identifier from JWT claims -->
+            <column name="jti" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <!-- Original token expiry date for cleanup -->
+            <column name="expiry_date" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- When was this token revoked -->
+            <column name="revoked_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+
+            <!-- Optional: reason for revocation -->
+            <column name="revoked_reason" type="VARCHAR(100)"/>
+
+        </createTable>
+
+        <!-- Index for fast JTI lookups (used on every authenticated request) -->
+        <createIndex tableName="revoked_tokens" indexName="idx_revoked_tokens_jti">
+            <column name="jti"/>
+        </createIndex>
+
+        <!-- Index for cleanup queries (remove expired tokens) -->
+        <createIndex tableName="revoked_tokens" indexName="idx_revoked_tokens_expiry">
+            <column name="expiry_date"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>
+

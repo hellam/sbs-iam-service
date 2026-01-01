@@ -10,6 +10,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "iam_user_contact", schema = "iam_service")

@@ -22,6 +22,7 @@ public class ProfileService {
 
     private final LoginFlowService loginFlowService;
     private final OidcTokenService oidcTokenService;
+    private final LoginHistoryService loginHistoryService;
 
     public ProfileSelectionResponse listProfiles(UUID flowId){
 
@@ -53,8 +54,14 @@ public class ProfileService {
         loginFlowService.selectProfile(session, req.getProfileType(), req.getProfileId());
         loginFlowService.updateStage(session, LoginStage.ACTIVE);
 
+        // Extract identifier from session metadata
+        String identifier = loginFlowService.extractIdentifier(session);
+
+        // Log successful login completion after profile selection
+        loginHistoryService.logLoginSuccess(session.getIamUser(), identifier, session);
+
         // Issue token with profile claims
-        return oidcTokenService.issueTokens(session);
+        return oidcTokenService.issueTokens(session.getId());
     }
 }
 

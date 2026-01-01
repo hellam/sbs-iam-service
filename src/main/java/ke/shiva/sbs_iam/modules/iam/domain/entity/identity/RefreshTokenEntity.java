@@ -3,12 +3,16 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.identity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.OffsetDateTime;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Setter
+@Getter
 @Entity
 @Table(name = "refresh_tokens", schema = "iam_service")
 public class RefreshTokenEntity {
@@ -53,93 +57,5 @@ public class RefreshTokenEntity {
 
     @OneToMany(mappedBy = "replacedByToken")
     private Set<RefreshTokenEntity> refreshTokens = new LinkedHashSet<>();
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public SessionEntity getSession() {
-        return session;
-    }
-
-    public void setSession(SessionEntity session) {
-        this.session = session;
-    }
-
-    public String getTokenHash() {
-        return tokenHash;
-    }
-
-    public void setTokenHash(String tokenHash) {
-        this.tokenHash = tokenHash;
-    }
-
-    public OffsetDateTime getIssuedAt() {
-        return issuedAt;
-    }
-
-    public void setIssuedAt(OffsetDateTime issuedAt) {
-        this.issuedAt = issuedAt;
-    }
-
-    public OffsetDateTime getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(OffsetDateTime expiresAt) {
-        this.expiresAt = expiresAt;
-    }
-
-    public OffsetDateTime getRevokedAt() {
-        return revokedAt;
-    }
-
-    public void setRevokedAt(OffsetDateTime revokedAt) {
-        this.revokedAt = revokedAt;
-    }
-
-    public String getRevokedReason() {
-        return revokedReason;
-    }
-
-    public void setRevokedReason(String revokedReason) {
-        this.revokedReason = revokedReason;
-    }
-
-    public RefreshTokenEntity getReplacedByToken() {
-        return replacedByToken;
-    }
-
-    public void setReplacedByToken(RefreshTokenEntity replacedByToken) {
-        this.replacedByToken = replacedByToken;
-    }
-
-    public OffsetDateTime getLastUsedAt() {
-        return lastUsedAt;
-    }
-
-    public void setLastUsedAt(OffsetDateTime lastUsedAt) {
-        this.lastUsedAt = lastUsedAt;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
-    }
-
-    public Set<RefreshTokenEntity> getRefreshTokens() {
-        return refreshTokens;
-    }
-
-    public void setRefreshTokens(Set<RefreshTokenEntity> refreshTokens) {
-        this.refreshTokens = refreshTokens;
-    }
 
 }

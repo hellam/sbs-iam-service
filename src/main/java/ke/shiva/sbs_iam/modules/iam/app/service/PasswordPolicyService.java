@@ -1,6 +1,5 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
-import jakarta.security.auth.message.AuthException;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PolicyEntity;
@@ -10,20 +9,24 @@ import ke.shiva.sbs_iam.modules.iam.infra.repository.PasswordHistoryRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.PolicyRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class PasswordPolicyService {
 
     private final PolicyRepository policyRepo;
     private final PasswordHistoryRepository historyRepo;
     private final PasswordVerifier passwordVerifier;
+
+    public PasswordPolicyService(PolicyRepository policyRepo, PasswordHistoryRepository historyRepo, @Lazy PasswordVerifier passwordVerifier) {
+        this.policyRepo = policyRepo;
+        this.historyRepo = historyRepo;
+        this.passwordVerifier = passwordVerifier;
+    }
 
     /**
      * Main entry point for validating a password change attempt.
