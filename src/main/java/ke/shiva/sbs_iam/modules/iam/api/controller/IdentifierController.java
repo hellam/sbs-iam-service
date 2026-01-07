@@ -10,6 +10,9 @@ import ke.shiva.sbs_iam.modules.iam.app.service.DomainGuard;
 import ke.shiva.sbs_iam.modules.iam.app.service.IdentifierService;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.shivacorestarter.dto.ApiResponse;
+import ke.shiva.shivacorestarter.ratelimit.KeyType;
+import ke.shiva.shivacorestarter.ratelimit.RateLimit;
+import ke.shiva.shivacorestarter.security.RequireSignature;
 import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/oauth/identifier")
 @RequiredArgsConstructor
 @Tag(name = "Authentication Flow")
+@RateLimit(capacity = 10, refillTokens = 10, refillDuration = "PT1M", keyType = KeyType.IP,
+          message = "Too many identifier lookup attempts. Please try again in a minute.")
 public class IdentifierController {
 
     private final IdentifierService identifierService;
@@ -29,6 +34,7 @@ public class IdentifierController {
 
     @Operation(summary = "1. Identify User (Backoffice)")
     @PostMapping("/backoffice")
+    @RequireSignature(expiresIn = 300)
     public ResponseEntity<ApiResponse<IdentifierResponse>> identifyBackoffice(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
@@ -40,6 +46,7 @@ public class IdentifierController {
 
     @Operation(summary = "1. Identify User (Mobile)")
     @PostMapping("/mobile")
+    @RequireSignature(expiresIn = 300)
     public ResponseEntity<IdentifierResponse> identifyMobile(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
@@ -59,5 +66,15 @@ public class IdentifierController {
         req.setChannel(Channel.INTERNET_BANKING);
         return ResponseEntity.ok(identifierService.handle(req));
     }
-}
 
+    @Operation(summary = "1. Identify User (USSD)")
+    @PostMapping("/ussd")
+    public ResponseEntity<IdentifierResponse> identifyUssd(
+            @RequestBody @Valid IdentifierRequest req,
+            HttpServletRequest http
+    ) {
+        domainGuard.validate(Channel.USSD, http);
+        req.setChannel(Channel.USSD);
+        return ResponseEntity.ok(identifierService.handle(req));
+    }
+}

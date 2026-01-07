@@ -12,6 +12,8 @@ import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
 import ke.shiva.sbs_iam.modules.iam.app.service.MfaService;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.shivacorestarter.dto.ApiResponse;
+import ke.shiva.shivacorestarter.ratelimit.KeyType;
+import ke.shiva.shivacorestarter.ratelimit.RateLimit;
 import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,8 @@ import java.util.UUID;
 @RequestMapping("/oauth/mfa")
 @RequiredArgsConstructor
 @Tag(name = "Authentication Flow")
+@RateLimit(capacity = 3, refillTokens = 3, refillDuration = "PT10M", keyType = KeyType.IP,
+          message = "Too many MFA attempts. Please try again in 10 minutes.")
 public class MfaController {
 
     private final MfaService mfaService;

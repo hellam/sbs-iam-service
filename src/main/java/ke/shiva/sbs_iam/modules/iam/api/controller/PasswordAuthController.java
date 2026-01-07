@@ -10,6 +10,8 @@ import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
 import ke.shiva.sbs_iam.modules.iam.app.service.PasswordAuthService;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.shivacorestarter.dto.ApiResponse;
+import ke.shiva.shivacorestarter.ratelimit.KeyType;
+import ke.shiva.shivacorestarter.ratelimit.RateLimit;
 import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.annotation.Order;
@@ -25,6 +27,8 @@ import java.util.UUID;
 @RequestMapping("/oauth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication Flow")
+@RateLimit(capacity = 5, refillTokens = 5, refillDuration = "PT5M", keyType = KeyType.IP,
+          message = "Too many login attempts. Please try again in 5 minutes.")
 public class PasswordAuthController {
 
     private final PasswordAuthService passwordAuthService;

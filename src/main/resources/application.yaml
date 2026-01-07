@@ -25,6 +25,20 @@ spring:
   config:
     import: optional:file:.env
 
+  # Redis configuration for rate limiting and caching
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: ${REDIS_DATABASE:0}
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
   #Tell Hibernate to validate the schema against the entities. ddl-auto can be set to 'update', 'create', 'create-drop', 'validate', 'none'
   jpa:
     hibernate:
@@ -57,6 +71,11 @@ spring:
 encryption:
   key: ${APP_KEY}
 
+# CORS Configuration
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4200}
+  allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
+
 # GeoIP Configuration for IP geolocation
 geoip:
   database:
@@ -75,3 +94,51 @@ management:
   health:
     redis:
       enabled: false
+
+# Rate Limiting Configuration
+shiva:
+  rate-limit:
+    enabled: true
+    storage: REDIS
+    default-limit:
+      capacity: 100
+      refill-tokens: 100
+      refill-duration: PT1M  # 1 minute
+    whitelisted-ips:
+      - "127.0.0.1"
+      - "::1"
+    blacklisted-ips: []
+    custom-header-name: "X-API-Key"
+    penalty:
+      enabled: true
+      violation-threshold: 10
+      blacklist-duration: PT15M  # 15 minutes
+      violation-window: PT1M  # 1 minute
+
+  # Security Headers Configuration
+  security:
+    headers:
+      enabled: true
+      x-frame-options: true
+      x-frame-options-value: DENY
+      x-content-type-options: true
+      x-xss-protection: true
+      hsts: true
+      hsts-max-age: 31536000  # 1 year
+      hsts-preload: false
+      csp: true
+      csp-directives: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'"
+      referrer-policy: true
+      referrer-policy-value: "strict-origin-when-cross-origin"
+      permissions-policy: true
+      permissions-policy-value: "geolocation=(), microphone=(), camera=()"
+      x-permitted-cross-domain-policies: true
+      remove-server-header: true
+      x-download-options: true
+
+    # Request Signature Validation (for mobile/external APIs)
+    signature:
+      enabled: true
+      secret-key: ${SIGNATURE_SECRET_KEY:change-this-secret-key-in-production}
+      algorithm: HmacSHA256
+

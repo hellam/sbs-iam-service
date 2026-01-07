@@ -9,7 +9,8 @@ public enum Channel {
     BACKOFFICE("Backoffice"),
     AGENT_APP("Agent App"),
     MERCHANT_PORTAL("Merchant Portal"),
-    API_ACCESS("API Access");
+    API_ACCESS("API Access"),
+    USSD("USSD");
 
     private final String description;
 
