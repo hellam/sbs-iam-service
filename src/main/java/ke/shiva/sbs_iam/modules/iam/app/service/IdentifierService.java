@@ -2,17 +2,24 @@ package ke.shiva.sbs_iam.modules.iam.app.service;
 
 import ke.shiva.sbs_iam.modules.iam.api.request.IdentifierRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.IdentifierResponse;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.EmployeeAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.LoginIdentifierEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerAuthRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.EmployeeAuthRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.LoginIdentifierRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
+import ke.shiva.shivacorestarter.util.FileUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Service
@@ -23,9 +30,14 @@ public class IdentifierService {
     private final PolicyEvaluationService policyService;
     private final LoginFlowService loginFlowService;
     private final LoginHistoryService loginHistoryService;
+    private final CustomerAuthRepository customerAuthRepo;
+    private final EmployeeAuthRepository employeeAuthRepo;
 
-    @Transactional(readOnly = false)
-    public IdentifierResponse handle(IdentifierRequest req){
+    @Value("${shiva.security.spa.public-key}")
+    private String spaPublicKey;
+
+    @Transactional
+    public IdentifierResponse handle(IdentifierRequest req) {
 
         Channel channel = req.getChannel();
 
@@ -34,9 +46,9 @@ public class IdentifierService {
                 .orElseThrow(() -> {
                     // Log failed identifier verification
                     loginHistoryService.logIdentifierFailure(
-                        req.getIdentifier(),
-                        channel.name(),
-                        "IDENTIFIER_NOT_FOUND"
+                            req.getIdentifier(),
+                            channel.name(),
+                            "IDENTIFIER_NOT_FOUND"
                     );
                     return BaseException.unauthorized("Invalid credentials");
                 });
@@ -46,18 +58,21 @@ public class IdentifierService {
         if (user.getStatus() != IamStatus.ACTIVE) {
             // Log failed identifier verification due to inactive user
             loginHistoryService.logIdentifierFailure(
-                req.getIdentifier(),
-                channel.name(),
-                "USER_INACTIVE"
+                    req.getIdentifier(),
+                    channel.name(),
+                    "USER_INACTIVE"
             );
             throw BaseException.unauthorized("Invalid credentials");
         }
+
+        // Check if account is locked before proceeding
+        checkAccountLockout(user, channel, req.getIdentifier());
 
         // evaluate policy requirements
         LoginRequirements requirements = policyService.evaluateRequirements(user, channel);
 
         // create temp session (flow)
-        var session = loginFlowService.start(user, channel, requirements,req.getIdentifier());
+        var session = loginFlowService.start(user, channel, requirements, req.getIdentifier());
 
         // Log successful identifier verification
         loginHistoryService.logIdentifierSuccess(user, req.getIdentifier(), session);
@@ -70,8 +85,66 @@ public class IdentifierService {
         resp.setPasswordExpired(requirements.isPasswordExpired());
         resp.setFirstLogin(requirements.isFirstLogin());
         resp.setSecurityQuestionsRequired(requirements.isQuestionsRequired());
+        resp.setPublicKey(FileUtil.cleanPublicKey(spaPublicKey));
         resp.setProfileSelectionRequired(requirements.isProfileSelectionRequired());
 
         return resp;
+    }
+
+    private void checkAccountLockout(IamUserEntity user, Channel channel, String identifier) {
+        switch (channel) {
+            case INTERNET_BANKING, MOBILE_BANKING -> checkCustomerLockout(user, identifier, channel);
+            case BACKOFFICE -> checkEmployeeLockout(user, identifier, channel);
+        }
+    }
+
+    private void checkCustomerLockout(IamUserEntity user, String identifier, Channel channel) {
+        CustomerAuthEntity auth = customerAuthRepo.findByIamUser(user);
+        if (auth == null) {
+            return; // No auth record means no lockout
+        }
+
+        if (auth.getInternetLocked()) {
+            if (auth.getInternetLockoutUntil() == null || auth.getInternetLockoutUntil().isAfter(OffsetDateTime.now())) {
+                // Log failed attempt due to account being locked
+                loginHistoryService.logIdentifierFailure(
+                        identifier,
+                        channel.name(),
+                        "ACCOUNT_LOCKED"
+                );
+                throw BaseException.accountLocked("Account is locked. Please try again later or contact support.");
+            } else {
+                // Lock has expired, so we can reset it
+                auth.setInternetLocked(false);
+                auth.setInternetLockoutUntil(null);
+                auth.setInternetFailedAttempts((short) 0);
+                customerAuthRepo.save(auth);
+            }
+        }
+    }
+
+    private void checkEmployeeLockout(IamUserEntity user, String identifier, Channel channel) {
+        EmployeeAuthEntity auth = employeeAuthRepo.findByIamUser(user);
+        if (auth == null) {
+            return; // No auth record means no lockout
+        }
+
+        if (auth.getStaffLocked()) {
+            if (auth.getStaffLockoutUntil() == null || auth.getStaffLockoutUntil().isAfter(OffsetDateTime.now())) {
+                // Log failed attempt due to account being locked
+                loginHistoryService.logIdentifierFailure(
+                        identifier,
+                        channel.name(),
+                        "ACCOUNT_LOCKED"
+                );
+                throw BaseException.accountLocked("Account is locked. Please try again later or contact support.");
+            } else {
+                // Lock has expired, so we can reset it
+                auth.setStaffLocked(false);
+                auth.setStaffLockoutUntil(null);
+                auth.setStaffFailedAttempts((short) 0);
+                employeeAuthRepo.save(auth);
+            }
+        }
     }
 }

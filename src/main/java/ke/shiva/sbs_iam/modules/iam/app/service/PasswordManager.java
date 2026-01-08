@@ -1,6 +1,5 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
-import jakarta.security.auth.message.AuthException;
 import ke.shiva.sbs_iam.modules.iam.api.request.PasswordChangeRequest;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.EmployeeAuthEntity;
@@ -11,6 +10,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PasswordPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
+import ke.shiva.shivacorestarter.util.TransitPasswordCrypto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,12 +25,16 @@ public class PasswordManager {
     private final OrganizationUserAuthRepository orgAuthRepo;
     private final PasswordHistoryRepository historyRepo;
     private final PasswordPolicyService passwordPolicyService;
+    private final java.security.PrivateKey loginPrivateKey;
 
     public void changePassword(SessionEntity session, PasswordChangeRequest request) {
 
         IamUserEntity user = session.getIamUser();
-        String newPassword = request.getNewPassword();
-        // 1. Validate against policy
+
+        // Decrypt new password for validation
+        String newPassword = decryptPassword(request.getNewPassword());
+
+        // 1. Validate against policy (oldPassword will be decrypted in passwordVerifier.verify)
         passwordPolicyService.validatePasswordChange(session, request.getOldPassword(), newPassword);
 
         // 2. Hash new password
@@ -70,5 +74,26 @@ public class PasswordManager {
         history.setPasswordHash(hash);
         history.setCreatedAt(OffsetDateTime.now());
         historyRepo.save(history);
+    }
+
+    public String decryptPassword(String encryptedPassword) {
+        try {
+            if (encryptedPassword == null || encryptedPassword.trim().isEmpty()) {
+                throw BaseException.badRequest("Password is required and cannot be empty");
+            }
+
+            return TransitPasswordCrypto.decryptPayload(encryptedPassword, loginPrivateKey);
+        } catch (IllegalArgumentException e) {
+            // Already has good error message from TransitPasswordCrypto
+            throw BaseException.badRequest(e.getMessage());
+        } catch (Exception e) {
+            throw BaseException.failedToDecryptPassword(
+                "Failed to decrypt password. Please ensure: " +
+                "1) Password was encrypted with the public key from /identify endpoint, " +
+                "2) The encrypted value is properly base64 encoded, " +
+                "3) No extra whitespace or characters were added. " +
+                "Error: " + e.getMessage()
+            );
+        }
     }
 }

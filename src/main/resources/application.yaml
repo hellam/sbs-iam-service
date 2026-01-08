@@ -88,9 +88,9 @@ management:
       exposure:
         include: health,info,metrics,loggers
 
-#  endpoint:
-#    health:
-#      show-details: always
+  #  endpoint:
+  #    health:
+  #      show-details: always
   health:
     redis:
       enabled: false
@@ -107,7 +107,7 @@ shiva:
     whitelisted-ips:
       - "127.0.0.1"
       - "::1"
-    blacklisted-ips: []
+    blacklisted-ips: [ ]
     custom-header-name: "X-API-Key"
     penalty:
       enabled: true
@@ -117,6 +117,12 @@ shiva:
 
   # Security Headers Configuration
   security:
+    jwt:
+      public-key: ${SHIVA_SECURITY_JWT_PUBLIC_KEY}
+      private-key: ${SHIVA_SECURITY_JWT_PRIVATE_KEY}
+    spa:
+      public-key: ${SHIVA_SECURITY_SPA_PUBLIC_KEY}
+      private-key: ${SHIVA_SECURITY_SPA_PRIVATE_KEY}
     headers:
       enabled: true
       x-frame-options: true

@@ -15,6 +15,8 @@ public class IdentifierResponse {
     private boolean firstLogin;
     private boolean securityQuestionsRequired;
 
+    private String publicKey; // For encrypting password on client side
+
     // IB-specific
     private boolean profileSelectionRequired;
 }

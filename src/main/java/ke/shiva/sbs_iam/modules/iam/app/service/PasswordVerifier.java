@@ -23,17 +23,22 @@ public class PasswordVerifier {
     private final CustomerAuthRepository customerAuthRepo;
     private final EmployeeAuthRepository employeeAuthRepo;
     private final PasswordPolicyService passwordPolicyService;
+    private final PasswordManager passwordManager;
 
-    public PasswordVerifier(CustomerAuthRepository customerAuthRepo, EmployeeAuthRepository employeeAuthRepo, @Lazy PasswordPolicyService passwordPolicyService) {
+    public PasswordVerifier(CustomerAuthRepository customerAuthRepo, EmployeeAuthRepository employeeAuthRepo, @Lazy PasswordPolicyService passwordPolicyService, @Lazy PasswordManager passwordManager) {
         this.customerAuthRepo = customerAuthRepo;
         this.employeeAuthRepo = employeeAuthRepo;
         this.passwordPolicyService = passwordPolicyService;
+        this.passwordManager = passwordManager;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean verify(SessionEntity session, String rawPassword) {
+    public boolean verify(SessionEntity session, String encryptedPassword) {
         Channel channel = session.getChannel();
         IamUserEntity user = session.getIamUser();
+
+        // Decrypt the password from the SPA
+        String rawPassword = passwordManager.decryptPassword(encryptedPassword);
 
         return switch (channel) {
             case INTERNET_BANKING, MOBILE_BANKING -> verifyCustomer(user, rawPassword, channel);
