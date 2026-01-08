@@ -12,6 +12,8 @@ import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 
@@ -28,6 +30,7 @@ public class PasswordVerifier {
         this.passwordPolicyService = passwordPolicyService;
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean verify(SessionEntity session, String rawPassword) {
         Channel channel = session.getChannel();
         IamUserEntity user = session.getIamUser();

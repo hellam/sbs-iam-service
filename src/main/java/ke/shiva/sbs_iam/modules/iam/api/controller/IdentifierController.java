@@ -34,47 +34,45 @@ public class IdentifierController {
 
     @Operation(summary = "1. Identify User (Backoffice)")
     @PostMapping("/backoffice")
-    @RequireSignature(expiresIn = 300)
     public ResponseEntity<ApiResponse<IdentifierResponse>> identifyBackoffice(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
     ) {
         domainGuard.validate(Channel.BACKOFFICE, http);
         req.setChannel(Channel.BACKOFFICE);
-        return ResponseBuilder.success("User identified successfully", identifierService.handle(req));
+        return ResponseBuilder.success(identifierService.handle(req));
     }
 
     @Operation(summary = "1. Identify User (Mobile)")
     @PostMapping("/mobile")
-    @RequireSignature(expiresIn = 300)
-    public ResponseEntity<IdentifierResponse> identifyMobile(
+    public ResponseEntity<ApiResponse<IdentifierResponse>> identifyMobile(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
     ) {
         domainGuard.validate(Channel.MOBILE_BANKING, http);
         req.setChannel(Channel.MOBILE_BANKING);
-        return ResponseEntity.ok(identifierService.handle(req));
+        return ResponseBuilder.success(identifierService.handle(req));
     }
 
     @Operation(summary = "1. Identify User (Internet Banking)")
     @PostMapping("/internet-banking")
-    public ResponseEntity<IdentifierResponse> identifyIB(
+    public ResponseEntity<ApiResponse<IdentifierResponse>> identifyIB(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http
     ) {
         domainGuard.validate(Channel.INTERNET_BANKING, http);
         req.setChannel(Channel.INTERNET_BANKING);
-        return ResponseEntity.ok(identifierService.handle(req));
+        return ResponseBuilder.success(identifierService.handle(req));
     }
 
-    @Operation(summary = "1. Identify User (USSD)")
-    @PostMapping("/ussd")
-    public ResponseEntity<IdentifierResponse> identifyUssd(
-            @RequestBody @Valid IdentifierRequest req,
-            HttpServletRequest http
-    ) {
-        domainGuard.validate(Channel.USSD, http);
-        req.setChannel(Channel.USSD);
-        return ResponseEntity.ok(identifierService.handle(req));
-    }
+//    @Operation(summary = "1. Identify User (USSD)")
+//    @PostMapping("/ussd")
+//    public ResponseEntity<IdentifierResponse> identifyUssd(
+//            @RequestBody @Valid IdentifierRequest req,
+//            HttpServletRequest http
+//    ) {
+//        domainGuard.validate(Channel.USSD, http);
+//        req.setChannel(Channel.USSD);
+//        return ResponseEntity.ok(identifierService.handle(req));
+//    }
 }
