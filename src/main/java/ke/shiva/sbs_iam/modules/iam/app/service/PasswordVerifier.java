@@ -38,7 +38,7 @@ public class PasswordVerifier {
         IamUserEntity user = session.getIamUser();
 
         // Decrypt the password from the SPA
-        String rawPassword = passwordManager.decryptPassword(encryptedPassword);
+        String rawPassword = passwordManager.decryptPassword(encryptedPassword, session.getSessionId());
 
         return switch (channel) {
             case INTERNET_BANKING, MOBILE_BANKING -> verifyCustomer(user, rawPassword, channel);

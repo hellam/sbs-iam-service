@@ -12,10 +12,12 @@ import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import ke.shiva.shivacorestarter.util.TransitPasswordCrypto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PasswordManager {
@@ -26,13 +28,14 @@ public class PasswordManager {
     private final PasswordHistoryRepository historyRepo;
     private final PasswordPolicyService passwordPolicyService;
     private final java.security.PrivateKey loginPrivateKey;
+    private final ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository sessionRepository;
 
     public void changePassword(SessionEntity session, PasswordChangeRequest request) {
 
         IamUserEntity user = session.getIamUser();
 
         // Decrypt new password for validation
-        String newPassword = decryptPassword(request.getNewPassword());
+        String newPassword = decryptPassword(request.getNewPassword(), session.getSessionId());
 
         // 1. Validate against policy (oldPassword will be decrypted in passwordVerifier.verify)
         passwordPolicyService.validatePasswordChange(session, request.getOldPassword(), newPassword);
@@ -76,23 +79,45 @@ public class PasswordManager {
         historyRepo.save(history);
     }
 
-    public String decryptPassword(String encryptedPassword) {
+    public String decryptPassword(String encryptedPassword, String _sessionId) {
         try {
             if (encryptedPassword == null || encryptedPassword.trim().isEmpty()) {
                 throw BaseException.badRequest("Password is required and cannot be empty");
             }
 
-            return TransitPasswordCrypto.decryptPayload(encryptedPassword, loginPrivateKey);
+            String saltedPassword = TransitPasswordCrypto.decryptPayload(encryptedPassword, loginPrivateKey);
+
+            // Extract session ID and encrypted password (format: sessionId:encryptedPassword)
+            String[] parts = saltedPassword.split(":", 2);
+            if (parts.length != 2) {
+                throw BaseException.badRequest("Invalid password format. Expected: sessionId:encryptedPassword");
+            }
+
+            String sessionId = parts[0];
+            String plainPassword = parts[1];
+
+            if (!sessionId.equals(_sessionId)) {
+                log.warn("Session ID mismatch during password decryption. Expected: {}, Received: {}", _sessionId, sessionId);
+                throw BaseException.badRequest();
+            }
+
+            // Validate session exists and is active
+            SessionEntity session = sessionRepository.findBySessionId(sessionId);
+            if (session == null) {
+                throw BaseException.unauthorized("Invalid or expired session");
+            }
+
+            if (session.getExpiresAt() != null && session.getExpiresAt().isBefore(OffsetDateTime.now())) {
+                throw BaseException.unauthorized("Session has expired");
+            }
+
+            // return decrypted password
+            return plainPassword;
         } catch (IllegalArgumentException e) {
-            // Already has good error message from TransitPasswordCrypto
             throw BaseException.badRequest(e.getMessage());
         } catch (Exception e) {
             throw BaseException.failedToDecryptPassword(
-                "Failed to decrypt password. Please ensure: " +
-                "1) Password was encrypted with the public key from /identify endpoint, " +
-                "2) The encrypted value is properly base64 encoded, " +
-                "3) No extra whitespace or characters were added. " +
-                "Error: " + e.getMessage()
+                "Failed to decrypt password. Error: " + e.getMessage()
             );
         }
     }
