@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/oauth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication Flow")
 public class PostLoginController {

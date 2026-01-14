@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/oauth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication Flow")
 @RateLimit(capacity = 5, refillTokens = 5, refillDuration = "PT5M", keyType = KeyType.IP,

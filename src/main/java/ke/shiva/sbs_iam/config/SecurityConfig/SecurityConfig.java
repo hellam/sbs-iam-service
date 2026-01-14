@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -30,25 +32,39 @@ public class SecurityConfig {
     @Value("${cors.allow-credentials:true}")
     private boolean allowCredentials;
 
+    @Value("${shiva.security.jwt.public-key:#{null}}")
+    private String publicKeyString;
+
+    private final JwtDecoder jwtDecoder;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .addFilterBefore(jwtRevocationFilter, BasicAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
-                                "/oauth/identifier/**",
-                                "/oauth/login/**",
-                                "/oauth/mfa/**",
-                                "/oauth/token",
-                                "/oauth/finalize/**",
-                                "/oauth/password/**",
+                                "/identifier/**",
+                                "/login/**",
+                                "/mfa/**",
+                                "token",
+                                "/finalize/**",
+                                "/password/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 );
+
+        if (publicKeyString != null && !publicKeyString.isEmpty()) {
+            http.oauth2ResourceServer(oauth2 -> oauth2
+                    .jwt(jwt -> jwt.decoder(jwtDecoder))
+            );
+        }
         return http.build();
     }
 

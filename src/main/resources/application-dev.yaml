@@ -11,7 +11,7 @@ springdoc:
     operations-sorter: alpha
     tags-sorter: alpha
     try-it-out-enabled: true
-  show-actuator: false
+  show-actuator: true
 
 management:
   endpoints:
@@ -31,9 +31,9 @@ server:
 
 seeder:
   employee:
-    enabled: true
+    enabled: false
   policy:
-    enabled: true
+    enabled: false
 
 security:
   allowed-domains:

@@ -28,7 +28,6 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/oauth")
 @RequiredArgsConstructor
 @Tag(name = "Authentication Flow")
 public class FinalizeLoginController {

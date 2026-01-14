@@ -5,7 +5,7 @@ spring:
     active: dev
   mvc:
     servlet:
-      path: /api/v1
+      path: /api/v1/oauth  # Base path for all MVC controllers
   #Temporal exclusion of DataSourceAutoConfiguration to avoid startup failure due to missing DB configuration
   #  autoconfigure:
   #    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration

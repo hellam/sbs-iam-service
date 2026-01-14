@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/oauth/identifier")
+@RequestMapping("identifier")
 @RequiredArgsConstructor
 @Tag(name = "Authentication Flow")
 @RateLimit(capacity = 10, refillTokens = 10, refillDuration = "PT1M", keyType = KeyType.IP,

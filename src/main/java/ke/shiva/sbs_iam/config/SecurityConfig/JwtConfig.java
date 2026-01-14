@@ -10,8 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.jwt.*;
 
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
@@ -118,5 +117,13 @@ public class JwtConfig {
         NimbusJwtEncoder encoder = new NimbusJwtEncoder(jwkSource);
         log.info("✅ JWT Encoder initialized successfully");
         return encoder;
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder(RSAPublicKey publicKey) {
+        log.info("Initializing JWT Decoder with RSA public key");
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(publicKey).build();
+        log.info("✅ JWT Decoder initialized successfully");
+        return decoder;
     }
 }
