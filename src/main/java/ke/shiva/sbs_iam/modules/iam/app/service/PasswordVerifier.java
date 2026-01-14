@@ -4,7 +4,6 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.EmployeeAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PasswordPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerAuthRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.EmployeeAuthRepository;
@@ -15,21 +14,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
-
 @Service
 public class PasswordVerifier {
 
     private final CustomerAuthRepository customerAuthRepo;
     private final EmployeeAuthRepository employeeAuthRepo;
-    private final PasswordPolicyService passwordPolicyService;
     private final PasswordManager passwordManager;
+    private final AccountLockoutService accountLockoutService;
 
-    public PasswordVerifier(CustomerAuthRepository customerAuthRepo, EmployeeAuthRepository employeeAuthRepo, @Lazy PasswordPolicyService passwordPolicyService, @Lazy PasswordManager passwordManager) {
+    public PasswordVerifier(CustomerAuthRepository customerAuthRepo, EmployeeAuthRepository employeeAuthRepo, @Lazy PasswordManager passwordManager, AccountLockoutService accountLockoutService) {
         this.customerAuthRepo = customerAuthRepo;
         this.employeeAuthRepo = employeeAuthRepo;
-        this.passwordPolicyService = passwordPolicyService;
         this.passwordManager = passwordManager;
+        this.accountLockoutService = accountLockoutService;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -53,41 +50,30 @@ public class PasswordVerifier {
             throw BaseException.iamUserCredentialsNotFound("Customer credentials not found");
         }
 
-        PasswordPolicyEntity policy = passwordPolicyService.resolvePolicy(channel);
+        // Check and validate lockout status (automatically unlocks if expired)
+        accountLockoutService.checkAndValidateCustomerLockout(user, channel);
 
-        if (auth.getInternetLocked()) {
-            if (auth.getInternetLockoutUntil() == null || auth.getInternetLockoutUntil().isAfter(OffsetDateTime.now())) {
-                throw BaseException.accountLocked("Account is locked. Please try again later or contact support.");
-            } else {
-                // Lock has expired, so we can reset it
-                auth.setInternetLocked(false);
-                auth.setInternetLockoutUntil(null);
-                auth.setInternetFailedAttempts((short) 0);
-                customerAuthRepo.save(auth);
-            }
-        }
+        String passwordHash = channel == Channel.INTERNET_BANKING
+                ? auth.getInternetPasswordHash()
+                : auth.getMobilePinHash();
 
-
-        boolean matches = HashUtil.bcryptVerify(rawPassword, auth.getInternetPasswordHash());
+        boolean matches = HashUtil.bcryptVerify(rawPassword, passwordHash);
 
         if (matches) {
-            auth.setInternetFailedAttempts((short) 0);
-            auth.setInternetLocked(false);
-            auth.setInternetLockoutUntil(null);
-            customerAuthRepo.save(auth);
+            // Reset lockout on successful authentication
+            if (channel == Channel.INTERNET_BANKING) {
+                accountLockoutService.resetCustomerInternetLockout(user);
+            } else {
+                accountLockoutService.resetCustomerMobileLockout(user);
+            }
             return true;
         } else {
-            short failedAttempts = (short) (auth.getInternetFailedAttempts() + 1);
-            auth.setInternetFailedAttempts(failedAttempts);
-            if (failedAttempts >= policy.getMaxFailedAttempts()) {
-                auth.setInternetLocked(true);
-                if (policy.getLockoutMinutes() != null && policy.getLockoutMinutes() > 0) {
-                    auth.setInternetLockoutUntil(OffsetDateTime.now().plusMinutes(policy.getLockoutMinutes()));
-                } else {
-                    auth.setInternetLockoutUntil(null); // Permanent lock
-                }
+            // Record failed attempt (will lock if threshold reached)
+            if (channel == Channel.INTERNET_BANKING) {
+                accountLockoutService.recordCustomerInternetFailedAttempt(user, channel);
+            } else {
+                accountLockoutService.recordCustomerMobileFailedAttempt(user, channel);
             }
-            customerAuthRepo.save(auth);
             return false;
         }
     }
@@ -98,40 +84,18 @@ public class PasswordVerifier {
             throw BaseException.iamUserCredentialsNotFound("Employee credentials not found");
         }
 
-        PasswordPolicyEntity policy = passwordPolicyService.resolvePolicy(channel);
-
-        if (auth.getStaffLocked()) {
-            if (auth.getStaffLockoutUntil() == null || auth.getStaffLockoutUntil().isAfter(OffsetDateTime.now())) {
-                throw BaseException.accountLocked("Account is locked. Please try again later or contact support.");
-            } else {
-                // Lock has expired, so we can reset it
-                auth.setStaffLocked(false);
-                auth.setStaffLockoutUntil(null);
-                auth.setStaffFailedAttempts((short) 0);
-                employeeAuthRepo.save(auth);
-            }
-        }
+        // Check and validate lockout status (automatically unlocks if expired)
+        accountLockoutService.checkAndValidateEmployeeLockout(user, channel);
 
         boolean matches = HashUtil.bcryptVerify(rawPassword, auth.getStaffPasswordHash());
 
         if (matches) {
-            auth.setStaffFailedAttempts((short) 0);
-            auth.setStaffLocked(false);
-            auth.setStaffLockoutUntil(null);
-            employeeAuthRepo.save(auth);
+            // Reset lockout on successful authentication
+            accountLockoutService.resetEmployeeLockout(user);
             return true;
         } else {
-            short failedAttempts = (short) (auth.getStaffFailedAttempts() + 1);
-            auth.setStaffFailedAttempts(failedAttempts);
-            if (failedAttempts >= policy.getMaxFailedAttempts()) {
-                auth.setStaffLocked(true);
-                if (policy.getLockoutMinutes() != null && policy.getLockoutMinutes() > 0) {
-                    auth.setStaffLockoutUntil(OffsetDateTime.now().plusMinutes(policy.getLockoutMinutes()));
-                } else {
-                    auth.setStaffLockoutUntil(null); // Permanent lock
-                }
-            }
-            employeeAuthRepo.save(auth);
+            // Record failed attempt (will lock if threshold reached)
+            accountLockoutService.recordEmployeeFailedAttempt(user, channel);
             return false;
         }
     }

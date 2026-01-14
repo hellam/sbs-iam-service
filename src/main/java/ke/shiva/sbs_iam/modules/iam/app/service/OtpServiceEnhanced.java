@@ -25,7 +25,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class OtpService {
+public class OtpServiceEnhanced {
 
     private final OtpRecordRepository otpRecordRepository;
     private final SessionRepository sessionRepository;
@@ -56,8 +56,6 @@ public class OtpService {
                     otpRecord.getExpiryTime().isAfter(OffsetDateTime.now()) &&
                     otpRecord.getVerifyAttempts() < mfaPolicy.getMaxVerifyAttempts()) {
                 log.info("Reusing existing OTP for session: {}", session.getSessionId());
-                throw BaseException.reuseOtp("An OTP has already been sent and is still valid. Please check your " +
-                        notificationChannel.name().toLowerCase() + ".");
             } else {
                 generateAndSetOtp(otpRecord, session, notificationChannel, mfaPolicy);
                 otpRecordRepository.save(otpRecord);
@@ -128,8 +126,8 @@ public class OtpService {
             accountLockoutService.lockAccountForOtpFailure(session.getIamUser(), session.getChannel());
 
             throw BaseException.accountLocked(
-                    "Too many failed OTP verification attempts. Your account has been locked. " +
-                            "Please contact support."
+                "Too many failed OTP verification attempts. Your account has been locked. " +
+                "Please contact support."
             );
         }
 
@@ -153,8 +151,8 @@ public class OtpService {
                 accountLockoutService.lockAccountForOtpFailure(session.getIamUser(), session.getChannel());
 
                 throw BaseException.accountLocked(
-                        "Too many failed OTP verification attempts. Your account has been locked. " +
-                                "Please contact support."
+                    "Too many failed OTP verification attempts. Your account has been locked. " +
+                    "Please contact support."
                 );
             }
 

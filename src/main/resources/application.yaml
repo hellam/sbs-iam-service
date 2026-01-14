@@ -10,13 +10,13 @@ spring:
   #  autoconfigure:
   #    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:shiva_banking} # Default to local DB for development
+    url: jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5432}/${DB_NAME:shiva_banking} # Default to local DB for development
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
     hikari: # HikariCP settings for connection pooling, it helps managing DB connections efficiently
-      pool-name: NotificationSvcHikariCP
+      pool-name: IamSvcHikariCP
       maximum-pool-size: 10 # max connections in pool, adjust based on app load
       minimum-idle: 5 # keep at least this many idle connections
       idle-timeout: 30000 # 30 seconds before an idle connection is closed
@@ -25,10 +25,10 @@ spring:
   config:
     import: optional:file:.env
 
-  # Redis configuration for rate limiting and caching
+    # Redis configuration for rate limiting and caching
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
+      host: ${REDIS_HOST:127.0.0.1}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       database: ${REDIS_DATABASE:0}
@@ -148,3 +148,8 @@ shiva:
       secret-key: ${SIGNATURE_SECRET_KEY:change-this-secret-key-in-production}
       algorithm: HmacSHA256
 
+# System properties to prevent internet access attempts
+system:
+  properties:
+    java.net.useSystemProxies: false
+    java.net.preferIPv4Stack: true
