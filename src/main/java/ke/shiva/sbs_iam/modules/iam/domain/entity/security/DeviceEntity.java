@@ -26,7 +26,6 @@ public class DeviceEntity extends BaseEntity {
     private IamUserEntity iamUser;
 
     @Size(max = 32)
-    @NotNull
     @Column(name = "device_type", nullable = false, length = 32)
     private String deviceType;
 
@@ -77,18 +76,15 @@ public class DeviceEntity extends BaseEntity {
     @Column(name = "last_asn", length = 32)
     private String lastAsn;
 
-    @NotNull
     @ColumnDefault("false")
     @Column(name = "trusted", nullable = false)
     private Boolean trusted;
 
     @Size(max = 16)
-    @NotNull
     @ColumnDefault("'LOW'")
     @Column(name = "risk_level", nullable = false, length = 16)
     private String riskLevel;
 
-    @NotNull
     @ColumnDefault("0")
     @Column(name = "risk_score", nullable = false)
     private Integer riskScore;
@@ -104,6 +100,12 @@ public class DeviceEntity extends BaseEntity {
     @Size(max = 255)
     @Column(name = "revoke_reason")
     private String revokeReason;
+    @Size(max = 100)
+    @Column(name = "first_city", length = 100)
+    private String firstCity;
+    @Size(max = 100)
+    @Column(name = "last_city", length = 100)
+    private String lastCity;
 
 
 }

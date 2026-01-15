@@ -28,15 +28,13 @@
             </column>
 
             <!-- Device classification -->
-            <column name="device_type" type="VARCHAR(32)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="device_type" type="VARCHAR(32)"/>
             <column name="platform" type="VARCHAR(64)"/>
             <column name="browser" type="VARCHAR(64)"/>
-            <column name="browser_version" type="VARCHAR(32)"/>
+            <column name="browser_version" type="VARCHAR(50)"/>
 
             <!-- User agent tracking (hashed for privacy) -->
-            <column name="user_agent_hash" type="CHAR(64)">
+            <column name="user_agent_hash" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
 
@@ -55,20 +53,16 @@
             </column>
 
             <!-- Geo / ASN (optional but useful) -->
-            <column name="first_country" type="CHAR(2)"/>
-            <column name="last_country" type="CHAR(2)"/>
-            <column name="last_asn" type="VARCHAR(32)"/>
+            <column name="first_country" type="VARCHAR(100)"/>
+            <column name="first_city" type="VARCHAR(100)"/>
+            <column name="last_country" type="VARCHAR(100)"/>
+            <column name="last_city" type="VARCHAR(100)"/>
+            <column name="last_asn" type="VARCHAR(100)"/>
 
             <!-- Trust & security state -->
-            <column name="trusted" type="BOOLEAN" defaultValueBoolean="false">
-                <constraints nullable="false"/>
-            </column>
-            <column name="risk_level" type="VARCHAR(16)" defaultValue="LOW">
-                <constraints nullable="false"/>
-            </column>
-            <column name="risk_score" type="INT" defaultValueNumeric="0">
-                <constraints nullable="false"/>
-            </column>
+            <column name="trusted" type="BOOLEAN" defaultValueBoolean="false"/>
+            <column name="risk_level" type="VARCHAR(16)" defaultValue="LOW"/>
+            <column name="risk_score" type="INT" defaultValueNumeric="0"/>
 
             <!-- Lifecycle -->
             <column name="active" type="BOOLEAN" defaultValueBoolean="true">

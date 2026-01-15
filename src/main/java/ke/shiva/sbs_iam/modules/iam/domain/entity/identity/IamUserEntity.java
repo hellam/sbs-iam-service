@@ -117,7 +117,7 @@ public class IamUserEntity {
     @OneToMany(mappedBy = "iamUser")
     private Set<SessionEntity> sessions = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "iamUser")
     private Set<DeviceEntity> devices = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "iamUser")

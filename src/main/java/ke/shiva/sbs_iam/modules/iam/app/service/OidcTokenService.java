@@ -14,6 +14,8 @@ import ke.shiva.sbs_iam.modules.iam.infra.repository.RefreshTokenRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.RevokedTokenRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
+import ke.shiva.shivacorestarter.util.HashUtil;
+import ke.shiva.shivacorestarter.util.SecureRandomStringGen;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.codec.Hex;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -83,8 +85,8 @@ public class OidcTokenService {
 
         String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(accessClaims)).getTokenValue();
 
-        String rawRefreshToken = generateRawRefreshToken();
-        String refreshTokenHash = hashToken(rawRefreshToken);
+        String rawRefreshToken = SecureRandomStringGen.generate();
+        String refreshTokenHash = HashUtil.sha256(rawRefreshToken);
 
         RefreshTokenEntity refreshTokenEntity = new RefreshTokenEntity();
         refreshTokenEntity.setSession(session);
@@ -103,7 +105,7 @@ public class OidcTokenService {
 
     @Transactional
     public OidcTokenResponse refreshTokens(RefreshTokenRequest request) {
-        String refreshTokenHash = hashToken(request.getRefreshToken());
+        String refreshTokenHash = HashUtil.sha256(request.getRefreshToken());
         RefreshTokenEntity oldToken = refreshTokenRepository.findByTokenHash(refreshTokenHash)
                 .orElseThrow(() -> BaseException.unauthorized("Invalid refresh token"));
 
@@ -153,22 +155,6 @@ public class OidcTokenService {
                 .claim("phone_number", otpService.getContactForNotificationChannel(session, NotificationChannel.SMS).getContactValue())
                 .build();
         return jwtEncoder.encode(JwtEncoderParameters.from(idClaims)).getTokenValue();
-    }
-
-    private String generateRawRefreshToken() {
-        byte[] bytes = new byte[32];
-        secureRandom.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    private String hashToken(String token) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
-            return new String(Hex.encode(hash));
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to hash token", e);
-        }
     }
 
     private String buildScopeFor(SessionEntity session) {
