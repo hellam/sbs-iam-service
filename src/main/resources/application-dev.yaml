@@ -31,9 +31,9 @@ server:
 
 seeder:
   employee:
-    enabled: false
+    enabled: true
   policy:
-    enabled: false
+    enabled: true
 
 security:
   allowed-domains:
