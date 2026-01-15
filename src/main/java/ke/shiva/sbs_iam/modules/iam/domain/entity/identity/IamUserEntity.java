@@ -127,3 +127,4 @@ public class IamUserEntity {
     private Set<ProfileContact> profileContacts = new LinkedHashSet<>();
 
 }
+
