@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- 112 - TRUSTED DEVICES -->
+
+    <changeSet id="pg-iam-112-devices" author="hellamimbosa">
+
+        <createTable tableName="devices">
+
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"
+                             primaryKeyName="pk_devices"/>
+            </column>
+
+            <!-- Public-facing device identifier (stored in HttpOnly cookie) -->
+            <column name="device_id" type="VARCHAR(128)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <!-- User binding (nullable until login happens) -->
+            <column name="iam_user_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+
+            <!-- Device classification -->
+            <column name="device_type" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="platform" type="VARCHAR(64)"/>
+            <column name="browser" type="VARCHAR(64)"/>
+            <column name="browser_version" type="VARCHAR(32)"/>
+
+            <!-- User agent tracking (hashed for privacy) -->
+            <column name="user_agent_hash" type="CHAR(64)">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Network / risk signals -->
+            <column name="first_ip" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_ip" type="VARCHAR(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="first_seen_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_seen_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Geo / ASN (optional but useful) -->
+            <column name="first_country" type="CHAR(2)"/>
+            <column name="last_country" type="CHAR(2)"/>
+            <column name="last_asn" type="VARCHAR(32)"/>
+
+            <!-- Trust & security state -->
+            <column name="trusted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="risk_level" type="VARCHAR(16)" defaultValue="LOW">
+                <constraints nullable="false"/>
+            </column>
+            <column name="risk_score" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+
+            <!-- Lifecycle -->
+            <column name="status" type="VARCHAR(16)" defaultValue="ACTIVE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revoked_at" type="TIMESTAMP"/>
+            <column name="revoke_reason" type="VARCHAR(255)"/>
+
+            <!-- Audit -->
+            <column name="created_at" type="TIMESTAMP" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueDate="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="devices" baseColumnNames="iam_user_id"
+                referencedTableName="iam_user" referencedColumnNames="id"
+                constraintName="fk_devices_user"/>
+
+        <createIndex tableName="devices" indexName="idx_devices_user">
+            <column name="iam_user_id"/>
+        </createIndex>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -99,7 +99,7 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/iam/10-session/111-refresh-tokens.xml
   - include:
-      file: db/changelog/changes/iam/10-session/112-trusted-devices.xml
+      file: db/changelog/changes/iam/10-session/112-devices.xml
   - include:
       file: db/changelog/changes/iam/10-session/113-session-events.xml
   - include:
