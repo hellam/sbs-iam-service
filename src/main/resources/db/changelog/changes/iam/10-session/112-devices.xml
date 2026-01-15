@@ -71,7 +71,7 @@
             </column>
 
             <!-- Lifecycle -->
-            <column name="status" type="VARCHAR(16)" defaultValue="ACTIVE">
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
                 <constraints nullable="false"/>
             </column>
             <column name="revoked_at" type="TIMESTAMP"/>
@@ -94,6 +94,10 @@
 
         <createIndex tableName="devices" indexName="idx_devices_user">
             <column name="iam_user_id"/>
+        </createIndex>
+
+        <createIndex tableName="devices" indexName="idx_devices_device_id" unique="true">
+            <column name="device_id"/>
         </createIndex>
 
     </changeSet>
