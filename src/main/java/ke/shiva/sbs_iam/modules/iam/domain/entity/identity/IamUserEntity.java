@@ -117,8 +117,8 @@ public class IamUserEntity {
     @OneToMany(mappedBy = "iamUser")
     private Set<SessionEntity> sessions = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "iamUser")
-    private Set<TrustedDeviceEntity> trustedDevices = new LinkedHashSet<>();
+    @OneToMany(mappedBy = "user")
+    private Set<DeviceEntity> devices = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "iamUser")
     private Set<UserConsentEntity> userConsents = new LinkedHashSet<>();
@@ -127,4 +127,3 @@ public class IamUserEntity {
     private Set<ProfileContact> profileContacts = new LinkedHashSet<>();
 
 }
-
