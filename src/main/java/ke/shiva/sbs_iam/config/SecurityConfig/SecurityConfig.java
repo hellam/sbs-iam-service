@@ -1,6 +1,10 @@
 package ke.shiva.sbs_iam.config.SecurityConfig;
 
 import ke.shiva.sbs_iam.config.JwtRevocationFilter;
+import ke.shiva.sbs_iam.modules.iam.app.security.DeviceIdFilter;
+import ke.shiva.sbs_iam.modules.iam.app.security.DeviceValidationMode;
+import ke.shiva.sbs_iam.modules.iam.app.service.DeviceIdValidator;
+import ke.shiva.sbs_iam.modules.iam.app.util.FlowIdProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -110,5 +114,15 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    public DeviceIdFilter sessionBoundFilter(DeviceIdValidator validator, FlowIdProvider provider) {
+        return new DeviceIdFilter(validator, provider, DeviceValidationMode.SESSION_BOUND, true);
+    }
+
+    @Bean
+    public DeviceIdFilter optionalFilter(DeviceIdValidator validator, FlowIdProvider provider) {
+        return new DeviceIdFilter(validator, provider, DeviceValidationMode.EXISTENCE_ONLY, false);
     }
 }

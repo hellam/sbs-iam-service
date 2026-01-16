@@ -1,21 +1,32 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
+import jakarta.servlet.http.HttpServletRequest;
+import ke.shiva.sbs_iam.config.SecurityConfig.SecurityConstants;
 import ke.shiva.sbs_iam.modules.iam.app.security.DeviceValidationMode;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.DeviceEntity;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.DeviceRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository;
-import ke.shiva.shivacorestarter.exception.BaseException;
-import ke.shiva.shivacorestarter.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import ke.shiva.sbs_iam.modules.iam.app.service.GeoIpService;
+import ke.shiva.shivacorestarter.util.HashUtil;
+import ke.shiva.shivacorestarter.util.RequestUtil;
+import ke.shiva.shivacorestarter.exception.BaseException;
+
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * Service responsible for validating device IDs in various authentication contexts.
- * Provides centralized logic for device verification across the authentication flow.
+ * Provides centralized logic for device verification across the authentication flow
+ * and updates last‑seen information on success.
  */
 @Slf4j
 @Service
@@ -24,13 +35,15 @@ public class DeviceIdValidator {
 
     private final DeviceRepository deviceRepository;
     private final SessionRepository sessionRepository;
+    private final GeoIpService geoIpService;
 
     /**
-     * Validates a device ID based on the specified validation mode.
+     * Validates a device ID based on the specified validation mode and updates
+     * the last‑seen metadata if validation succeeds.
      *
      * @param deviceId The raw device ID from the cookie
-     * @param mode The validation mode to apply
-     * @param flowId The flow ID for session-bound validation (optional for EXISTENCE_ONLY)
+     * @param mode     The validation mode to apply
+     * @param flowId   The flow ID for session‑bound validation (optional for EXISTENCE_ONLY)
      * @throws BaseException if validation fails
      */
     public void validate(String deviceId, DeviceValidationMode mode, UUID flowId) {
@@ -46,6 +59,9 @@ public class DeviceIdValidator {
             case SESSION_BOUND -> validateSessionBound(hashedDeviceId, flowId);
             default -> throw new IllegalArgumentException("Unknown validation mode: " + mode);
         }
+
+        // Update last seen only after validation passes
+        updateLastSeen(hashedDeviceId);
     }
 
     /**
@@ -69,7 +85,7 @@ public class DeviceIdValidator {
     private void validateSessionBound(String hashedDeviceId, UUID flowId) {
         if (flowId == null) {
             log.error("Device validation failed: Flow ID required for SESSION_BOUND validation");
-            throw BaseException.badRequest("Invalid request context");
+            throw BaseException.badRequest("Invalid request");
         }
 
         // First validate existence
@@ -80,7 +96,7 @@ public class DeviceIdValidator {
 
         if (session == null) {
             log.warn("Session not found for flow ID: {}", flowId);
-            throw BaseException.unauthorized("Invalid session");
+            throw BaseException.unauthorized("Session expired");
         }
 
         if (!hashedDeviceId.equals(session.getDeviceId())) {
@@ -108,5 +124,46 @@ public class DeviceIdValidator {
         String hashedDeviceId = HashUtil.sha256(deviceId);
         return deviceRepository.existsByDeviceId(hashedDeviceId);
     }
-}
 
+    /**
+     * Updates the last‑seen metadata for a device.  This method extracts the current
+     * request context to obtain the client IP and user agent.  If the request
+     * context cannot be determined, the update is skipped.
+     *
+     * @param hashedDeviceId The SHA‑256 hashed device ID
+     */
+    private void updateLastSeen(String hashedDeviceId) {
+        Optional<DeviceEntity> optionalDevice = deviceRepository.findByDeviceIdAndActiveTrue(hashedDeviceId);
+        if (optionalDevice.isEmpty()) {
+            return;
+        }
+        DeviceEntity device = optionalDevice.get();
+        try {
+            ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attrs == null) {
+                return;
+            }
+            HttpServletRequest request = attrs.getRequest();
+            // Extract IP and user agent
+            String ipAddress = RequestUtil.getClientIp(request);
+            String userAgent = request.getHeader(SecurityConstants.Headers.USER_AGENT_HEADER);
+            String userAgentHash = HashUtil.sha256(userAgent);
+
+            // Lookup location using GeoIP service
+            GeoIpService.GeoLocation location = geoIpService.lookup(ipAddress);
+
+            device.setLastIp(ipAddress);
+            device.setLastSeenAt(Instant.now());
+            device.setUserAgentHash(userAgentHash);
+            device.setLastCountry(location != null ? location.getCountry() : null);
+            device.setLastCity(location != null ? location.getCity() : null);
+            device.setUpdatedAt(OffsetDateTime.now());
+
+            deviceRepository.save(device);
+            log.debug("Last seen updated for device: {}…", hashedDeviceId.substring(0, 8));
+        } catch (Exception e) {
+            log.warn("Failed to update last seen for device {}: {}",
+                    hashedDeviceId.substring(0, 8) + "...", e.getMessage());
+        }
+    }
+}
