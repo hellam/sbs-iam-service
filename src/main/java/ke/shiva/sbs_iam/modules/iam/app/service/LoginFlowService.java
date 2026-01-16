@@ -10,18 +10,18 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.ProfileType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.SessionType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
-import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerProfileRepository;
-import ke.shiva.sbs_iam.modules.iam.infra.repository.OrganizationUserRepository;
-import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionEventRepository;
-import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
 import ke.shiva.shivacorestarter.exception.BaseException;
+import ke.shiva.shivacorestarter.util.HashUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LoginFlowService {
@@ -31,13 +31,15 @@ public class LoginFlowService {
     private final CustomerProfileRepository customerRepo;
     private final OrganizationUserRepository orgRepo;
     private final SessionRepository sessionRepository;
+    private final DeviceRepository deviceRepository;
 
     // -------- CREATE LOGIN FLOW --------
-    public SessionEntity start(IamUserEntity user, Channel channel, LoginRequirements reqs, String identifier) {
+    public SessionEntity start(IamUserEntity user, Channel channel, LoginRequirements reqs, String identifier, String deviceId) {
 
         SessionEntity s = new SessionEntity();
         s.setSessionId(String.valueOf(UUID.randomUUID()));
         s.setIamUser(user);
+        s.setDeviceId(HashUtil.sha256(deviceId));
         s.setChannel(channel);
         s.setStatus(LoginStage.IDENTIFIER_OK);
         s.setSessionType(SessionType.LOGIN_TEMP);
@@ -165,5 +167,19 @@ public class LoginFlowService {
         s.setExpiresAt(OffsetDateTime.now().plus(Duration.ofMinutes(15)));
         sessionRepo.save(s);
         logEvent(s, "SESSION_EXTENDED");
+    }
+    public void extend(SessionEntity s, int timeMinutes) {
+        s.setExpiresAt(OffsetDateTime.now().plus(Duration.ofMinutes(timeMinutes)));
+        sessionRepo.save(s);
+        logEvent(s, "SESSION_EXTENDED");
+    }
+
+    public void verifyDeviceId(String deviceId) {
+        String hashedDeviceId = HashUtil.sha256(deviceId);
+        boolean exists = deviceRepository.existsByDeviceId(hashedDeviceId);
+        if (!exists) {
+            log.warn("Device ID verification failed for deviceId: {}", deviceId);
+            throw BaseException.badRequest("Invalid Request");
+        }
     }
 }

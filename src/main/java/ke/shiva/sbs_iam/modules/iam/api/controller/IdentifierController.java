@@ -4,22 +4,21 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import ke.shiva.sbs_iam.config.SecurityConfig.SecurityConstants;
 import ke.shiva.sbs_iam.modules.iam.api.request.IdentifierRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.IdentifierResponse;
+import ke.shiva.sbs_iam.modules.iam.app.security.DeviceValidationMode;
+import ke.shiva.sbs_iam.modules.iam.app.security.RequiresDeviceId;
 import ke.shiva.sbs_iam.modules.iam.app.service.DomainGuard;
 import ke.shiva.sbs_iam.modules.iam.app.service.IdentifierService;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.shivacorestarter.dto.ApiResponse;
 import ke.shiva.shivacorestarter.ratelimit.KeyType;
 import ke.shiva.shivacorestarter.ratelimit.RateLimit;
-import ke.shiva.shivacorestarter.security.RequireSignature;
 import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("identifier")
@@ -36,33 +35,38 @@ public class IdentifierController {
     @PostMapping("/backoffice")
     public ResponseEntity<ApiResponse<IdentifierResponse>> identifyBackoffice(
             @RequestBody @Valid IdentifierRequest req,
-            HttpServletRequest http
+            HttpServletRequest http,
+            @CookieValue(value = SecurityConstants.Cookies.DEVICE_ID_TOKEN_NAME) String deviceId
     ) {
         domainGuard.validate(Channel.BACKOFFICE, http);
         req.setChannel(Channel.BACKOFFICE);
-        return ResponseBuilder.success(identifierService.handle(req));
+        return ResponseBuilder.success(identifierService.handle(req, deviceId));
     }
 
     @Operation(summary = "1. Identify User (Mobile)")
     @PostMapping("/mobile")
     public ResponseEntity<ApiResponse<IdentifierResponse>> identifyMobile(
             @RequestBody @Valid IdentifierRequest req,
-            HttpServletRequest http
+            HttpServletRequest http,
+            //TODO: Change to DEVICE_ID_TOKEN_NAME not Cookie
+            @CookieValue(value = SecurityConstants.Cookies.DEVICE_ID_TOKEN_NAME) String deviceId
     ) {
         domainGuard.validate(Channel.MOBILE_BANKING, http);
         req.setChannel(Channel.MOBILE_BANKING);
-        return ResponseBuilder.success(identifierService.handle(req));
+        return ResponseBuilder.success(identifierService.handle(req, deviceId));
     }
 
     @Operation(summary = "1. Identify User (Internet Banking)")
     @PostMapping("/internet-banking")
+    @RequiresDeviceId(mode = DeviceValidationMode.EXISTENCE_ONLY)
     public ResponseEntity<ApiResponse<IdentifierResponse>> identifyIB(
             @RequestBody @Valid IdentifierRequest req,
-            HttpServletRequest http
+            HttpServletRequest http,
+            @CookieValue(value = SecurityConstants.Cookies.DEVICE_ID_TOKEN_NAME) String deviceId
     ) {
         domainGuard.validate(Channel.INTERNET_BANKING, http);
         req.setChannel(Channel.INTERNET_BANKING);
-        return ResponseBuilder.success(identifierService.handle(req));
+        return ResponseBuilder.success(identifierService.handle(req, deviceId));
     }
 
 //    @Operation(summary = "1. Identify User (USSD)")

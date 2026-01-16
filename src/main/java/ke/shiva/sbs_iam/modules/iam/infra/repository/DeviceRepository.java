@@ -9,5 +9,7 @@ import java.util.Optional;
 @Repository
 public interface DeviceRepository extends JpaRepository<DeviceEntity, Long> {
     Optional<DeviceEntity> findByDeviceIdAndActiveTrue(String deviceId);
+
+    boolean existsByDeviceId(String hashedDeviceId);
 }
 

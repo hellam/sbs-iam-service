@@ -7,7 +7,9 @@ import ke.shiva.sbs_iam.modules.iam.api.request.MfaInitRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.MfaVerifyRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.MfaInitResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.MfaVerifyResponse;
+import ke.shiva.sbs_iam.modules.iam.app.security.DeviceValidationMode;
 import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
+import ke.shiva.sbs_iam.modules.iam.app.security.RequiresDeviceId;
 import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
 import ke.shiva.sbs_iam.modules.iam.app.service.MfaService;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
@@ -43,6 +45,7 @@ public class MfaController {
 
     @Operation(summary = "4. Verify MFA")
     @PostMapping("/verify")
+    @RequiresDeviceId(mode = DeviceValidationMode.SESSION_BOUND)
     @RequiresStage(LoginStage.PASSWORD_OK)
     public ResponseEntity<ApiResponse<MfaVerifyResponse>> verify(@Valid @RequestBody MfaVerifyRequest req, @FlowId UUID flowId) {
         return ResponseBuilder.success("MFA verified successfully", mfaService.verify(req, flowId));

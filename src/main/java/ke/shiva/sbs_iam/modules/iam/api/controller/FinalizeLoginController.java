@@ -2,9 +2,12 @@ package ke.shiva.sbs_iam.modules.iam.api.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import ke.shiva.sbs_iam.config.SecurityConfig.SecurityConstants;
 import ke.shiva.sbs_iam.modules.iam.api.request.RefreshTokenRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.OidcTokenResponse;
+import ke.shiva.sbs_iam.modules.iam.app.security.DeviceValidationMode;
 import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
+import ke.shiva.sbs_iam.modules.iam.app.security.RequiresDeviceId;
 import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
 import ke.shiva.sbs_iam.modules.iam.app.service.LoginFlowService;
 import ke.shiva.sbs_iam.modules.iam.app.service.LoginHistoryService;
@@ -19,10 +22,7 @@ import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -42,11 +42,9 @@ public class FinalizeLoginController {
     public ResponseEntity<ApiResponse<OidcTokenResponse>> finalize(
             @FlowId UUID flowId
     ) {
-        SessionEntity session =
-                loginFlowService.requireStage(flowId, LoginStage.MFA_OK);
+        SessionEntity session = loginFlowService.requireStage(flowId, LoginStage.MFA_OK);
 
-        LoginRequirements reqs =
-                loginFlowService.getRequirements(session);
+        LoginRequirements reqs = loginFlowService.getRequirements(session);
 
         if (reqs.hasPostLoginSteps()) {
             log.error("Attempt to finalize login with pending post-login steps, flowId={}", flowId);
@@ -70,9 +68,11 @@ public class FinalizeLoginController {
 
     @Operation(summary = "Refresh OIDC tokens")
     @PostMapping("/token")
+    @RequiresDeviceId(mode = DeviceValidationMode.SESSION_BOUND)
     public ResponseEntity<ApiResponse<OidcTokenResponse>> refreshToken(
-            @RequestBody RefreshTokenRequest request
+            @RequestBody RefreshTokenRequest request,
+            @CookieValue(value = SecurityConstants.Cookies.DEVICE_ID_TOKEN_NAME) String deviceId
     ) {
-        return ResponseBuilder.success(oidcTokenService.refreshTokens(request));
+        return ResponseBuilder.success(oidcTokenService.refreshTokens(request, deviceId));
     }
 }

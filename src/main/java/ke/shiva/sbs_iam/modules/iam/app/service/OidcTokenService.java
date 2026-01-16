@@ -6,10 +6,12 @@ import ke.shiva.sbs_iam.modules.iam.api.response.OidcTokenResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.RefreshTokenEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.security.DeviceEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.RevokedTokenEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.NotificationChannel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.UserCategory;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.DeviceRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.RefreshTokenRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.RevokedTokenRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository;
@@ -17,7 +19,7 @@ import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import ke.shiva.shivacorestarter.util.SecureRandomStringGen;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.codec.Hex;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -28,13 +30,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.SecureRandom;
+
 import java.time.OffsetDateTime;
-import java.util.Base64;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OidcTokenService {
@@ -45,7 +45,8 @@ public class OidcTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final RevokedTokenRepository revokedTokenRepository;
     private final OtpService otpService;
-    private final SecureRandom secureRandom = new SecureRandom();
+    private final LoginFlowService loginFlowService;
+    private final DeviceRepository deviceRepository;
 
     @Transactional
     public OidcTokenResponse issueTokens(Long sessionId) {
@@ -63,7 +64,7 @@ public class OidcTokenService {
 
         OffsetDateTime now = OffsetDateTime.now();
         long accessTokenValidity = 300L; // 5 minutes
-        long refreshTokenValidity = 900L; // 15 minutes
+        long refreshTokenValidity = 1800L; // 30 minutes
 
         JwtClaimsSet accessClaims = JwtClaimsSet.builder()
                 .issuer("sbs-iam")
@@ -95,6 +96,8 @@ public class OidcTokenService {
         refreshTokenEntity.setExpiresAt(now.plusSeconds(refreshTokenValidity));
         refreshTokenRepository.save(refreshTokenEntity);
 
+        loginFlowService.extend(session, 30); // Extend session by 30 minutes on token issue
+
         OidcTokenResponse resp = new OidcTokenResponse();
         resp.setAccessToken(accessToken);
         resp.setRefreshToken(rawRefreshToken);
@@ -104,7 +107,7 @@ public class OidcTokenService {
     }
 
     @Transactional
-    public OidcTokenResponse refreshTokens(RefreshTokenRequest request) {
+    public OidcTokenResponse refreshTokens(RefreshTokenRequest request, String deviceId) {
         String refreshTokenHash = HashUtil.sha256(request.getRefreshToken());
         RefreshTokenEntity oldToken = refreshTokenRepository.findByTokenHash(refreshTokenHash)
                 .orElseThrow(() -> BaseException.unauthorized("Invalid refresh token"));
@@ -130,6 +133,30 @@ public class OidcTokenService {
             }
         } catch (Exception e) {
             // Ignore if the token is invalid, it can't be used anyway
+        }
+
+        //get session and validate
+        SessionEntity session = oldToken.getSession();
+        if (session.getExpiresAt().isBefore(OffsetDateTime.now())) {
+            throw BaseException.unauthorized("Session expired");
+        }
+
+        //check device id matches
+        if (!session.getDeviceId().equals(HashUtil.sha256(deviceId))) {
+            //TODO: Log possible token theft attempt
+            log.warn("Refresh token device ID mismatch for session ID {}", session.getId());
+            DeviceEntity device = deviceRepository.findByDeviceIdAndActiveTrue(deviceId).orElseThrow(
+                    () -> BaseException.badRequest("Invalid Request")
+            );
+
+            device.setRiskLevel("HIGH");
+            device.setRiskScore(100);
+            deviceRepository.save(device);
+
+            //TODO: Revoke all tokens associated with this session
+            //TODO: Send event to GW to block further requests from this session
+
+            throw BaseException.badRequest("Invalid Request");
         }
 
 

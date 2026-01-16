@@ -5,7 +5,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.modules.iam.api.request.PasswordLoginRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.PasswordStepResponse;
+import ke.shiva.sbs_iam.modules.iam.app.security.DeviceValidationMode;
 import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
+import ke.shiva.sbs_iam.modules.iam.app.security.RequiresDeviceId;
 import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
 import ke.shiva.sbs_iam.modules.iam.app.service.PasswordAuthService;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
@@ -34,6 +36,7 @@ public class PasswordAuthController {
 
     @Operation(summary = "2. Submit Password")
     @PostMapping("/password")
+    @RequiresDeviceId(mode = DeviceValidationMode.SESSION_BOUND)
     @RequiresStage(LoginStage.IDENTIFIER_OK)
     public ResponseEntity<ApiResponse<PasswordStepResponse>> passwordStep(
             @RequestBody @Valid PasswordLoginRequest request, @FlowId UUID flowId

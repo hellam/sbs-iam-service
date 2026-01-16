@@ -39,7 +39,9 @@ public class IdentifierService {
     private String spaPublicKey;
 
     @Transactional
-    public IdentifierResponse handle(IdentifierRequest req) {
+    public IdentifierResponse handle(IdentifierRequest req, String deviceId) {
+        //Verify deviceId exists if provided
+//        loginFlowService.verifyDeviceId(deviceId);
 
         Channel channel = req.getChannel();
 
@@ -74,7 +76,7 @@ public class IdentifierService {
         LoginRequirements requirements = policyService.evaluateRequirements(user, channel);
 
         // create temp session (flow)
-        var session = loginFlowService.start(user, channel, requirements, req.getIdentifier());
+        var session = loginFlowService.start(user, channel, requirements, req.getIdentifier(), deviceId);
 
         // Log successful identifier verification
         loginHistoryService.logIdentifierSuccess(user, req.getIdentifier(), session);
