@@ -5,9 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import ke.shiva.sbs_iam.config.SecurityConfig.SecurityConstants;
 import ke.shiva.sbs_iam.modules.iam.api.request.RefreshTokenRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.OidcTokenResponse;
-import ke.shiva.sbs_iam.modules.iam.app.security.DeviceValidationMode;
 import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
-import ke.shiva.sbs_iam.modules.iam.app.security.RequiresDeviceId;
 import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
 import ke.shiva.sbs_iam.modules.iam.app.service.LoginFlowService;
 import ke.shiva.sbs_iam.modules.iam.app.service.LoginHistoryService;
@@ -68,7 +66,6 @@ public class FinalizeLoginController {
 
     @Operation(summary = "Refresh OIDC tokens")
     @PostMapping("/token")
-    @RequiresDeviceId(mode = DeviceValidationMode.SESSION_BOUND)
     public ResponseEntity<ApiResponse<OidcTokenResponse>> refreshToken(
             @RequestBody RefreshTokenRequest request,
             @CookieValue(value = SecurityConstants.Cookies.DEVICE_ID_TOKEN_NAME) String deviceId

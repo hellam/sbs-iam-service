@@ -11,7 +11,6 @@ import ke.shiva.sbs_iam.modules.iam.app.util.FlowIdProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.WebUtils;
 
@@ -23,6 +22,7 @@ import java.util.UUID;
  * be registered multiple times with different URL patterns and validation modes
  * to mirror the behaviour of the old interceptor/annotation system.
  */
+
 @RequiredArgsConstructor
 @Order(Ordered.LOWEST_PRECEDENCE - 10)
 public class DeviceIdFilter extends OncePerRequestFilter {

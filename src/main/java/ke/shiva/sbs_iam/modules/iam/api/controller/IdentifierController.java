@@ -7,8 +7,6 @@ import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.config.SecurityConfig.SecurityConstants;
 import ke.shiva.sbs_iam.modules.iam.api.request.IdentifierRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.IdentifierResponse;
-import ke.shiva.sbs_iam.modules.iam.app.security.DeviceValidationMode;
-import ke.shiva.sbs_iam.modules.iam.app.security.RequiresDeviceId;
 import ke.shiva.sbs_iam.modules.iam.app.service.DomainGuard;
 import ke.shiva.sbs_iam.modules.iam.app.service.IdentifierService;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
@@ -58,7 +56,6 @@ public class IdentifierController {
 
     @Operation(summary = "1. Identify User (Internet Banking)")
     @PostMapping("/internet-banking")
-    @RequiresDeviceId(mode = DeviceValidationMode.EXISTENCE_ONLY)
     public ResponseEntity<ApiResponse<IdentifierResponse>> identifyIB(
             @RequestBody @Valid IdentifierRequest req,
             HttpServletRequest http,

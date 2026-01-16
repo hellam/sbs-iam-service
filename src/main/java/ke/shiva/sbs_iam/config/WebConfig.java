@@ -1,6 +1,5 @@
 package ke.shiva.sbs_iam.config;
 
-import ke.shiva.sbs_iam.modules.iam.app.security.DeviceIdInterceptor;
 import ke.shiva.sbs_iam.modules.iam.app.security.FlowIdArgumentResolver;
 import ke.shiva.sbs_iam.modules.iam.app.security.StageCheckInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +16,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Autowired
     private StageCheckInterceptor stageCheckInterceptor;
 
-    @Autowired
-    private DeviceIdInterceptor deviceIdInterceptor;
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
@@ -28,7 +25,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // Device ID validation should run before stage checks
-        registry.addInterceptor(deviceIdInterceptor);
         registry.addInterceptor(stageCheckInterceptor);
     }
 }

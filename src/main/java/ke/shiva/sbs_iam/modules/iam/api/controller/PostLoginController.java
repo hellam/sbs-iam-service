@@ -5,9 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.modules.iam.api.request.PasswordChangeRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.SecurityQuestionsRequest;
-import ke.shiva.sbs_iam.modules.iam.app.security.DeviceValidationMode;
 import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
-import ke.shiva.sbs_iam.modules.iam.app.security.RequiresDeviceId;
 import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
 import ke.shiva.sbs_iam.modules.iam.app.service.PostLoginService;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
@@ -15,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -39,7 +36,6 @@ public class PostLoginController {
 
     @Operation(summary = "6. Submit Security Questions")
     @PostMapping("/security-questions")
-    @RequiresDeviceId(mode = DeviceValidationMode.SESSION_BOUND)
     @RequiresStage(LoginStage.MFA_OK)
     public ResponseEntity<Void> submitQuestions(
             @RequestBody @Valid SecurityQuestionsRequest req, @FlowId UUID flowId
