@@ -18,9 +18,9 @@ public class DeviceFilterConfiguration {
                 DeviceValidationMode.EXISTENCE_ONLY, true);
         FilterRegistrationBean<DeviceIdFilter> registration = new FilterRegistrationBean<>(filter);
         registration.setUrlPatterns(java.util.List.of(
-                "/identifier/backoffice",
-                "/identifier/mobile",
-                "/identifier/internet-banking"
+                "/api/v1/oauth/identifier/backoffice",
+                "/api/v1/oauth/identifier/mobile",
+                "/api/v1/oauth/identifier/internet-banking"
         ));
         registration.setOrder(2);
         return registration;
@@ -33,12 +33,12 @@ public class DeviceFilterConfiguration {
                 DeviceValidationMode.SESSION_BOUND, true);
         FilterRegistrationBean<DeviceIdFilter> registration = new FilterRegistrationBean<>(filter);
         registration.setUrlPatterns(java.util.List.of(
-                "/password",
-                "/mfa/initiate",
-                "/mfa/verify",
-                "/password/change",
-                "/security-questions",
-                "/token"
+                "/api/v1/oauth/password",
+                "/api/v1/oauth/mfa/initiate",
+                "/api/v1/oauth/mfa/verify",
+                "/api/v1/oauth/password/change",
+                "/api/v1/oauth/security-questions",
+                "/api/v1/oauth/token"
         ));
         registration.setOrder(3);
         return registration;
