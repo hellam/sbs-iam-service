@@ -116,9 +116,8 @@ public class PasswordManager {
         } catch (IllegalArgumentException e) {
             throw BaseException.badRequest(e.getMessage());
         } catch (Exception e) {
-            throw BaseException.failedToDecryptPassword(
-                "Failed to decrypt password. Error: " + e.getMessage()
-            );
+            log.error("Error during password decryption: {}", e.getMessage());
+            throw BaseException.badRequest();
         }
     }
 }

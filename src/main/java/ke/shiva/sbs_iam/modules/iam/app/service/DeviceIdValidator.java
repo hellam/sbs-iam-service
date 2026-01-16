@@ -5,7 +5,9 @@ import ke.shiva.sbs_iam.config.SecurityConfig.SecurityConstants;
 import ke.shiva.sbs_iam.modules.iam.app.security.DeviceValidationMode;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.DeviceEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.security.SecurityEventEntity;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.DeviceRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.SecurityEventRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import ke.shiva.sbs_iam.modules.iam.app.service.GeoIpService;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import ke.shiva.shivacorestarter.util.RequestUtil;
 import ke.shiva.shivacorestarter.exception.BaseException;
@@ -36,6 +37,7 @@ public class DeviceIdValidator {
     private final DeviceRepository deviceRepository;
     private final SessionRepository sessionRepository;
     private final GeoIpService geoIpService;
+    private final SecurityEventRepository securityEventRepository;
 
     /**
      * Validates a device ID based on the specified validation mode and updates
@@ -104,6 +106,34 @@ public class DeviceIdValidator {
                     session.getDeviceId() != null ? session.getDeviceId().substring(0, 8) + "..." : "null",
                     hashedDeviceId.substring(0, 8) + "...",
                     flowId);
+            ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attrs == null) {
+                log.info("Cannot log security event: no request context available");
+                return;
+            }
+            HttpServletRequest request = attrs.getRequest();
+            String ipAddress = RequestUtil.getClientIp(request);
+
+            // Lookup location using GeoIP service
+            GeoIpService.GeoLocation location = geoIpService.lookup(ipAddress);
+
+            // Potential security incident: log and throw exception
+            SecurityEventEntity securityEvent = new SecurityEventEntity();
+            securityEvent.setEventType("DEVICE_MISMATCH");
+            securityEvent.setDeviceId(hashedDeviceId);
+            securityEvent.setDescription("Device ID mismatch detected during session validation");
+            securityEvent.setRelatedSession(session);
+            securityEvent.setCreatedAt(OffsetDateTime.now());
+            securityEvent.setIamUser(session.getIamUser());
+            securityEvent.setSeverity("HIGH");
+            securityEvent.setIpAddress(ipAddress);
+            securityEvent.setLocationCountry(location !=null ? location.getCountry() : null);
+            securityEvent.setLocationCity(location !=null ? location.getCity() : null);
+            securityEventRepository.save(securityEvent);
+
+            //TODO: Consider revoking session or tokens associated with this session
+            //TODO: Consider blocking device or marking it as high risk
+
             throw BaseException.unauthorized("Device mismatch");
         }
 
