@@ -71,11 +71,6 @@ spring:
 encryption:
   key: ${APP_KEY}
 
-# CORS Configuration
-cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4200}
-  allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
-
 # GeoIP Configuration for IP geolocation
 geoip:
   database:
@@ -124,36 +119,14 @@ shiva:
     jwt:
       public-key: ${SHIVA_SECURITY_JWT_PUBLIC_KEY}
       private-key: ${SHIVA_SECURITY_JWT_PRIVATE_KEY}
+      expected-issuer: sbs-iam
+      expected-audience: gateway-service
     spa:
       public-key: ${SHIVA_SECURITY_SPA_PUBLIC_KEY}
       private-key: ${SHIVA_SECURITY_SPA_PRIVATE_KEY}
-    headers:
-      enabled: true
-      x-frame-options: true
-      x-frame-options-value: DENY
-      x-content-type-options: true
-      x-xss-protection: true
-      hsts: true
-      hsts-max-age: 31536000  # 1 year
-      hsts-preload: false
-      csp: true
-      csp-directives: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'"
-      referrer-policy: true
-      referrer-policy-value: "strict-origin-when-cross-origin"
-      permissions-policy: true
-      permissions-policy-value: "geolocation=(), microphone=(), camera=()"
-      x-permitted-cross-domain-policies: true
-      remove-server-header: true
-      x-download-options: true
 
     # Request Signature Validation (for mobile/external APIs)
     signature:
       enabled: true
       secret-key: ${SIGNATURE_SECRET_KEY:change-this-secret-key-in-production}
       algorithm: HmacSHA256
-
-# System properties to prevent internet access attempts
-system:
-  properties:
-    java.net.useSystemProxies: false
-    java.net.preferIPv4Stack: true

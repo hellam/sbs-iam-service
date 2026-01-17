@@ -20,6 +20,7 @@ import ke.shiva.shivacorestarter.util.HashUtil;
 import ke.shiva.shivacorestarter.util.SecureRandomStringGen;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -32,6 +33,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -47,6 +49,14 @@ public class OidcTokenService {
     private final OtpService otpService;
     private final LoginFlowService loginFlowService;
     private final DeviceRepository deviceRepository;
+
+
+    // expected issuer and audience configured via properties
+    @Value("${shiva.security.jwt.expected-issuer:sbs-iam}")
+    private String expectedIssuer;
+
+    @Value("${shiva.security.jwt.expected-audience:gateway-service}")
+    private String expectedAudience;
 
     @Transactional
     public OidcTokenResponse issueTokens(Long sessionId) {
@@ -67,9 +77,10 @@ public class OidcTokenService {
         long refreshTokenValidity = 1800L; // 30 minutes
 
         JwtClaimsSet accessClaims = JwtClaimsSet.builder()
-                .issuer("sbs-iam")
+                .issuer(expectedIssuer)
                 .issuedAt(now.toInstant())
                 .expiresAt(now.plusSeconds(accessTokenValidity).toInstant())
+                .audience(List.of(expectedAudience))
                 .subject(String.valueOf(user.getPublicId()))
                 .claim("channel", channel.name())
                 .claim("category", category.name())
