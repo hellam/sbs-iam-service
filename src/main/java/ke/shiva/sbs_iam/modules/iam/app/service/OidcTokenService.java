@@ -125,7 +125,7 @@ public class OidcTokenService {
 //        resp.setAccessToken(accessToken);
 //        resp.setRefreshToken(rawRefreshToken);
         resp.setExpiresIn(accessTokenValidity);
-        resp.setIdToken(buildIdToken(session, user, now, accessTokenValidity));
+//        resp.setIdToken(buildIdToken(session, user, now, accessTokenValidity));
         return resp;
     }
 
