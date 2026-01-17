@@ -1,6 +1,8 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import ke.shiva.sbs_iam.config.SecurityConfig.SecurityConstants;
 import ke.shiva.sbs_iam.modules.iam.api.request.RefreshTokenRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.OidcTokenResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
@@ -21,6 +23,7 @@ import ke.shiva.shivacorestarter.util.SecureRandomStringGen;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -32,6 +35,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -49,6 +53,12 @@ public class OidcTokenService {
     private final OtpService otpService;
     private final LoginFlowService loginFlowService;
     private final DeviceRepository deviceRepository;
+
+    @Value("${shiva.security.cookies.secure:true}")
+    private boolean cookieSecure;
+
+    @Value("${shiva.security.cookies.same-site:Lax}")
+    private String cookieSameSite;
 
 
     // expected issuer and audience configured via properties
@@ -109,9 +119,11 @@ public class OidcTokenService {
 
         loginFlowService.extend(session, 30); // Extend session by 30 minutes on token issue
 
+        setTokenCookies(accessToken, rawRefreshToken, accessTokenValidity, refreshTokenValidity);
+
         OidcTokenResponse resp = new OidcTokenResponse();
-        resp.setAccessToken(accessToken);
-        resp.setRefreshToken(rawRefreshToken);
+//        resp.setAccessToken(accessToken);
+//        resp.setRefreshToken(rawRefreshToken);
         resp.setExpiresIn(accessTokenValidity);
         resp.setIdToken(buildIdToken(session, user, now, accessTokenValidity));
         return resp;
@@ -199,5 +211,29 @@ public class OidcTokenService {
         // TODO: build scopes from roles/permissions (RBAC)
         // For now: return channel as scope
         return session.getChannel().name().toLowerCase();
+    }
+
+    private void setTokenCookies(String accessToken, String refreshToken, long accessTokenValidity, long refreshTokenValidity) {
+        HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse();
+        if (response == null) return;
+
+        ResponseCookie accessCookie = ResponseCookie.from(SecurityConstants.Cookies.ACCESS_TOKEN_NAME, accessToken)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/")
+                .maxAge(Duration.ofSeconds(accessTokenValidity))
+                .sameSite(cookieSameSite)
+                .build();
+
+        ResponseCookie refreshCookie = ResponseCookie.from(SecurityConstants.Cookies.REFRESH_TOKEN_NAME, refreshToken)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .path("/")
+                .maxAge(Duration.ofSeconds(refreshTokenValidity))
+                .sameSite(cookieSameSite)
+                .build();
+
+        response.addHeader("Set-Cookie", accessCookie.toString());
+        response.addHeader("Set-Cookie", refreshCookie.toString());
     }
 }
