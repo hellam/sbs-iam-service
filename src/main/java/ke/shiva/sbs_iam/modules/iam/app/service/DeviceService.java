@@ -77,4 +77,14 @@ public class DeviceService {
         device.setUpdatedAt(OffsetDateTime.now());
         deviceRepository.save(device);
     }
+
+    /**
+     * Validates if a device is registered and active.
+     *
+     * @param deviceId The device ID to validate.
+     * @return true if the device is valid, false otherwise.
+     */
+    public boolean validateDevice(String deviceId) {
+        return deviceRepository.findByDeviceIdAndActiveTrue(deviceId).isPresent();
+    }
 }

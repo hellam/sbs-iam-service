@@ -1,5 +1,6 @@
 package ke.shiva.sbs_iam.modules.iam.app.security;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,6 +9,7 @@ import ke.shiva.sbs_iam.config.SecurityConfig.SecurityConstants;
 import ke.shiva.sbs_iam.modules.iam.app.service.DeviceIdValidator;
 import ke.shiva.sbs_iam.modules.iam.app.util.FlowIdProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -25,7 +27,7 @@ import java.util.UUID;
  * This filter can be registered multiple times with different URL patterns and
  * validation modes to provide flexible device validation.
  */
-
+@Slf4j
 @RequiredArgsConstructor
 @Order(Ordered.LOWEST_PRECEDENCE - 10)
 public class DeviceIdFilter extends OncePerRequestFilter {
@@ -43,7 +45,7 @@ public class DeviceIdFilter extends OncePerRequestFilter {
         // Gateway handles the device cookie and forwards the device ID via X-Device-ID header
         String deviceId = request.getHeader(SecurityConstants.Headers.DEVICE_ID);
 
-        logger.warn("DeviceIdFilter: Extracted device ID from header: {" + deviceId);
+        log.warn("DeviceIdFilter: Extracted device ID from header: {}", deviceId);
 
         // If the device ID is missing and not required, skip validation
         if ((deviceId == null || deviceId.isBlank()) && !required) {

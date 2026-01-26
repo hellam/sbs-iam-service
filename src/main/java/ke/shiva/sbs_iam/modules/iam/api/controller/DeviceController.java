@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "Devices Control")
 @RateLimit(capacity = 10, refillTokens = 5, refillDuration = "PT2M", keyType = KeyType.IP)
+@RequestMapping("/devices")
 public class DeviceController {
     private final DeviceService deviceService;
 
@@ -24,7 +25,7 @@ public class DeviceController {
      * Device registration endpoint called by API Gateway.
      * This endpoint receives device information and registers/updates it in the database.
      */
-    @PostMapping("/device/init")
+    @PostMapping("/init")
     public ResponseEntity<ApiResponse<Void>> registerDeviceFromGateway(
             @Valid @RequestBody DeviceRegistrationRequest request
     ) {
@@ -33,4 +34,12 @@ public class DeviceController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Device registered successfully", null, null));
     }
 
+    @GetMapping("/validate/{deviceId}")
+    public ResponseEntity<Void> validateDevice(@PathVariable String deviceId) {
+        if (deviceService.validateDevice(deviceId)) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }
