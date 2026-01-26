@@ -35,6 +35,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -60,5 +61,24 @@ public class SecurityConfig {
             );
         }
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:9000",    // your gateway
+                "http://localhost:3000",    // if frontend dev
+                "http://localhost:4200"     // if Angular
+        ));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));  // or list: "Authorization", "Content-Type", etc.
+        configuration.setExposedHeaders(Arrays.asList("X-Correlation-Id", "X-Request-Id"));  // optional
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);  // 1 hour
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);  // apply to all paths
+        return source;
     }
 }
