@@ -2,7 +2,6 @@ package ke.shiva.sbs_iam.modules.iam.app.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import ke.shiva.sbs_iam.config.SecurityConfig.SecurityConstants;
@@ -12,15 +11,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.util.WebUtils;
 
 import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Filter that performs device ID validation before controller execution.  It can
- * be registered multiple times with different URL patterns and validation modes
- * to mirror the behaviour of the old interceptor/annotation system.
+ * Filter that performs device ID validation before controller execution.
+ * Reads device ID from X-Device-ID header (set by API Gateway).
+ * <p>
+ * The API Gateway handles device cookie management and forwards the device ID
+ * to downstream services via the X-Device-ID header.
+ * <p>
+ * This filter can be registered multiple times with different URL patterns and
+ * validation modes to provide flexible device validation.
  */
 
 @RequiredArgsConstructor
@@ -36,9 +39,11 @@ public class DeviceIdFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        // Extract device ID from cookie
-        Cookie cookie = WebUtils.getCookie(request, SecurityConstants.Cookies.DEVICE_ID_TOKEN_NAME);
-        String deviceId = cookie != null ? cookie.getValue() : null;
+        // Extract device ID from header (set by API Gateway)
+        // Gateway handles the device cookie and forwards the device ID via X-Device-ID header
+        String deviceId = request.getHeader(SecurityConstants.Headers.DEVICE_ID);
+
+        logger.warn("DeviceIdFilter: Extracted device ID from header: {" + deviceId);
 
         // If the device ID is missing and not required, skip validation
         if ((deviceId == null || deviceId.isBlank()) && !required) {

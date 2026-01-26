@@ -72,7 +72,7 @@ public class SecurityConfig {
                 "http://localhost:4200"     // if Angular
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));  // or list: "Authorization", "Content-Type", etc.
+        configuration.setAllowedHeaders(List.of("*"));  // or list: "Authorization", "Content-Type", etc.
         configuration.setExposedHeaders(Arrays.asList("X-Correlation-Id", "X-Request-Id"));  // optional
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);  // 1 hour
