@@ -54,12 +54,6 @@ public class OidcTokenService {
     private final LoginFlowService loginFlowService;
     private final DeviceRepository deviceRepository;
 
-    @Value("${shiva.security.cookies.secure:true}")
-    private boolean cookieSecure;
-
-    @Value("${shiva.security.cookies.same-site:Lax}")
-    private String cookieSameSite;
-
 
     // expected issuer and audience configured via properties
     @Value("${shiva.security.jwt.expected-issuer:sbs-iam}")

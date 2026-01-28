@@ -2,6 +2,7 @@ package ke.shiva.sbs_iam.modules.iam.api.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import ke.shiva.sbs_iam.config.SecurityConfig.SecurityConstants;
 import ke.shiva.sbs_iam.modules.iam.api.request.RefreshTokenRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.OidcTokenResponse;
@@ -68,8 +69,10 @@ public class FinalizeLoginController {
     @PostMapping("/token")
     public ResponseEntity<ApiResponse<OidcTokenResponse>> refreshToken(
             @RequestBody RefreshTokenRequest request,
-            @CookieValue(value = SecurityConstants.Cookies.DEVICE_ID_TOKEN_NAME) String deviceId
+            HttpServletRequest httpRequest
     ) {
+
+        String deviceId = httpRequest.getHeader(SecurityConstants.Headers.DEVICE_ID);
         return ResponseBuilder.success(oidcTokenService.refreshTokens(request, deviceId));
     }
 }

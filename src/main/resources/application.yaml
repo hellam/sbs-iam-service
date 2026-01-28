@@ -112,10 +112,6 @@ shiva:
 
   # Security Headers Configuration
   security:
-    cookies:
-      secure: false
-      http-only: false
-      same-site: Lax
     jwt:
       public-key: ${SHIVA_SECURITY_JWT_PUBLIC_KEY}
       private-key: ${SHIVA_SECURITY_JWT_PRIVATE_KEY}

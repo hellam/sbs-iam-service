@@ -45,11 +45,10 @@ public class IdentifierController {
     @PostMapping("/mobile")
     public ResponseEntity<ApiResponse<IdentifierResponse>> identifyMobile(
             @RequestBody @Valid IdentifierRequest req,
-            HttpServletRequest http,
-            //TODO: Change to DEVICE_ID_TOKEN_NAME not Cookie
-            @CookieValue(value = SecurityConstants.Cookies.DEVICE_ID_TOKEN_NAME) String deviceId
+            HttpServletRequest httpRequest
     ) {
-        domainGuard.validate(Channel.MOBILE_BANKING, http);
+        String deviceId = httpRequest.getHeader(SecurityConstants.Headers.DEVICE_ID);
+        domainGuard.validate(Channel.MOBILE_BANKING, httpRequest);
         req.setChannel(Channel.MOBILE_BANKING);
         return ResponseBuilder.success(identifierService.handle(req, deviceId));
     }
@@ -58,10 +57,10 @@ public class IdentifierController {
     @PostMapping("/internet-banking")
     public ResponseEntity<ApiResponse<IdentifierResponse>> identifyIB(
             @RequestBody @Valid IdentifierRequest req,
-            HttpServletRequest http,
-            @CookieValue(value = SecurityConstants.Cookies.DEVICE_ID_TOKEN_NAME) String deviceId
+            HttpServletRequest httpRequest
     ) {
-        domainGuard.validate(Channel.INTERNET_BANKING, http);
+        String deviceId = httpRequest.getHeader(SecurityConstants.Headers.DEVICE_ID);
+        domainGuard.validate(Channel.INTERNET_BANKING, httpRequest);
         req.setChannel(Channel.INTERNET_BANKING);
         return ResponseBuilder.success(identifierService.handle(req, deviceId));
     }

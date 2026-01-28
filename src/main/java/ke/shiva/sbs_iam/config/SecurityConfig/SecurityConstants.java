@@ -6,13 +6,6 @@ public final class SecurityConstants {
         // Private constructor to prevent instantiation
     }
 
-    public static final class Cookies {
-        private Cookies() {}
-        public static final String ACCESS_TOKEN_NAME = "__Secure-1PSID";
-        public static final String REFRESH_TOKEN_NAME = "_Secure-3PSID";
-        public static final String DEVICE_ID_TOKEN_NAME = "__Host-SBS_SID";
-    }
-
     //Header Constants
     public static final class Headers {
         private Headers() {
