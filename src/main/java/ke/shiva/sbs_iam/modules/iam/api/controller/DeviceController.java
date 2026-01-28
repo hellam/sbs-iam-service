@@ -1,5 +1,6 @@
 package ke.shiva.sbs_iam.modules.iam.api.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.modules.iam.api.dto.device.DeviceRegistrationRequest;
@@ -25,6 +26,7 @@ public class DeviceController {
      * Device registration endpoint called by API Gateway.
      * This endpoint receives device information and registers/updates it in the database.
      */
+    @Hidden
     @PostMapping("/init")
     public ResponseEntity<ApiResponse<Void>> registerDeviceFromGateway(
             @Valid @RequestBody DeviceRegistrationRequest request
@@ -35,6 +37,7 @@ public class DeviceController {
     }
 
     @GetMapping("/validate/{deviceId}")
+    @Hidden
     public ResponseEntity<Void> validateDevice(@PathVariable String deviceId) {
         if (deviceService.validateDevice(deviceId)) {
             return ResponseEntity.ok().build();

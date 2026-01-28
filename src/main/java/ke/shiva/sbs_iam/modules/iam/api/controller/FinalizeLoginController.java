@@ -1,5 +1,6 @@
 package ke.shiva.sbs_iam.modules.iam.api.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -67,6 +68,7 @@ public class FinalizeLoginController {
 
     @Operation(summary = "Refresh OIDC tokens")
     @PostMapping("/refresh")
+    @Hidden
     public ResponseEntity<ApiResponse<OidcTokenResponse>> refreshToken(
             @RequestBody RefreshTokenRequest request,
             HttpServletRequest httpRequest
