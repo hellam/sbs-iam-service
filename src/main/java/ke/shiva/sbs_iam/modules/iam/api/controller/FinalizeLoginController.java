@@ -66,7 +66,7 @@ public class FinalizeLoginController {
     }
 
     @Operation(summary = "Refresh OIDC tokens")
-    @PostMapping("/token")
+    @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<OidcTokenResponse>> refreshToken(
             @RequestBody RefreshTokenRequest request,
             HttpServletRequest httpRequest

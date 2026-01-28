@@ -38,7 +38,7 @@ public class DeviceFilterConfiguration {
                 "/api/v1/oauth/mfa/verify",
                 "/api/v1/oauth/password/change",
                 "/api/v1/oauth/security-questions",
-                "/api/v1/oauth/token"
+                "/api/v1/oauth/refresh"
         ));
         registration.setOrder(3);
         return registration;

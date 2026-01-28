@@ -46,7 +46,7 @@ public class SecurityConfig {
                                 "/identifier/**",
                                 "/login/**",
                                 "/mfa/**",
-                                "/token",
+                                "/refresh",
                                 "/finalize/**",
                                 "/password/**",
                                 "/v3/api-docs/**",
