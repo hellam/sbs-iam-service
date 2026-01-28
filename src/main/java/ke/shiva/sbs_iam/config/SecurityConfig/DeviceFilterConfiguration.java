@@ -11,20 +11,20 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class DeviceFilterConfiguration {
 
-    @Bean
-    public FilterRegistrationBean<DeviceIdFilter> existenceOnlyDeviceFilter(DeviceIdValidator validator,
-                                                                            FlowIdProvider flowIdProvider) {
-        DeviceIdFilter filter = new DeviceIdFilter(validator, flowIdProvider,
-                DeviceValidationMode.EXISTENCE_ONLY, true);
-        FilterRegistrationBean<DeviceIdFilter> registration = new FilterRegistrationBean<>(filter);
-        registration.setUrlPatterns(java.util.List.of(
-                "/api/v1/oauth/identifier/backoffice",
-                "/api/v1/oauth/identifier/mobile",
-                "/api/v1/oauth/identifier/internet-banking"
-        ));
-        registration.setOrder(2);
-        return registration;
-    }
+//    @Bean
+//    public FilterRegistrationBean<DeviceIdFilter> existenceOnlyDeviceFilter(DeviceIdValidator validator,
+//                                                                            FlowIdProvider flowIdProvider) {
+//        DeviceIdFilter filter = new DeviceIdFilter(validator, flowIdProvider,
+//                DeviceValidationMode.EXISTENCE_ONLY, true);
+//        FilterRegistrationBean<DeviceIdFilter> registration = new FilterRegistrationBean<>(filter);
+//        registration.setUrlPatterns(java.util.List.of(
+//                "/api/v1/oauth/identifier/backoffice",
+//                "/api/v1/oauth/identifier/mobile",
+//                "/api/v1/oauth/identifier/internet-banking"
+//        ));
+//        registration.setOrder(2);
+//        return registration;
+//    }
 
     @Bean
     public FilterRegistrationBean<DeviceIdFilter> sessionBoundDeviceFilter(DeviceIdValidator validator,

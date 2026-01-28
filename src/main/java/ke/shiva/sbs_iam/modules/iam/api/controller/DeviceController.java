@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "Devices Control")
 @RateLimit(capacity = 10, refillTokens = 5, refillDuration = "PT2M", keyType = KeyType.IP)
-@RequestMapping("/devices")
+@RequestMapping("/device")
 public class DeviceController {
     private final DeviceService deviceService;
 

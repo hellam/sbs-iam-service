@@ -33,10 +33,10 @@ public class IdentifierController {
     @PostMapping("/backoffice")
     public ResponseEntity<ApiResponse<IdentifierResponse>> identifyBackoffice(
             @RequestBody @Valid IdentifierRequest req,
-            HttpServletRequest http,
-            @CookieValue(value = SecurityConstants.Cookies.DEVICE_ID_TOKEN_NAME) String deviceId
+            HttpServletRequest request
     ) {
-        domainGuard.validate(Channel.BACKOFFICE, http);
+        String deviceId = request.getHeader(SecurityConstants.Headers.DEVICE_ID);
+        domainGuard.validate(Channel.BACKOFFICE, request);
         req.setChannel(Channel.BACKOFFICE);
         return ResponseBuilder.success(identifierService.handle(req, deviceId));
     }

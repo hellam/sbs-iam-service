@@ -3,6 +3,7 @@ package ke.shiva.sbs_iam.modules.iam.app.service;
 import ke.shiva.sbs_iam.modules.iam.api.dto.device.DeviceRegistrationRequest;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.DeviceEntity;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.DeviceRepository;
+import ke.shiva.shivacorestarter.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -85,6 +86,7 @@ public class DeviceService {
      * @return true if the device is valid, false otherwise.
      */
     public boolean validateDevice(String deviceId) {
-        return deviceRepository.findByDeviceIdAndActiveTrue(deviceId).isPresent();
+
+        return deviceRepository.findByDeviceIdAndActiveTrue(HashUtil.sha256(deviceId)).isPresent();
     }
 }

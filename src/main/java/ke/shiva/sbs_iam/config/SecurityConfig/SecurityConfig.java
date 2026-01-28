@@ -42,7 +42,7 @@ public class SecurityConfig {
                 .addFilterBefore(jwtRevocationFilter, BasicAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
-                                "/device/init",
+                                "/device/**",
                                 "/identifier/**",
                                 "/login/**",
                                 "/mfa/**",
