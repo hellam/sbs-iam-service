@@ -40,105 +40,38 @@ public class PasswordEncryptionTester {
             System.out.println("╚══════════════════════════════════════════════════════════╝");
             System.out.println();
 
-            // Option 1: Quick test with hardcoded values
-            System.out.println("Choose an option:");
-            System.out.println("1. Quick test (uses default public key from /identify)");
-            System.out.println("2. Custom test (enter your own public key)");
-            System.out.print("\nEnter choice (1 or 2): ");
+            // Hardcoded values
+            String publicKeyBase64 = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA30cRtVAhBdkfR4nH53+1qc3mSwvvejj/XSA4g8PqvfDHi50jo+pMu0+mfZ9pYcRTvHgMOjIoefulTbE39FfjvNhdBB9Vtp1lxHcLEPUmMBZCqzS86wpGH4h/6TVvyaNinL9KPRoLCma2JHvDr4+/CYriy+A3D2n4XUEQuFVIC3s7Y9gP9TI7yvIrU8jUsoAZwjTfLP+35zMIDlOPAtl6+x3BlRIgzagqTEn0iUNABYbATscwyHR1qC5XX99RJIUkUCAKZvCXLqrmKO/ScaadvAL7OU1IFgmxe7cJu8QeosY79oGXQlKpwF+2Nt1f38MLUajkH52klPLE1UeSo/h0/wIDAQAB";
+            String password = "Admin@1234";
 
-            String choice = scanner.nextLine().trim();
+            System.out.print("Enter session ID: ");
+            String sessionId = scanner.nextLine().trim();
 
-            String publicKeyBase64;
-
-            if ("1".equals(choice)) {
-                System.out.println("\n📝 First, call POST /api/v1/iam/identify endpoint to get:");
-                System.out.println("   - publicKey");
-                System.out.println("   - flowId (used as session ID)\n");
-                System.out.print("Enter session ID (flowId from /identify response): ");
-                String sessionId = scanner.nextLine().trim();
-                System.out.print("Enter public key (base64) from /identify response: ");
-                publicKeyBase64 = scanner.nextLine().trim();
-
-                if (sessionId.isEmpty()) {
-                    System.err.println("❌ Error: Session ID cannot be empty!");
-                    System.exit(1);
-                }
-
-                System.out.print("\nEnter password to encrypt: ");
-                String password = scanner.nextLine();
-
-                if (password.isEmpty()) {
-                    System.err.println("❌ Error: Password cannot be empty!");
-                    System.exit(1);
-                }
-
-                System.out.println("\n⏳ Encrypting password...");
-
-                // Encrypt the password
-                String encryptedPassword = encryptPassword(password, publicKeyBase64);
-
-                // Add session ID salt
-                String saltedPassword = sessionId + ":" + encryptedPassword;
-
-                System.out.println("\n✅ Encryption successful!");
-                System.out.println("\n╔══════════════════════════════════════════════════════════╗");
-                System.out.println("║          Salted Encrypted Password (Copy Below)         ║");
-                System.out.println("╚══════════════════════════════════════════════════════════╝");
-                System.out.println();
-                System.out.println(saltedPassword);
-                System.out.println();
-                System.out.println("Format: sessionId:encryptedPassword");
-                System.out.println("───────────────────────────────────────────────────────────");
-                System.out.println("📋 Copy the salted password above and paste it into:");
-                System.out.println("   - Swagger UI password field");
-                System.out.println("   - POST /api/v1/iam/password request body");
-                System.out.println("───────────────────────────────────────────────────────────");
-                System.out.println();
-            } else {
-                System.out.print("\nEnter session ID: ");
-                String sessionId = scanner.nextLine().trim();
-                System.out.print("Enter public key (base64): ");
-                publicKeyBase64 = scanner.nextLine().trim();
-
-                if (sessionId.isEmpty()) {
-                    System.err.println("❌ Error: Session ID cannot be empty!");
-                    System.exit(1);
-                }
-
-                if (publicKeyBase64.isEmpty()) {
-                    System.err.println("❌ Error: Public key cannot be empty!");
-                    System.exit(1);
-                }
-
-                System.out.print("\nEnter password to encrypt: ");
-                String password = scanner.nextLine();
-
-                if (password.isEmpty()) {
-                    System.err.println("❌ Error: Password cannot be empty!");
-                    System.exit(1);
-                }
-
-                System.out.println("\n⏳ Encrypting password...");
-
-                // Add session ID salt
-                String saltedPassword = sessionId + ":" + password;
-                // Encrypt the password
-                String encryptedPassword = encryptPassword(saltedPassword, publicKeyBase64);
-
-
-                System.out.println("\n✅ Encryption successful!");
-                System.out.println("\n╔══════════════════════════════════════════════════════════╗");
-                System.out.println("║          Salted Encrypted Password (Copy Below)         ║");
-                System.out.println("╚══════════════════════════════════════════════════════════╝");
-                System.out.println();
-                System.out.println(encryptedPassword);
-                System.out.println();
-                System.out.println("Format: sessionId:password");
-                System.out.println("───────────────────────────────────────────────────────────");
-                System.out.println("📋 Use this in your API requests");
-                System.out.println("───────────────────────────────────────────────────────────");
-                System.out.println();
+            if (sessionId.isEmpty()) {
+                System.err.println("❌ Error: Session ID cannot be empty!");
+                System.exit(1);
             }
+
+            System.out.println("\n⏳ Encrypting password...");
+            System.out.println("📝 Using default password: Admin@1234");
+
+            // Add session ID salt
+            String saltedPassword = sessionId + ":" + password;
+            // Encrypt the password
+            String encryptedPassword = encryptPassword(saltedPassword, publicKeyBase64);
+
+            System.out.println("\n✅ Encryption successful!");
+            System.out.println("\n╔══════════════════════════════════════════════════════════╗");
+            System.out.println("║          Salted Encrypted Password (Copy Below)         ║");
+            System.out.println("╚══════════════════════════════════════════════════════════╝");
+            System.out.println();
+            System.out.println(encryptedPassword);
+            System.out.println();
+            System.out.println("Format: sessionId:password");
+            System.out.println("───────────────────────────────────────────────────────────");
+            System.out.println("📋 Use this in your API requests");
+            System.out.println("───────────────────────────────────────────────────────────");
+            System.out.println();
 
             // Ask if they want to encrypt another password
             System.out.print("Encrypt another password? (y/n): ");

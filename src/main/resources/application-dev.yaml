@@ -44,3 +44,7 @@ security:
         - "localhost:43000"
       MOBILE_BANKING:
         - "localhost:44000"
+
+shiva:
+  api-doc:
+    servers: http://localhost:9000${spring.mvc.servlet.path},http://localhost:${server.port}${spring.mvc.servlet.path}
