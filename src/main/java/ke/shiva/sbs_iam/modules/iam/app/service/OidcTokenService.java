@@ -119,7 +119,7 @@ public class OidcTokenService {
 
         loginFlowService.extend(session, 30); // Extend session by 30 minutes on token issue
 
-        setTokenCookies(accessToken, rawRefreshToken, accessTokenValidity, refreshTokenValidity);
+        setTokenHeaders(accessToken, rawRefreshToken, accessTokenValidity, refreshTokenValidity);
 
         OidcTokenResponse resp = new OidcTokenResponse();
 //        resp.setAccessToken(accessToken);
@@ -213,27 +213,40 @@ public class OidcTokenService {
         return session.getChannel().name().toLowerCase();
     }
 
-    private void setTokenCookies(String accessToken, String refreshToken, long accessTokenValidity, long refreshTokenValidity) {
+//    private void setTokenCookies(String accessToken, String refreshToken, long accessTokenValidity, long refreshTokenValidity) {
+//        HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse();
+//        if (response == null) return;
+//
+//        ResponseCookie accessCookie = ResponseCookie.from(SecurityConstants.Cookies.ACCESS_TOKEN_NAME, accessToken)
+//                .httpOnly(true)
+//                .secure(cookieSecure)
+//                .path("/")
+//                .maxAge(Duration.ofSeconds(accessTokenValidity))
+//                .sameSite(cookieSameSite)
+//                .build();
+//
+//        ResponseCookie refreshCookie = ResponseCookie.from(SecurityConstants.Cookies.REFRESH_TOKEN_NAME, refreshToken)
+//                .httpOnly(true)
+//                .secure(cookieSecure)
+//                .path("/")
+//                .maxAge(Duration.ofSeconds(refreshTokenValidity))
+//                .sameSite(cookieSameSite)
+//                .build();
+//
+//        response.addHeader("Set-Cookie", accessCookie.toString());
+//        response.addHeader("Set-Cookie", refreshCookie.toString());
+//    }
+
+    private void setTokenHeaders(String accessToken, String refreshToken, long accessTokenValidity, long refreshTokenValidity) {
         HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse();
+
         if (response == null) return;
 
-        ResponseCookie accessCookie = ResponseCookie.from(SecurityConstants.Cookies.ACCESS_TOKEN_NAME, accessToken)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .path("/")
-                .maxAge(Duration.ofSeconds(accessTokenValidity))
-                .sameSite(cookieSameSite)
-                .build();
+        response.setHeader("X-Access-Token", accessToken);
+        response.setHeader("X-Access-Token-Expiry", String.valueOf(accessTokenValidity));
 
-        ResponseCookie refreshCookie = ResponseCookie.from(SecurityConstants.Cookies.REFRESH_TOKEN_NAME, refreshToken)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .path("/")
-                .maxAge(Duration.ofSeconds(refreshTokenValidity))
-                .sameSite(cookieSameSite)
-                .build();
-
-        response.addHeader("Set-Cookie", accessCookie.toString());
-        response.addHeader("Set-Cookie", refreshCookie.toString());
+        response.setHeader("X-Refresh-Token", refreshToken);
+        response.setHeader("X-Refresh-Token-Expiry", String.valueOf(refreshTokenValidity));
     }
+
 }
