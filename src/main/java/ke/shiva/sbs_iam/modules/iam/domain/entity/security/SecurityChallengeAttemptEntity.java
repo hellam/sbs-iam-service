@@ -4,10 +4,15 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.OffsetDateTime;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "security_challenge_attempt", schema = "iam_service")
 public class SecurityChallengeAttemptEntity {
@@ -38,76 +43,12 @@ public class SecurityChallengeAttemptEntity {
     @Column(name = "device_id")
     private String deviceId;
 
-    @Size(max = 50)
     @Column(name = "channel", length = 50)
-    private String channel;
+    @Enumerated(EnumType.STRING)
+    private Channel channel;
 
     @ColumnDefault("now()")
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public IamUserEntity getIamUser() {
-        return iamUser;
-    }
-
-    public void setIamUser(IamUserEntity iamUser) {
-        this.iamUser = iamUser;
-    }
-
-    public SecurityQuestionEntity getSecurityQuestion() {
-        return securityQuestion;
-    }
-
-    public void setSecurityQuestion(SecurityQuestionEntity securityQuestion) {
-        this.securityQuestion = securityQuestion;
-    }
-
-    public Boolean getAnswerCorrect() {
-        return answerCorrect;
-    }
-
-    public void setAnswerCorrect(Boolean answerCorrect) {
-        this.answerCorrect = answerCorrect;
-    }
-
-    public String getIpAddress() {
-        return ipAddress;
-    }
-
-    public void setIpAddress(String ipAddress) {
-        this.ipAddress = ipAddress;
-    }
-
-    public String getDeviceId() {
-        return deviceId;
-    }
-
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
-
-    public String getChannel() {
-        return channel;
-    }
-
-    public void setChannel(String channel) {
-        this.channel = channel;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
 
 }

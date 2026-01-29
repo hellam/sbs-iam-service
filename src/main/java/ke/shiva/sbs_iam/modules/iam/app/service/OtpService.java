@@ -32,7 +32,7 @@ public class OtpService {
     private final UserContactRepository userContactRepository;
     private final OtpGenerator otpGenerator;
     private final PolicyService policyService;
-    private final AccountLockoutService accountLockoutService; // Added for lockout integration
+    private final AccountLockoutService accountLockoutService;
 
     public void sendOtp(SessionEntity session, NotificationChannel notificationChannel) {
         MfaPolicyEntity mfaPolicy = policyService.getMfaPolicy(session.getChannel());
@@ -117,6 +117,11 @@ public class OtpService {
             return false;
         }
 
+        //check if OTP is already blocked or verified
+        if (otpRecord.getStatus().equals("BLOCKED") || otpRecord.getStatus().equals("VERIFIED")) {
+            return false;
+        }
+
         MfaPolicyEntity mfaPolicy = policyService.getMfaPolicy(session.getChannel());
 
         // Check if max verification attempts reached
@@ -124,16 +129,17 @@ public class OtpService {
             otpRecord.setStatus("BLOCKED");
             otpRecordRepository.save(otpRecord);
 
-            // Lock the user account due to excessive failed OTP attempts
-            accountLockoutService.lockAccountForOtpFailure(session.getIamUser(), session.getChannel());
+
+            // Lock the account
+            accountLockoutService.lockAccountAttemptFailure(session.getIamUser(), session.getChannel());
 
             throw BaseException.accountLocked(
-                    "Too many failed OTP verification attempts. Your account has been locked. " +
-                            "Please contact support."
+                    "Too many failed OTP verification attempts. Please request a new OTP."
             );
         }
 
         boolean matches = HashUtil.bcryptVerify(otp, otpRecord.getOtpHash());
+
 
         if (matches) {
             otpRecord.setStatus("VERIFIED");
@@ -150,7 +156,7 @@ public class OtpService {
                 otpRecordRepository.save(otpRecord);
 
                 // Lock the account
-                accountLockoutService.lockAccountForOtpFailure(session.getIamUser(), session.getChannel());
+                accountLockoutService.lockAccountAttemptFailure(session.getIamUser(), session.getChannel());
 
                 throw BaseException.accountLocked(
                         "Too many failed OTP verification attempts. Your account has been locked. " +

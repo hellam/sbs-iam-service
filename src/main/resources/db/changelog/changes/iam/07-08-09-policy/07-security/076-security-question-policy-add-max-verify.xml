@@ -11,7 +11,7 @@
     <changeSet id="pg-policy-076-security-question-policy-add-max-verify-attempts" author="hellamimbosa">
 
         <addColumn tableName="security_question_policy" schemaName="iam_service">
-            <column name="max_verify_attempts" type="SMALLINT" defaultValueNumeric="3" afterColumn="max_questions">
+            <column name="max_verify_attempts" type="SMALLINT" defaultValueNumeric="3">
                 <constraints nullable="false"/>
             </column>
         </addColumn>

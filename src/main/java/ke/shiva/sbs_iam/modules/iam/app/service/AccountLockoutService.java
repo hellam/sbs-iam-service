@@ -262,7 +262,7 @@ public class AccountLockoutService {
      * @param channel the channel
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void lockAccountForOtpFailure(IamUserEntity user, Channel channel) {
+    public void lockAccountAttemptFailure(IamUserEntity user, Channel channel) {
         PasswordPolicyEntity policy = passwordPolicyService.resolvePolicy(channel);
 
         switch (channel) {
