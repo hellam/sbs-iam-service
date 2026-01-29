@@ -23,7 +23,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "Authentication Flow")
+@Tag(name = "Password Verification")
 @RateLimit(capacity = 5, refillTokens = 5, refillDuration = "PT5M", keyType = KeyType.IP,
           message = "Too many login attempts. Please try again in 5 minutes.")
 public class PasswordAuthController {

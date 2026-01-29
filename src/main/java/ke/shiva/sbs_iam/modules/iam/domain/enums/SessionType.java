@@ -2,6 +2,7 @@ package ke.shiva.sbs_iam.modules.iam.domain.enums;
 
 public enum SessionType {
     LOGIN_TEMP,
-    LOGIN_ACTIVE
+    LOGIN_ACTIVE,
+    FORGOT_PASSWORD_TEMP
 }
 

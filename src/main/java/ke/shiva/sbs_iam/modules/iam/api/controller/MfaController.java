@@ -27,7 +27,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/mfa")
 @RequiredArgsConstructor
-@Tag(name = "Authentication Flow")
+@Tag(name = "MFA Verification")
 @RateLimit(capacity = 3, refillTokens = 3, refillDuration = "PT10M", keyType = KeyType.IP,
           message = "Too many MFA attempts. Please try again in 10 minutes.")
 public class MfaController {

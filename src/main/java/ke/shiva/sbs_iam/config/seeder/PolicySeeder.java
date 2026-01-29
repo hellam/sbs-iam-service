@@ -181,6 +181,7 @@ public class PolicySeeder implements CommandLineRunner {
             SecurityQuestionPolicyEntity sqPolicy = new SecurityQuestionPolicyEntity();
             sqPolicy.setPolicy(policy);
             sqPolicy.setChannel(channel);
+            sqPolicy.setMaxVerifyAttempts(Short.valueOf("3"));
             // Use default values
             securityQuestionPolicyRepository.save(sqPolicy);
         } else {

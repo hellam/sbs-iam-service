@@ -7,6 +7,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.MfaPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PasswordPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.SecurityQuestionPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
+import ke.shiva.sbs_iam.modules.iam.domain.model.ForgotPasswordRequirements;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
 import ke.shiva.shivacorestarter.exception.BaseException;
@@ -24,7 +25,7 @@ public class PolicyEvaluationService {
     private final PasswordPolicyService passwordPolicyService;
     private final PolicyService policyService;
 
-    public LoginRequirements evaluateRequirements(IamUserEntity user, Channel channel) {
+    public LoginRequirements evaluateLoginRequirements(IamUserEntity user, Channel channel) {
 
         boolean otpRequired = isOtpRequired(channel);
         boolean totpRequired = isTotpRequired(user, channel);
@@ -43,6 +44,17 @@ public class PolicyEvaluationService {
         );
     }
 
+    public ForgotPasswordRequirements evaluateForgotPasswordRequirements(IamUserEntity user, Channel channel) {
+        boolean securityQuestionsRequired = areSecurityQuestionsRequiredForForgotPassword(user, channel);
+        int securityQuestionsCount = getSecurityQuestionsCount(channel);
+        boolean mfaRequired = isOtpRequired(channel);
+
+        return ForgotPasswordRequirements.builder()
+                .securityQuestionsRequired(securityQuestionsRequired)
+                .securityQuestionsCount(securityQuestionsCount)
+                .mfaRequired(mfaRequired)
+                .build();
+    }
 
     private boolean isOtpRequired(Channel channel) {
         MfaPolicyEntity mfaPolicy = policyService.getMfaPolicy(channel);
@@ -69,53 +81,54 @@ public class PolicyEvaluationService {
 
     private boolean isPasswordExpired(IamUserEntity user, Channel channel) {
         PasswordPolicyEntity passwordPolicy = passwordPolicyService.resolvePolicy(channel);
-        if (passwordPolicy.getExpirationEnabled()) {
-
-            return switch (channel) {
-                case BACKOFFICE -> {
-                    EmployeeAuthEntity empAuth = employeeAuthRepo.findByIamUser(user);
-                    OffsetDateTime expiry = empAuth.getStaffPasswordExpiry();
-                    yield expiry != null && expiry.isBefore(OffsetDateTime.now());
-                }
-                case INTERNET_BANKING, MOBILE_BANKING -> {
-                    CustomerAuthEntity custAuth = customerAuthRepo.findByIamUser(user);
-                    OffsetDateTime expiry = custAuth.getInternetPasswordExpiry();
-                    yield expiry != null && expiry.isBefore(OffsetDateTime.now());
-                }
-                default -> false;
-            };
+        if (passwordPolicy == null || !Boolean.TRUE.equals(passwordPolicy.getExpirationEnabled())) {
+            return false;
         }
-        return false;
+
+        return switch (channel) {
+            case BACKOFFICE -> {
+                EmployeeAuthEntity empAuth = employeeAuthRepo.findByIamUser(user);
+                OffsetDateTime expiry = empAuth.getStaffPasswordExpiry();
+                yield expiry != null && expiry.isBefore(OffsetDateTime.now());
+            }
+            case INTERNET_BANKING, MOBILE_BANKING -> {
+                CustomerAuthEntity custAuth = customerAuthRepo.findByIamUser(user);
+                OffsetDateTime expiry = custAuth.getInternetPasswordExpiry();
+                yield expiry != null && expiry.isBefore(OffsetDateTime.now());
+            }
+            default -> false;
+        };
     }
 
     private boolean isFirstLogin(IamUserEntity user, Channel channel) {
         PasswordPolicyEntity passwordPolicy = passwordPolicyService.resolvePolicy(channel);
-        if (passwordPolicy.getRequireFactoryReset()) {
-            // 3. Update correct credentials table
-            switch (channel) {
-
-                case INTERNET_BANKING -> {
-                    CustomerAuthEntity auth = customerAuthRepo.findByIamUserId(user.getId())
-                            .orElseThrow(() -> BaseException.channelNotAllowed("CustomerAuth missing"));
-                    return auth.getInternetFirstTimeLogin();
-                }
-
-                case MOBILE_BANKING -> {
-                    CustomerAuthEntity auth = customerAuthRepo.findByIamUserId(user.getId())
-                            .orElseThrow(() -> BaseException.channelNotAllowed("CustomerAuth missing"));
-                    return auth.getMobileFirstTimeLogin();
-                }
-
-                case BACKOFFICE -> {
-                    EmployeeAuthEntity auth = employeeAuthRepo.findByIamUserId(user.getId())
-                            .orElseThrow(() -> BaseException.channelNotAllowed("EmployeeAuth missing"));
-                    return auth.getFirstTimeLogin();
-                }
-
-                default -> throw BaseException.channelNotAllowed("Unsupported user category");
-            }
+        if (passwordPolicy == null || !Boolean.TRUE.equals(passwordPolicy.getRequireFactoryReset())) {
+            return false;
         }
-        return false;
+
+        // 3. Update correct credentials table
+        switch (channel) {
+
+            case INTERNET_BANKING -> {
+                CustomerAuthEntity auth = customerAuthRepo.findByIamUserId(user.getId())
+                        .orElseThrow(() -> BaseException.channelNotAllowed("CustomerAuth missing"));
+                return auth.getInternetFirstTimeLogin();
+            }
+
+            case MOBILE_BANKING -> {
+                CustomerAuthEntity auth = customerAuthRepo.findByIamUserId(user.getId())
+                        .orElseThrow(() -> BaseException.channelNotAllowed("CustomerAuth missing"));
+                return auth.getMobileFirstTimeLogin();
+            }
+
+            case BACKOFFICE -> {
+                EmployeeAuthEntity auth = employeeAuthRepo.findByIamUserId(user.getId())
+                        .orElseThrow(() -> BaseException.channelNotAllowed("EmployeeAuth missing"));
+                return auth.getFirstTimeLogin();
+            }
+
+            default -> throw BaseException.channelNotAllowed("Unsupported user category");
+        }
     }
 
     private boolean areSecurityQuestionsRequired(IamUserEntity user, Channel channel) {
@@ -127,6 +140,27 @@ public class PolicyEvaluationService {
             return !hasSetQuestions;
         }
         return false;
+    }
+
+    private boolean areSecurityQuestionsRequiredForForgotPassword(IamUserEntity user, Channel channel) {
+        SecurityQuestionPolicyEntity securityQuestionPolicy = policyService.getSecurityQuestionPolicy(channel);
+        if (securityQuestionPolicy != null && securityQuestionPolicy.getEnabled()
+                && securityQuestionPolicy.getAskOnForgotPassword() != null
+                && securityQuestionPolicy.getAskOnForgotPassword()) {
+            // Check if user has set up security questions
+            boolean hasSetQuestions = user.getIamUserSecurityQuestions() != null
+                    && !user.getIamUserSecurityQuestions().isEmpty();
+            return hasSetQuestions;
+        }
+        return false;
+    }
+
+    private int getSecurityQuestionsCount(Channel channel) {
+        SecurityQuestionPolicyEntity securityQuestionPolicy = policyService.getSecurityQuestionPolicy(channel);
+        if (securityQuestionPolicy != null && securityQuestionPolicy.getMinQuestions() != null) {
+            return securityQuestionPolicy.getMinQuestions();
+        }
+        return 0;
     }
 
     private boolean isProfileSelectionRequired(Channel channel) {

@@ -31,7 +31,9 @@ server:
 
 seeder:
   employee:
-    enabled: true
+    enabled: true  # Enable employee seeder to create admin user
+  customer:
+    enabled: true  # Enable customer seeder to create internet banking user
   policy:
     enabled: true
 
@@ -41,7 +43,7 @@ security:
       BACKOFFICE:
         - "localhost"
       INTERNET_BANKING:
-        - "localhost:43000"
+        - "localhost"
       MOBILE_BANKING:
         - "localhost:44000"
 

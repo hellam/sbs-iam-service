@@ -44,19 +44,26 @@ public class PasswordPolicyService {
 
         PasswordPolicyEntity policy = resolvePolicy(session.getChannel());
 
-        validateStructure(newPassword, policy);
-        validateAgainstHistory(session.getIamUser(), newPassword, policy);
-        validateCommonPasswords(newPassword, policy);
+        // If no policy configured, skip validation (allow any password)
+        if (policy != null) {
+            validateStructure(newPassword, policy);
+            validateAgainstHistory(session.getIamUser(), newPassword, policy);
+            validateCommonPasswords(newPassword, policy);
+        }
     }
 
     /**
      * Load password policy based on channel.
+     * Returns null if no policy is configured for the channel.
      */
     public PasswordPolicyEntity resolvePolicy(Channel channel) {
         // 3. GLOBAL POLICY (always exists)
-        PolicyEntity globalPolicy =
-                policyRepo.findFirstByChannelsContains(channel.name())
-                        .orElseThrow(() -> BaseException.unableToProcessRequest("GLOBAL password policy missing"));
+        PolicyEntity globalPolicy = policyRepo.findFirstByChannelsContains(channel.toString())
+                .orElse(null);
+
+        if (globalPolicy == null) {
+            return null;
+        }
 
         return globalPolicy.getPasswordPolicy();
     }
@@ -64,7 +71,7 @@ public class PasswordPolicyService {
     /**
      * Check password length, uppercase, number, etc.
      */
-    private void validateStructure(String password, PasswordPolicyEntity p) {
+    public void validateStructure(String password, PasswordPolicyEntity p) {
 
         if (p.getMinLength() != null && password.length() < p.getMinLength()) {
             throw BaseException.badRequest("Password is too short (min " + p.getMinLength() + ")");
@@ -94,7 +101,7 @@ public class PasswordPolicyService {
     /**
      * Prevent reusing old passwords.
      */
-    private void validateAgainstHistory(IamUserEntity user, String newPassword, PasswordPolicyEntity p){
+    public void validateAgainstHistory(IamUserEntity user, String newPassword, PasswordPolicyEntity p){
 
         int lastN = Optional.ofNullable(p.getPasswordHistoryCount()).orElse((short) 0);
 
@@ -117,7 +124,7 @@ public class PasswordPolicyService {
     /**
      * Optional: block common passwords list.
      */
-    private void validateCommonPasswords(String password, PasswordPolicyEntity p) {
+    public void validateCommonPasswords(String password, PasswordPolicyEntity p) {
         if (Boolean.TRUE.equals(p.getBlockCommonPasswords())) {
             // You can load this from DB later. For now:
             List<String> common = List.of(

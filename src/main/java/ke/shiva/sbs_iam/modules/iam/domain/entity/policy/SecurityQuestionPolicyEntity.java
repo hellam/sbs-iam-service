@@ -56,4 +56,9 @@ public class SecurityQuestionPolicyEntity extends BaseEntity {
     @Column(name = "is_active")
     private Boolean isActive;
 
+    @NotNull
+    @ColumnDefault("3")
+    @Column(name = "max_verify_attempts", nullable = false)
+    private Short maxVerifyAttempts;
+
 }

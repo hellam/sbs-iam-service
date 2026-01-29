@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ADD max_verify_attempts COLUMN TO SECURITY QUESTION POLICY -->
+
+    <changeSet id="pg-policy-076-security-question-policy-add-max-verify-attempts" author="hellamimbosa">
+
+        <addColumn tableName="security_question_policy" schemaName="iam_service">
+            <column name="max_verify_attempts" type="SMALLINT" defaultValueNumeric="3">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+    </changeSet>
+
+</databaseChangeLog>
+

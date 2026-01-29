@@ -5,10 +5,8 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.SecurityQuestionPolicyE
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.MfaPolicyRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SecurityQuestionPolicyRepository;
-import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -23,8 +21,8 @@ public class PolicyService {
 
         MfaPolicyEntity mfaPolicy = mfaPolicyRepository.findByChannel(channel);
         if (mfaPolicy == null) {
-            log.error("No MFA policy found for channel: {}", channel);
-            throw new IllegalStateException("No MFA policy found for channel: " + channel);
+            log.warn("No MFA policy found for channel: {}", channel);
+            return null;
         }
 
         return mfaPolicy;
@@ -35,8 +33,8 @@ public class PolicyService {
         // Assuming you have a SecurityQuestionPolicyRepository similar to MfaPolicyRepository
         SecurityQuestionPolicyEntity questionPolicy = securityQuestionPolicyRepository.findByChannel(channel);
         if (questionPolicy == null) {
-            log.error("No Security Question policy found for channel: {}", channel);
-            throw new IllegalStateException("No Security Question policy found for channel: " + channel);
+            log.warn("No Security Question policy found for channel: {}", channel);
+            return null;
         }
 
         return questionPolicy;
