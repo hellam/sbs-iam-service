@@ -19,8 +19,7 @@ import java.util.UUID;
 public class MfaService {
 
     private final LoginFlowService loginFlowService;
-    private final OtpService otpService;
-    private final TotpVerifier totpVerifier;
+    private final CommonMfaService commonMfaService;
     private final SecurityEventService securityEventService;
     private final LoginHistoryService loginHistoryService;
 
@@ -35,10 +34,9 @@ public class MfaService {
             return new MfaInitResponse(flowId);
         }
 
-
         // If OTP is required, send it
         if (reqs.isOtpRequired()) {
-            otpService.sendOtp(session, req.getChannel());
+            commonMfaService.sendOtp(session, req.getChannel());
         }
 
         return new MfaInitResponse(flowId);
@@ -53,13 +51,8 @@ public class MfaService {
         // Extract identifier from session metadata
         String identifier = loginFlowService.extractIdentifier(session);
 
-        boolean ok;
-
-        if (reqs.isTotpRequired()) {
-            ok = totpVerifier.verify(user, req.getCode());
-        } else {
-            ok = otpService.verify(flowId.toString(), req.getCode());
-        }
+        // Verify MFA code using common service
+        boolean ok = commonMfaService.verifyMfaCode(session, req.getCode(), reqs.isTotpRequired());
 
         if (!ok) {
             securityEventService.onLoginFailure(user, "MFA_INVALID", session);

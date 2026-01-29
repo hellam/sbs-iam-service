@@ -125,6 +125,7 @@ public class OidcTokenService {
 
     @Transactional
     public OidcTokenResponse refreshTokens(RefreshTokenRequest request, String deviceId) {
+        log.info("Refreshing tokens for device ID {}", deviceId);
         String refreshTokenHash = HashUtil.sha256(request.getRefreshToken());
         RefreshTokenEntity oldToken = refreshTokenRepository.findByTokenHash(refreshTokenHash)
                 .orElseThrow(() -> BaseException.unauthorized("Invalid refresh token"));

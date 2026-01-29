@@ -7,6 +7,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.MfaPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PasswordPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.SecurityQuestionPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
+import ke.shiva.sbs_iam.modules.iam.domain.model.ForgotPasswordRequirements;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
 import ke.shiva.shivacorestarter.exception.BaseException;
@@ -24,7 +25,7 @@ public class PolicyEvaluationService {
     private final PasswordPolicyService passwordPolicyService;
     private final PolicyService policyService;
 
-    public LoginRequirements evaluateRequirements(IamUserEntity user, Channel channel) {
+    public LoginRequirements evaluateLoginRequirements(IamUserEntity user, Channel channel) {
 
         boolean otpRequired = isOtpRequired(channel);
         boolean totpRequired = isTotpRequired(user, channel);
@@ -43,6 +44,17 @@ public class PolicyEvaluationService {
         );
     }
 
+    public ForgotPasswordRequirements evaluateForgotPasswordRequirements(IamUserEntity user, Channel channel) {
+        boolean securityQuestionsRequired = areSecurityQuestionsRequiredForForgotPassword(user, channel);
+        int securityQuestionsCount = getSecurityQuestionsCount(channel);
+        boolean mfaRequired = isOtpRequired(channel);
+
+        return ForgotPasswordRequirements.builder()
+                .securityQuestionsRequired(securityQuestionsRequired)
+                .securityQuestionsCount(securityQuestionsCount)
+                .mfaRequired(mfaRequired)
+                .build();
+    }
 
     private boolean isOtpRequired(Channel channel) {
         MfaPolicyEntity mfaPolicy = policyService.getMfaPolicy(channel);
@@ -127,6 +139,27 @@ public class PolicyEvaluationService {
             return !hasSetQuestions;
         }
         return false;
+    }
+
+    private boolean areSecurityQuestionsRequiredForForgotPassword(IamUserEntity user, Channel channel) {
+        SecurityQuestionPolicyEntity securityQuestionPolicy = policyService.getSecurityQuestionPolicy(channel);
+        if (securityQuestionPolicy != null && securityQuestionPolicy.getEnabled()
+                && securityQuestionPolicy.getAskOnForgotPassword() != null
+                && securityQuestionPolicy.getAskOnForgotPassword()) {
+            // Check if user has set up security questions
+            boolean hasSetQuestions = user.getIamUserSecurityQuestions() != null
+                    && !user.getIamUserSecurityQuestions().isEmpty();
+            return hasSetQuestions;
+        }
+        return false;
+    }
+
+    private int getSecurityQuestionsCount(Channel channel) {
+        SecurityQuestionPolicyEntity securityQuestionPolicy = policyService.getSecurityQuestionPolicy(channel);
+        if (securityQuestionPolicy != null && securityQuestionPolicy.getMinQuestions() != null) {
+            return securityQuestionPolicy.getMinQuestions();
+        }
+        return 0;
     }
 
     private boolean isProfileSelectionRequired(Channel channel) {

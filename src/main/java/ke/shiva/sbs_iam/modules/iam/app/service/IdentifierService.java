@@ -73,7 +73,7 @@ public class IdentifierService {
         checkAccountLockout(user, channel, req.getIdentifier());
 
         // evaluate policy requirements
-        LoginRequirements requirements = policyService.evaluateRequirements(user, channel);
+        LoginRequirements requirements = policyService.evaluateLoginRequirements(user, channel);
 
         // create temp session (flow)
         var session = loginFlowService.start(user, channel, requirements, req.getIdentifier(), deviceId);
