@@ -34,6 +34,7 @@ public class OpenApiConfig {
                 .tags(List.of(
                         new Tag().name("Identity Verification").description("Endpoints for user identity verification"),
                         new Tag().name("Password Verification").description("Endpoints for password verification"),
+                        new Tag().name("MFA Verification").description("Endpoints for multi-factor authentication"),
                         new Tag().name("Authentication Flow").description("Endpoints for the user authentication flow")
                 ))
                 .servers(getServerList());
