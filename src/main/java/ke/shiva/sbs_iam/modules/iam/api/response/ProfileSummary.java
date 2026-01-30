@@ -7,6 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class ProfileSummary {
     private String profileType;
-    private Long profileId;
+    private String profileId;
     private String displayName;
 }

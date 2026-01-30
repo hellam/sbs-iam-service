@@ -39,7 +39,7 @@ public class IamUserEntity {
     private UUID publicId;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "party_id", nullable = false)
     private PartyEntity party;
 

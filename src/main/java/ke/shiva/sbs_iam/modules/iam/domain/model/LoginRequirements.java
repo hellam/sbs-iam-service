@@ -21,7 +21,7 @@ public class LoginRequirements {
     }
 
     public boolean hasPostLoginSteps() {
-        return isPasswordChangeRequired() || questionsRequired;
+        return isPasswordChangeRequired() || questionsRequired || profileSelectionRequired;
     }
 }
 

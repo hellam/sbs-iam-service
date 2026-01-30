@@ -8,6 +8,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
 import ke.shiva.shivacorestarter.exception.BaseException;
+import ke.shiva.shivacorestarter.util.EncryptionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class ProfileService {
     private final LoginFlowService loginFlowService;
     private final OidcTokenService oidcTokenService;
     private final LoginHistoryService loginHistoryService;
+    private final EncryptionUtil encryptionUtil;
 
     public ProfileSelectionResponse listProfiles(UUID flowId){
 
@@ -32,10 +34,7 @@ public class ProfileService {
         LoginRequirements reqs =
                 loginFlowService.getRequirements(session);
 
-        if (!reqs.isProfileSelectionRequired()) {
-            log.debug("Profile selection not required for this channel");
-            throw BaseException.badRequest();
-        }
+        reviewRequirements(reqs);
 
         List<ProfileSummary> profiles =
                 loginFlowService.getProfiles(session.getIamUser());
@@ -51,7 +50,12 @@ public class ProfileService {
         SessionEntity session =
                 loginFlowService.requireStage(flowId, LoginStage.MFA_OK);
 
-        loginFlowService.selectProfile(session, req.getProfileType(), req.getProfileId());
+        LoginRequirements reqs =
+                loginFlowService.getRequirements(session);
+
+        reviewRequirements(reqs);
+
+        loginFlowService.selectProfile(session, req.getProfileType(), Long.valueOf(encryptionUtil.decrypt(req.getProfileId())));
         loginFlowService.updateStage(session, LoginStage.ACTIVE);
 
         // Extract identifier from session metadata
@@ -62,6 +66,23 @@ public class ProfileService {
 
         // Issue token with profile claims
         return oidcTokenService.issueTokens(session.getId());
+    }
+
+    private static void reviewRequirements(LoginRequirements reqs) {
+        if (!reqs.isProfileSelectionRequired()) {
+            log.debug("Profile selection not required for this channel");
+            throw BaseException.badRequest();
+        }
+
+        if (!reqs.isQuestionsRequired()) {
+            log.debug("Security questions not yet completed");
+            throw BaseException.invalidFlow();
+        }
+
+        if(!reqs.isPasswordChangeRequired()) {
+            log.debug("Password change not yet completed");
+            throw BaseException.invalidFlow();
+        }
     }
 }
 

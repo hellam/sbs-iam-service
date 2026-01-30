@@ -9,6 +9,8 @@ import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
 import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
 import ke.shiva.sbs_iam.modules.iam.app.service.PostLoginService;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
+import ke.shiva.shivacorestarter.dto.ApiResponse;
+import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,21 +29,21 @@ public class PostLoginController {
     @Operation(summary = "5. Change Password")
     @PostMapping("/password/change")
     @RequiresStage(LoginStage.MFA_OK)
-    public ResponseEntity<Void> changePassword(
+    public ResponseEntity<ApiResponse<Void>> changePassword(
             @RequestBody @Valid PasswordChangeRequest req, @FlowId UUID flowId
     ) {
         postLoginService.changePassword(req,flowId);
-        return ResponseEntity.ok().build();
+        return ResponseBuilder.success("Password changed successfully. Please login again with your new password.");
     }
 
     @Operation(summary = "6. Submit Security Questions")
     @PostMapping("/security-questions")
     @RequiresStage(LoginStage.MFA_OK)
-    public ResponseEntity<Void> submitQuestions(
+    public ResponseEntity<ApiResponse<Void>> submitQuestions(
             @RequestBody @Valid SecurityQuestionsRequest req, @FlowId UUID flowId
     ) {
         postLoginService.handleQuestions(req, flowId);
-        return ResponseEntity.ok().build();
+        return ResponseBuilder.success("Security questions set successfully");
     }
 }
 

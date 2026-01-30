@@ -42,7 +42,7 @@ public class PasswordEncryptionTester {
 
             // Hardcoded values
             String publicKeyBase64 = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA30cRtVAhBdkfR4nH53+1qc3mSwvvejj/XSA4g8PqvfDHi50jo+pMu0+mfZ9pYcRTvHgMOjIoefulTbE39FfjvNhdBB9Vtp1lxHcLEPUmMBZCqzS86wpGH4h/6TVvyaNinL9KPRoLCma2JHvDr4+/CYriy+A3D2n4XUEQuFVIC3s7Y9gP9TI7yvIrU8jUsoAZwjTfLP+35zMIDlOPAtl6+x3BlRIgzagqTEn0iUNABYbATscwyHR1qC5XX99RJIUkUCAKZvCXLqrmKO/ScaadvAL7OU1IFgmxe7cJu8QeosY79oGXQlKpwF+2Nt1f38MLUajkH52klPLE1UeSo/h0/wIDAQAB";
-            String password = "Admin@1234";
+            String password = "user";
 
             System.out.print("Enter session ID: ");
             String sessionId = scanner.nextLine().trim();

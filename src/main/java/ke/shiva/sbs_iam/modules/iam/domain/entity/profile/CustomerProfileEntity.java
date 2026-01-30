@@ -20,7 +20,7 @@ public class CustomerProfileEntity {
     private Long id;
 
     @MapsId
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iam_user_id", nullable = false)
     private IamUserEntity iamUser;
 

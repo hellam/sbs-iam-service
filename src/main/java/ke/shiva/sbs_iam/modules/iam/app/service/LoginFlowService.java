@@ -12,6 +12,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
 import ke.shiva.shivacorestarter.exception.BaseException;
+import ke.shiva.shivacorestarter.util.EncryptionUtil;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ public class LoginFlowService {
     private final OrganizationUserRepository orgRepo;
     private final SessionRepository sessionRepository;
     private final DeviceRepository deviceRepository;
+    private final EncryptionUtil encryptionUtil;
 
     // -------- CREATE LOGIN FLOW --------
     public SessionEntity start(IamUserEntity user, Channel channel, LoginRequirements reqs, String identifier, String deviceId) {
@@ -97,12 +99,12 @@ public class LoginFlowService {
         List<ProfileSummary> list = new ArrayList<>();
 
         customerRepo.findByIamUser(iamUser).ifPresent(cp -> {
-            list.add(new ProfileSummary("CUSTOMER", cp.getId(), cp.getFullName()));
+            list.add(new ProfileSummary("CUSTOMER", encryptionUtil.encrypt(cp.getId().toString()), cp.getFullName()));
         });
 
         List<OrganizationUserEntity> orgUsers = orgRepo.findAllByIamUser(iamUser);
         for (var ou : orgUsers) {
-            list.add(new ProfileSummary("ORG_USER", ou.getId(), ou.getOrgDisplayName()));
+            list.add(new ProfileSummary("ORG_USER", encryptionUtil.encrypt(ou.getId().toString()), ou.getOrgDisplayName()));
         }
 
         return list;

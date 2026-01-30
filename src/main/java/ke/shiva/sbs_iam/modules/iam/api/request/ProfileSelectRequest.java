@@ -11,5 +11,5 @@ public class ProfileSelectRequest {
     private ProfileType profileType;
 
     @NotNull
-    private Long profileId;
+    private String profileId;
 }
