@@ -132,7 +132,7 @@ shiva:
     provider: BRNET  # or MOCK for testing
     timeout-seconds: 30
     cache:
-      enabled: true
+      enabled: false
       client-details-ttl-minutes: 30
       account-details-ttl-minutes: 30
       account-balance-ttl-minutes: 5
@@ -142,8 +142,12 @@ shiva:
       connection-string: ${BRNET_CONNECTION_STRING}
       base-url: ${BRNET_BASE_URL}
       action: http://www.craftsilicon.com/banking/core
-      token-cache-ttl-minutes: 5
+      token-cache-ttl-minutes: 0
       token-refresh-threshold-minutes: 1
       request-timeout-seconds: 30
-      enable-logging: false
+      enable-logging: true
 
+# Also enable DEBUG logging for the BRNetClient
+logging:
+  level:
+    ke.shiva.corebanking.provider.brnet.BRNetClient: DEBUG
