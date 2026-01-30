@@ -85,7 +85,7 @@
         <dependency>
             <groupId>ke.shiva</groupId>
             <artifactId>shiva-spring-core-starter</artifactId>
-            <version>1.0.26</version>
+            <version>1.0.27</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
