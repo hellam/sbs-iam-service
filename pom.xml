@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.6</version>
+        <version>3.5.10</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>ke.shiva</groupId>
@@ -15,7 +15,11 @@
     <description>Identity and Access Management Service</description>
     <url/>
     <licenses>
-        <license/>
+        <license>
+            <name>Proprietary License</name>
+            <url>https://shiva.co.ke/licenses/proprietary</url>
+            <distribution>repo</distribution>
+        </license>
     </licenses>
     <developers>
         <developer/>
@@ -36,6 +40,14 @@
             <id>github</id>
             <name>Shiva Spring Core Starter</name>
             <url>https://maven.pkg.github.com/hellam/shiva-spring-core-starter</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>github</id>
+            <name>Shiva Corebanking Starter</name>
+            <url>https://maven.pkg.github.com/hellam/shiva-corebanking-starter</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -85,7 +97,12 @@
         <dependency>
             <groupId>ke.shiva</groupId>
             <artifactId>shiva-spring-core-starter</artifactId>
-            <version>1.0.27</version>
+            <version>1.0.28</version>
+        </dependency>
+        <dependency>
+            <groupId>ke.shiva</groupId>
+            <artifactId>shiva-corebanking-starter</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
