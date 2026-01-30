@@ -47,7 +47,7 @@
         <repository>
             <id>github</id>
             <name>Shiva Corebanking Starter</name>
-            <url>https://maven.pkg.github.com/hellam/shiva-corebanking-starter</url>
+            <url>https://maven.pkg.github.com/hellam/sbs-corebanking-starter</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -102,7 +102,7 @@
         <dependency>
             <groupId>ke.shiva</groupId>
             <artifactId>shiva-corebanking-starter</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
