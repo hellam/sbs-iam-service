@@ -53,7 +53,7 @@ public class PasswordEncryptionTester {
             }
 
             System.out.println("\n⏳ Encrypting password...");
-            System.out.println("📝 Using default password: Admin@1234");
+            System.out.println("📝 Using default password: user");
 
             // Add session ID salt
             String saltedPassword = sessionId + ":" + password;

@@ -96,7 +96,7 @@ public class ForgotPasswordController {
             @Valid @RequestBody MfaInitRequest req,
             @FlowId UUID flowId
     ) {
-        return ResponseBuilder.success("MFA initiated successfully", mfaService.initiate(req, flowId));
+        return ResponseBuilder.success(mfaService.initiate(req, flowId));
     }
 
     @Operation(summary = "4. Verify MFA for Forgot Password")

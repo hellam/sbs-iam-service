@@ -10,6 +10,5 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MfaInitResponse {
-
     private UUID flowId;
 }

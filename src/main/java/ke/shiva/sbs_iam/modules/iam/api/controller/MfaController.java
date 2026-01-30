@@ -38,7 +38,7 @@ public class MfaController {
     @PostMapping("/initiate")
     @RequiresStage(LoginStage.PASSWORD_OK)
     public ResponseEntity<ApiResponse<MfaInitResponse>> initiate(@Valid @RequestBody MfaInitRequest req, @FlowId UUID flowId) {
-        return ResponseBuilder.success("MFA initiated successfully", mfaService.initiate(req, flowId));
+        return ResponseBuilder.success(mfaService.initiate(req, flowId));
     }
 
     @Operation(summary = "4. Verify MFA")

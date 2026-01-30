@@ -26,7 +26,7 @@ public class ForgotPasswordMfaService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public MfaInitResponse initiate(MfaInitRequest request, UUID flowId) {
+    public String initiate(MfaInitRequest request, UUID flowId) {
         // Get and validate session - must be at least at FP_IDENTIFIER_OK
         // Could be FP_IDENTIFIER_OK (no security questions) or FP_SECURITY_QUESTIONS_OK
         SessionEntity session = flowService.requireAtLeast(flowId, LoginStage.FP_IDENTIFIER_OK);
@@ -50,9 +50,7 @@ public class ForgotPasswordMfaService {
 
         // Send OTP using common MFA service
         // Note: TOTP is typically not supported for forgot password (user might not have access to their device)
-        commonMfaService.sendOtp(session, request.getChannel());
-
-        return new MfaInitResponse(flowId);
+        return commonMfaService.sendOtp(session, request.getChannel());
     }
 
     @Transactional

@@ -24,22 +24,22 @@ public class MfaService {
     private final LoginHistoryService loginHistoryService;
 
     // Optional: if using OTP, trigger it here
-    public MfaInitResponse initiate(MfaInitRequest req, UUID flowId)  {
+    public String initiate(MfaInitRequest req, UUID flowId)  {
 
         SessionEntity session = loginFlowService.requireStage(flowId, LoginStage.PASSWORD_OK);
 
         LoginRequirements reqs = loginFlowService.getRequirements(session);
 
         if (reqs.isTotpRequired()) {
-            return new MfaInitResponse(flowId);
+            return "Please provide TOTP code from your authenticator app.";
         }
 
         // If OTP is required, send it
         if (reqs.isOtpRequired()) {
-            commonMfaService.sendOtp(session, req.getChannel());
+            return commonMfaService.sendOtp(session, req.getChannel());
         }
 
-        return new MfaInitResponse(flowId);
+        return "";
     }
 
     public MfaVerifyResponse verify(MfaVerifyRequest req, UUID flowId) {

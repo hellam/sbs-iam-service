@@ -11,6 +11,7 @@ import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.UserContactRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
+import ke.shiva.shivacorestarter.util.MaskingUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ public class OtpService {
     private final PolicyService policyService;
     private final AccountLockoutService accountLockoutService;
 
-    public void sendOtp(SessionEntity session, NotificationChannel notificationChannel) {
+    public String sendOtp(SessionEntity session, NotificationChannel notificationChannel) {
         MfaPolicyEntity mfaPolicy = policyService.getMfaPolicy(session.getChannel());
         UserContact userContact = getContactForNotificationChannel(session, notificationChannel);
 
@@ -50,6 +51,7 @@ public class OtpService {
         Optional<OtpRecordEntity> existingOtp = otpRecordRepository.findBySessionId(session.getSessionId());
         OtpRecordEntity otpRecord;
 
+        String contactValue = "";
         if (existingOtp.isPresent()) {
             otpRecord = existingOtp.get();
             if ("PENDING".equals(otpRecord.getStatus()) &&
@@ -59,7 +61,7 @@ public class OtpService {
                 throw BaseException.reuseOtp("An OTP has already been sent and is still valid. Please check your " +
                         notificationChannel.name().toLowerCase() + ".");
             } else {
-                generateAndSetOtp(otpRecord, session, notificationChannel, mfaPolicy);
+                contactValue = generateAndSetOtp(otpRecord, session, notificationChannel, mfaPolicy);
                 otpRecordRepository.save(otpRecord);
             }
         } else {
@@ -67,21 +69,36 @@ public class OtpService {
             otpRecord.setChannel(session.getChannel());
             otpRecord.setNotificationChannel(notificationChannel);
             otpRecord.setSessionId(session.getSessionId());
-            generateAndSetOtp(otpRecord, session, notificationChannel, mfaPolicy);
+            contactValue = generateAndSetOtp(otpRecord, session, notificationChannel, mfaPolicy);
             otpRecordRepository.save(otpRecord);
         }
+
+        return contactValue;
     }
 
-    private void generateAndSetOtp(OtpRecordEntity otpRecord, SessionEntity session,
-                                   NotificationChannel notificationChannel, MfaPolicyEntity mfaPolicy) {
+    private String generateAndSetOtp(OtpRecordEntity otpRecord, SessionEntity session,
+                                     NotificationChannel notificationChannel, MfaPolicyEntity mfaPolicy) {
         String otp = otpGenerator.generate(mfaPolicy.getOtpType(), mfaPolicy.getOtpLength());
         String otpHash = HashUtil.bcrypt(otp);
+        UserContact userContact = getContactForNotificationChannel(session, notificationChannel);
+        String contactValue = userContact.getContactValue();
+        ContactType contactType = userContact.getContactType();
+
         otpRecord.setOtpHash(otpHash);
         otpRecord.setExpiryTime(OffsetDateTime.now().plusSeconds(mfaPolicy.getOtpExpirySeconds()));
         otpRecord.setVerifyAttempts((short) 0);
         otpRecord.setStatus("PENDING");
-        otpRecord.setTo(getContactForNotificationChannel(session, notificationChannel).getContactValue());
-        log.info("Generated OTP: {} for session: {}", otp, session.getSessionId());
+        otpRecord.setTo(contactValue);
+        log.info("Generated OTP: {} to: {} for session: {}", otp, contactValue, session.getSessionId());
+
+        //TODO: Integrate with notification service to send the OTP via the specified channel
+
+        //mask contact value for return
+        if (contactType == ContactType.EMAIL)
+            contactValue = MaskingUtil.maskEmail(contactValue);
+        else if (contactType == ContactType.PHONE)
+            contactValue = MaskingUtil.maskPhone(contactValue);
+        return "OTP sent to " + contactValue + " via " + notificationChannel.getDescription();
     }
 
     public UserContact getContactForNotificationChannel(SessionEntity session, NotificationChannel notificationChannel) {

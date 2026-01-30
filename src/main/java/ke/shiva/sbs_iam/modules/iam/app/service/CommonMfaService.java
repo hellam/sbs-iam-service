@@ -26,9 +26,9 @@ public class CommonMfaService {
      * @param session The session entity
      * @param channel The notification channel (SMS, EMAIL, etc.)
      */
-    public void sendOtp(SessionEntity session, NotificationChannel channel) {
+    public String sendOtp(SessionEntity session, NotificationChannel channel) {
         log.debug("Sending OTP for session: {} via channel: {}", session.getSessionId(), channel);
-        otpService.sendOtp(session, channel);
+        return otpService.sendOtp(session, channel);
     }
 
     /**

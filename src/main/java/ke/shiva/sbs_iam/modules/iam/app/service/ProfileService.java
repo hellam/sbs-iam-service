@@ -70,17 +70,17 @@ public class ProfileService {
 
     private static void reviewRequirements(LoginRequirements reqs) {
         if (!reqs.isProfileSelectionRequired()) {
-            log.debug("Profile selection not required for this channel");
+            log.warn("Profile selection not required for this channel");
             throw BaseException.badRequest();
         }
 
-        if (!reqs.isQuestionsRequired()) {
-            log.debug("Security questions not yet completed");
+        if (reqs.isQuestionsRequired()) {
+            log.warn("Security questions not yet completed");
             throw BaseException.invalidFlow();
         }
 
-        if(!reqs.isPasswordChangeRequired()) {
-            log.debug("Password change not yet completed");
+        if(reqs.isPasswordChangeRequired()) {
+            log.warn("Password change not yet completed");
             throw BaseException.invalidFlow();
         }
     }
