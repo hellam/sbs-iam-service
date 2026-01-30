@@ -2,7 +2,6 @@ package ke.shiva.sbs_iam.modules.iam.app.service;
 
 import ke.shiva.sbs_iam.modules.iam.api.request.MfaInitRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.MfaVerifyRequest;
-import ke.shiva.sbs_iam.modules.iam.api.response.MfaInitResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.MfaVerifyResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
@@ -67,7 +66,6 @@ public class MfaService {
         loginFlowService.extend(session);
 
         MfaVerifyResponse resp = new MfaVerifyResponse();
-        resp.setFlowId(UUID.fromString(session.getSessionId()));
         resp.setNextIsProfileSelection(loginFlowService
                 .getRequirements(session)
                 .isProfileSelectionRequired());

@@ -7,7 +7,6 @@ import java.util.UUID;
 
 @Data
 public class ProfileSelectionResponse {
-    private UUID flowId;
     private List<ProfileSummary> profiles;
 }
 

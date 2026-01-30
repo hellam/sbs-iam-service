@@ -40,7 +40,6 @@ public class ProfileService {
                 loginFlowService.getProfiles(session.getIamUser());
 
         ProfileSelectionResponse resp = new ProfileSelectionResponse();
-        resp.setFlowId(flowId);
         resp.setProfiles(profiles);
         return resp;
     }

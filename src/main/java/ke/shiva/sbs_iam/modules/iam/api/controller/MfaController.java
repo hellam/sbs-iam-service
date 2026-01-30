@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.modules.iam.api.request.MfaInitRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.MfaVerifyRequest;
-import ke.shiva.sbs_iam.modules.iam.api.response.MfaInitResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.MfaVerifyResponse;
 import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
 import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
@@ -37,7 +36,7 @@ public class MfaController {
     @Operation(summary = "3. Initiate MFA")
     @PostMapping("/initiate")
     @RequiresStage(LoginStage.PASSWORD_OK)
-    public ResponseEntity<ApiResponse<MfaInitResponse>> initiate(@Valid @RequestBody MfaInitRequest req, @FlowId UUID flowId) {
+    public ResponseEntity<ApiResponse<Void>> initiate(@Valid @RequestBody MfaInitRequest req, @FlowId UUID flowId) {
         return ResponseBuilder.success(mfaService.initiate(req, flowId));
     }
 

@@ -3,7 +3,6 @@ package ke.shiva.sbs_iam.modules.iam.app.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ke.shiva.sbs_iam.modules.iam.api.request.MfaInitRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.MfaVerifyRequest;
-import ke.shiva.sbs_iam.modules.iam.api.response.MfaInitResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.MfaVerifyResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
@@ -87,7 +86,6 @@ public class ForgotPasswordMfaService {
         flowService.updateStage(session, LoginStage.FP_MFA_OK);
 
         MfaVerifyResponse response = new MfaVerifyResponse();
-        response.setFlowId(flowId);
         response.setNextIsProfileSelection(false); // Forgot password doesn't require profile selection
 
         return response;

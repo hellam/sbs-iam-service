@@ -52,7 +52,6 @@ public class PasswordAuthService {
         loginFlowService.extend(session);
 
         PasswordStepResponse resp = new PasswordStepResponse();
-        resp.setFlowId(UUID.fromString(session.getSessionId()));
         resp.setOtpRequired(reqs.isOtpRequired());
         resp.setTotpRequired(reqs.isTotpRequired());
         resp.setPasswordChangeRequired(reqs.isPasswordChangeRequired());

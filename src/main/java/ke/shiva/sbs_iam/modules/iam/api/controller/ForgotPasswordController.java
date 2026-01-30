@@ -92,7 +92,7 @@ public class ForgotPasswordController {
     @PostMapping("/mfa/initiate")
     @RateLimit(capacity = 3, refillTokens = 3, refillDuration = "PT10M", keyType = KeyType.IP,
             message = "Too many MFA attempts. Please try again in 10 minutes.")
-    public ResponseEntity<ApiResponse<MfaInitResponse>> initiateMfa(
+    public ResponseEntity<ApiResponse<Void>> initiateMfa(
             @Valid @RequestBody MfaInitRequest req,
             @FlowId UUID flowId
     ) {
