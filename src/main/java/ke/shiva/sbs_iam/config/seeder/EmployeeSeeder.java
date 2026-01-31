@@ -1,5 +1,6 @@
 package ke.shiva.sbs_iam.config.seeder;
 
+import ke.shiva.sbs_iam.modules.iam.domain.enums.party.PartyType;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.ProfileContactRepository;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.EmployeeAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
@@ -111,7 +112,7 @@ public class EmployeeSeeder implements CommandLineRunner {
             log.info("Creating party for employee");
             PartyEntity party = new PartyEntity();
             party.setPublicId(UUID.randomUUID());
-            party.setPartyType("PERSON");
+            party.setPartyType(PartyType.PERSON);
             party.setStatus("ACTIVE");
             party = partyRepository.save(party);
 

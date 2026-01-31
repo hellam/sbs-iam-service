@@ -7,6 +7,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.FeaturePolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.OrgRoleEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.party.PartyType;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,10 +31,10 @@ public class PartyEntity extends BaseEntity {
     @Column(name = "public_id", nullable = false)
     private UUID publicId;
 
-    @Size(max = 50)
     @NotNull
     @Column(name = "party_type", nullable = false, length = 50)
-    private String partyType;
+    @Enumerated(EnumType.STRING)
+    private PartyType partyType;
 
     @Size(max = 50)
     @Column(name = "core_customer_id", length = 50)
