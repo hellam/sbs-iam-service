@@ -41,12 +41,12 @@ security:
   allowed-domains:
     map:
       BACKOFFICE:
-        - "localhost"
+        - "192.168.100.146"
       INTERNET_BANKING:
-        - "localhost"
+        - "192.168.100.146"
       MOBILE_BANKING:
         - "localhost:44000"
 
 shiva:
   api-doc:
-    servers: http://localhost:9000${spring.mvc.servlet.path},http://localhost:${server.port}${spring.mvc.servlet.path}
+    servers: http://localhost:9000${spring.mvc.servlet.path},http://192.168.100.146:9000${spring.mvc.servlet.path},http://localhost:${server.port}${spring.mvc.servlet.path}

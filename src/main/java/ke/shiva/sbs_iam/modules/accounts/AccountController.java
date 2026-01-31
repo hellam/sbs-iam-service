@@ -1,5 +1,6 @@
 package ke.shiva.sbs_iam.modules.accounts;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,6 +29,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/accounts")
 @RequiredArgsConstructor
+@Hidden
 @Tag(name = "Account Operations", description = "Account information and balance retrieval")
 public class AccountController {
 
