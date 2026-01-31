@@ -67,6 +67,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
+                "http://192.168.100.146:9000",    // your gateway
                 "http://localhost:9000",    // your gateway
                 "http://localhost:3000",    // if frontend dev
                 "http://localhost:4200"     // if Angular
