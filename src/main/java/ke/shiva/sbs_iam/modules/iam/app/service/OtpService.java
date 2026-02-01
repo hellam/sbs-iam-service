@@ -58,8 +58,10 @@ public class OtpService {
                     otpRecord.getExpiryTime().isAfter(OffsetDateTime.now()) &&
                     otpRecord.getVerifyAttempts() < mfaPolicy.getMaxVerifyAttempts()) {
                 log.info("Reusing existing OTP for session: {}", session.getSessionId());
-                throw BaseException.reuseOtp("An OTP has already been sent and is still valid. Please check your " +
-                        notificationChannel.name().toLowerCase() + ".");
+//                throw BaseException.reuseOtp("An OTP has already been sent and is still valid. Please check your " +
+//                        notificationChannel.name().toLowerCase() + ".");
+                return "An OTP has already been sent and is still valid. Please check your " +
+                        notificationChannel.name().toLowerCase() + ".";
             } else {
                 contactValue = generateAndSetOtp(otpRecord, session, notificationChannel, mfaPolicy);
                 otpRecordRepository.save(otpRecord);

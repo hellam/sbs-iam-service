@@ -19,7 +19,7 @@ import org.hibernate.annotations.ColumnDefault;
 })
 public class PasswordPolicyEntity extends BaseEntity {
     @NotNull
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "policy_id", nullable = false)
     private PolicyEntity policy;
 

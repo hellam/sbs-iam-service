@@ -93,6 +93,9 @@ public class AccountLockoutService {
         }
 
         PasswordPolicyEntity policy = passwordPolicyService.resolvePolicy(channel);
+        if (policy == null) {
+            throw BaseException.unableToProcessRequest("No password policy configured for channel: " + channel);
+        }
 
         short failedAttempts = (short) (auth.getInternetFailedAttempts() + 1);
         auth.setInternetFailedAttempts(failedAttempts);
@@ -123,6 +126,9 @@ public class AccountLockoutService {
         }
 
         PasswordPolicyEntity policy = passwordPolicyService.resolvePolicy(channel);
+        if (policy == null) {
+            throw BaseException.unableToProcessRequest("No password policy configured for channel: " + channel);
+        }
 
         short failedAttempts = (short) (auth.getMobileFailedAttempts() + 1);
         auth.setMobileFailedAttempts(failedAttempts);
@@ -153,6 +159,9 @@ public class AccountLockoutService {
         }
 
         PasswordPolicyEntity policy = passwordPolicyService.resolvePolicy(channel);
+        if (policy == null) {
+            throw BaseException.unableToProcessRequest("No password policy configured for channel: " + channel);
+        }
 
         short failedAttempts = (short) (auth.getStaffFailedAttempts() + 1);
         auth.setStaffFailedAttempts(failedAttempts);
@@ -264,6 +273,9 @@ public class AccountLockoutService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void lockAccountAttemptFailure(IamUserEntity user, Channel channel) {
         PasswordPolicyEntity policy = passwordPolicyService.resolvePolicy(channel);
+        if (policy == null) {
+            throw BaseException.unableToProcessRequest("No password policy configured for channel: " + channel);
+        }
 
         switch (channel) {
             case INTERNET_BANKING -> {
@@ -305,4 +317,3 @@ public class AccountLockoutService {
         }
     }
 }
-

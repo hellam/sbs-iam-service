@@ -1,6 +1,5 @@
 package ke.shiva.sbs_iam.modules.iam.app.security;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,6 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import ke.shiva.sbs_iam.config.SecurityConfig.SecurityConstants;
 import ke.shiva.sbs_iam.modules.iam.app.service.DeviceIdValidator;
 import ke.shiva.sbs_iam.modules.iam.app.util.FlowIdProvider;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
@@ -63,8 +63,15 @@ public class DeviceIdFilter extends OncePerRequestFilter {
             }
         }
 
-        // Delegate validation (updates last seen on success)
-        deviceIdValidator.validate(deviceId, validationMode, flowId);
-        filterChain.doFilter(request, response);
+        try {
+            // Delegate validation (updates last seen on success)
+            deviceIdValidator.validate(deviceId, validationMode, flowId);
+            filterChain.doFilter(request, response);
+        } catch (BaseException e) {
+            // Set the appropriate HTTP status code from the exception
+            response.setStatus(e.getStatus().value());
+            log.warn("Device validation failed: {}", e.getMessage());
+            // Don't continue the filter chain for authentication/authorization errors
+        }
     }
 }

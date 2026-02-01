@@ -11,6 +11,7 @@ import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -56,9 +57,10 @@ public class PasswordPolicyService {
      * Load password policy based on channel.
      * Returns null if no policy is configured for the channel.
      */
+    @Transactional
     public PasswordPolicyEntity resolvePolicy(Channel channel) {
         // 3. GLOBAL POLICY (always exists)
-        PolicyEntity globalPolicy = policyRepo.findFirstByChannelsContains(channel.toString())
+        PolicyEntity globalPolicy = policyRepo.findFirstByChannelsContains(channel.name())
                 .orElse(null);
 
         if (globalPolicy == null) {
