@@ -38,7 +38,7 @@ public class PasswordAuthService {
         if (!ok) {
             securityEventService.onLoginFailure(user, "PASSWORD_INVALID", session);
             loginHistoryService.logPasswordFailure(user, identifier, session, "PASSWORD_INVALID");
-            throw BaseException.unauthorized("Invalid credentials");
+            throw BaseException.badRequest("Invalid credentials");
         }
 
         securityEventService.onLoginSuccess(user, "PASSWORD_SUCCESS", session);

@@ -16,6 +16,12 @@ management:
 server:
   port: 7001
 
+seeder:
+  policy:
+    enabled: true
+  security-question:
+    enabled: true
+
 security:
   allowed-domains:
     map:

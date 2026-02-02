@@ -6,6 +6,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PasswordPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.PasswordHistoryRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.PasswordPolicyRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.PolicyRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
@@ -19,14 +20,16 @@ import java.util.Optional;
 @Service
 public class PasswordPolicyService {
 
-    private final PolicyRepository policyRepo;
     private final PasswordHistoryRepository historyRepo;
     private final PasswordVerifier passwordVerifier;
+    private final PasswordPolicyRepository passwordPolicyRepo;
 
-    public PasswordPolicyService(PolicyRepository policyRepo, PasswordHistoryRepository historyRepo, @Lazy PasswordVerifier passwordVerifier) {
-        this.policyRepo = policyRepo;
+    public PasswordPolicyService(PasswordHistoryRepository historyRepo,
+                                 @Lazy PasswordVerifier passwordVerifier,
+                                 PasswordPolicyRepository passwordPolicyRepo) {
         this.historyRepo = historyRepo;
         this.passwordVerifier = passwordVerifier;
+        this.passwordPolicyRepo = passwordPolicyRepo;
     }
 
     /**
@@ -40,34 +43,29 @@ public class PasswordPolicyService {
 
         if (!ok) {
 //            securityEventService.onLoginFailure(user, "PASSWORD_INVALID", session);
-            throw BaseException.unauthorized("Invalid current password");
+            throw BaseException.badRequest("Invalid current password");
         }
 
         PasswordPolicyEntity policy = resolvePolicy(session.getChannel());
+        if (policy==null){
+            throw BaseException.unableToProcessRequest("No password policy found for channel: " + session.getChannel());
+
+        }
 
         // If no policy configured, skip validation (allow any password)
-        if (policy != null) {
-            validateStructure(newPassword, policy);
-            validateAgainstHistory(session.getIamUser(), newPassword, policy);
-            validateCommonPasswords(newPassword, policy);
-        }
+        validateStructure(newPassword, policy);
+        validateAgainstHistory(session.getIamUser(), newPassword, policy);
+        validateCommonPasswords(newPassword, policy);
     }
 
     /**
      * Load password policy based on channel.
      * Returns null if no policy is configured for the channel.
      */
-    @Transactional
     public PasswordPolicyEntity resolvePolicy(Channel channel) {
         // 3. GLOBAL POLICY (always exists)
-        PolicyEntity globalPolicy = policyRepo.findFirstByChannelsContains(channel.name())
+        return passwordPolicyRepo.findFirstByChannel(channel)
                 .orElse(null);
-
-        if (globalPolicy == null) {
-            return null;
-        }
-
-        return globalPolicy.getPasswordPolicy();
     }
 
     /**

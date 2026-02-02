@@ -36,6 +36,8 @@ seeder:
     enabled: true  # Enable customer seeder to create internet banking user
   policy:
     enabled: true
+  security-question:
+    enabled: true
 
 security:
   allowed-domains:

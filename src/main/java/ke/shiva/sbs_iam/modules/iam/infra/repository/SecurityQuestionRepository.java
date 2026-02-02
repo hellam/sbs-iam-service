@@ -4,5 +4,9 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.security.SecurityQuestionEntit
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
-public interface SecurityQuestionRepository extends JpaRepository<SecurityQuestionEntity, Long> {}
+public interface SecurityQuestionRepository extends JpaRepository<SecurityQuestionEntity, Long> {
+    List<SecurityQuestionEntity> findAllByIsActiveTrue();
+}

@@ -22,8 +22,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("identifier")
 @RequiredArgsConstructor
 @Tag(name = "Identity Verification")
-@RateLimit(capacity = 10, refillTokens = 10, refillDuration = "PT1M", keyType = KeyType.IP,
-          message = "Too many identifier lookup attempts. Please try again in a minute.")
+@RateLimit(capacity = 5, refillTokens = 1, refillDuration = "PT5M", keyType = KeyType.IP,
+          message = "Too many attempts. Please try again later")
 public class IdentifierController {
 
     private final IdentifierService identifierService;

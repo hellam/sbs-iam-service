@@ -66,9 +66,7 @@ public class MfaService {
         loginFlowService.extend(session);
 
         MfaVerifyResponse resp = new MfaVerifyResponse();
-        resp.setNextIsProfileSelection(loginFlowService
-                .getRequirements(session)
-                .isProfileSelectionRequired());
+        resp.setNextIsProfileSelection(loginFlowService.getRequirements(session).nextIsProfileSelection());
 
         return resp;
     }

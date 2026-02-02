@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/device/**",
+                                "/security-questions/**",
                                 "/identifier/**",
                                 "/login/**",
                                 "/mfa/**",
