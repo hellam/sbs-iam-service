@@ -4,6 +4,7 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import ke.shiva.sbs_iam.modules.iam.api.request.PasswordChangeRequest;
 import ke.shiva.sbs_iam.modules.iam.app.service.LoginFlowService;
+import ke.shiva.sbs_iam.modules.iam.app.service.PasswordManager;
 import ke.shiva.sbs_iam.modules.iam.app.service.PasswordPolicyService;
 import ke.shiva.sbs_iam.modules.iam.app.util.FlowIdProvider;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
@@ -20,6 +21,7 @@ public class PasswordPolicyValidator implements ConstraintValidator<ValidPasswor
     private final PasswordPolicyService passwordPolicyService;
     private final LoginFlowService loginFlowService;
     private final FlowIdProvider flowIdProvider;
+    private final PasswordManager passwordManager;
 
     @Override
     public boolean isValid(PasswordChangeRequest request, ConstraintValidatorContext context) {
@@ -32,6 +34,8 @@ public class PasswordPolicyValidator implements ConstraintValidator<ValidPasswor
             // 1. Load the session to get the context (especially the channel)
             SessionEntity session = loginFlowService.requireAtLeast(flowId, LoginStage.IDENTIFIER_OK);
 
+            request.setNewPassword(passwordManager.decryptPassword(request.getNewPassword(), session.getSessionId()));
+            request.setOldPassword(passwordManager.decryptPassword(request.getOldPassword(), session.getSessionId()));
             // 2. Delegate to the existing service
             passwordPolicyService.validatePasswordChange(session, request.getOldPassword(), request.getNewPassword());
 

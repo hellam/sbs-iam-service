@@ -34,14 +34,11 @@ public class PasswordManager {
 
         IamUserEntity user = session.getIamUser();
 
-        // Decrypt new password for validation
-        String newPassword = decryptPassword(request.getNewPassword(), session.getSessionId());
-
         // 1. Validate against policy (oldPassword will be decrypted in passwordVerifier.verify)
-        passwordPolicyService.validatePasswordChange(session, request.getOldPassword(), newPassword);
+        passwordPolicyService.validatePasswordChange(session, request.getOldPassword(), request.getNewPassword());
 
         // 2. Hash new password
-        String hash = HashUtil.bcrypt(newPassword);
+        String hash = HashUtil.bcrypt(request.getNewPassword());
         PasswordPolicyEntity passwordPolicy = passwordPolicyService.resolvePolicy(session.getChannel());
 
         OffsetDateTime expiry = null;

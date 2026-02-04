@@ -4,11 +4,13 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import ke.shiva.sbs_iam.modules.iam.api.request.ForgotPasswordResetRequest;
 import ke.shiva.sbs_iam.modules.iam.app.service.ForgotPasswordFlowService;
+import ke.shiva.sbs_iam.modules.iam.app.service.PasswordManager;
 import ke.shiva.sbs_iam.modules.iam.app.service.PasswordPolicyService;
 import ke.shiva.sbs_iam.modules.iam.app.util.FlowIdProvider;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PasswordPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
+import ke.shiva.shivacorestarter.util.TransitPasswordCrypto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,6 +25,7 @@ public class ForgotPasswordPolicyValidator implements ConstraintValidator<ValidF
     private final PasswordPolicyService passwordPolicyService;
     private final ForgotPasswordFlowService forgotPasswordFlowService;
     private final FlowIdProvider flowIdProvider;
+    private final PasswordManager passwordManager;
 
     @Override
     public boolean isValid(ForgotPasswordResetRequest request, ConstraintValidatorContext context) {
@@ -35,6 +38,9 @@ public class ForgotPasswordPolicyValidator implements ConstraintValidator<ValidF
 
             // Load the forgot password session to get the context (channel, user)
             SessionEntity session = forgotPasswordFlowService.requireAtLeast(flowId, LoginStage.FP_IDENTIFIER_OK);
+
+            // Decrypt the new password for validation
+//            request.setNewPassword(passwordManager.decryptPassword(request.getNewPassword(),session.getSessionId()));
 
             // Get password policy for the channel
             PasswordPolicyEntity policy = passwordPolicyService.resolvePolicy(session.getChannel());

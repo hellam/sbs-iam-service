@@ -13,6 +13,7 @@ import java.util.UUID;
 @ValidPasswordPolicy(message = "Password does not meet the policy requirements.")
 public class PasswordChangeRequest {
 
+    @NotBlank
     private String oldPassword; // optional depending on policy
 
     @NotBlank
@@ -21,8 +22,8 @@ public class PasswordChangeRequest {
     @NotBlank
     private String newPasswordConfirmation;
 
-    @AssertTrue(message = "Password confirmation does not match")
-    private boolean isNewPasswordConfirmed() {
-        return Objects.equals(this.newPassword, this.newPasswordConfirmation);
-    }
+//    @AssertTrue(message = "Password confirmation does not match")
+//    private boolean isNewPasswordConfirmed() {
+//        return Objects.equals(this.newPassword, this.newPasswordConfirmation);
+//    }
 }

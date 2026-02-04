@@ -4,11 +4,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import ke.shiva.sbs_iam.config.AllowedDomainsProperties;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.shivacorestarter.exception.BaseException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Component
 public class DomainGuard {
 
@@ -33,7 +35,8 @@ public class DomainGuard {
         boolean match = allowed.stream().anyMatch(host::equalsIgnoreCase);
 
         if (!match) {
-            throw BaseException.domainNotAllowed("Access forbidden");
+            log.warn("Domain not allowed: {} for channel: {}", host, channel);
+            throw BaseException.domainNotAllowed("Access forbidden!");
         }
     }
 }
