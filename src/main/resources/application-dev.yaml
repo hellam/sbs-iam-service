@@ -53,4 +53,4 @@ security:
 
 shiva:
   api-doc:
-    servers: http://192.168.100.146:9000${spring.mvc.servlet.path},https://192.168.100.97:9000${spring.mvc.servlet.path},http://localhost:9000${spring.mvc.servlet.path},http://localhost:${server.port}${spring.mvc.servlet.path}
+    servers: https://192.168.100.97:9000${spring.mvc.servlet.path},https://localhost:9000${spring.mvc.servlet.path},http://localhost:${server.port}${spring.mvc.servlet.path}
