@@ -44,7 +44,7 @@ public class ProfileService {
         return resp;
     }
 
-    public OidcTokenResponse selectProfile(ProfileSelectRequest req, UUID flowId) {
+    public void selectProfile(ProfileSelectRequest req, UUID flowId) {
 
         SessionEntity session =
                 loginFlowService.requireStage(flowId, LoginStage.MFA_OK);
@@ -64,7 +64,7 @@ public class ProfileService {
         loginHistoryService.logLoginSuccess(session.getIamUser(), identifier, session);
 
         // Issue token with profile claims
-        return oidcTokenService.issueTokens(session.getId());
+        oidcTokenService.issueTokens(session.getId());
     }
 
     private static void reviewRequirements(LoginRequirements reqs) {

@@ -5,11 +5,11 @@ import lombok.Data;
 
 @Data
 public class OidcTokenResponse {
-    @JsonIgnore
+//    @JsonIgnore
 //    private String accessToken;
 //    @JsonIgnore
 //    private String refreshToken;
-    private long expiresIn;
-    private String tokenType = "Bearer";
+//    private long expiresIn;
+//    private String tokenType = "Bearer";
 //    private String idToken;
 }

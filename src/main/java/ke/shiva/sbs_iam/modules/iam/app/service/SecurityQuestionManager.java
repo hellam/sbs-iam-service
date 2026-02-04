@@ -7,6 +7,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.security.SecurityQuestionEntit
 import ke.shiva.sbs_iam.modules.iam.infra.repository.IamUserSecurityQuestionRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SecurityQuestionRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
+import ke.shiva.shivacorestarter.util.EncryptionUtil;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class SecurityQuestionManager {
 
     private final IamUserSecurityQuestionRepository userQuestionRepo;
     private final SecurityQuestionRepository securityQuestionRepo;
+    private final EncryptionUtil encryptionUtil;
 
     public void save(IamUserEntity user, List<SecurityQuestionsRequest.QuestionAnswer> questions) {
 
@@ -29,7 +31,8 @@ public class SecurityQuestionManager {
         userQuestionRepo.deleteAllByIamUserId(user.getId());
 
         for (var qa : questions) {
-            SecurityQuestionEntity securityQuestionEntity = securityQuestionRepo.findById(qa.getQuestionId()).
+            Long questionId = Long.valueOf(encryptionUtil.decrypt(qa.getQuestionId()));
+            SecurityQuestionEntity securityQuestionEntity = securityQuestionRepo.findById(questionId).
                     orElseThrow(() -> BaseException.badRequest("Invalid security question: " + qa.getQuestionId()));
 
             IamUserSecurityQuestionEntity entity = new IamUserSecurityQuestionEntity();

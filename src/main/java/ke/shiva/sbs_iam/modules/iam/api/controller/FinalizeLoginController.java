@@ -39,7 +39,7 @@ public class FinalizeLoginController {
     @Operation(summary = "9. Finalize Login")
     @PostMapping("/finalize")
     @RequiresStage(LoginStage.MFA_OK)
-    public ResponseEntity<ApiResponse<OidcTokenResponse>> finalize(
+    public ResponseEntity<ApiResponse<Void>> finalize(
             @FlowId UUID flowId
     ) {
         SessionEntity session = loginFlowService.requireStage(flowId, LoginStage.MFA_OK);
@@ -63,7 +63,8 @@ public class FinalizeLoginController {
         // Log successful login completion
         loginHistoryService.logLoginSuccess(session.getIamUser(), identifier, session);
 
-        return ResponseBuilder.success(oidcTokenService.issueTokens(session.getId()));
+        oidcTokenService.issueTokens(session.getId());
+        return ResponseBuilder.success("Welcome! You have successfully logged in.");
     }
 
     @Operation(summary = "Refresh OIDC tokens")
@@ -75,6 +76,7 @@ public class FinalizeLoginController {
     ) {
 
         String deviceId = httpRequest.getHeader(SecurityConstants.Headers.DEVICE_ID);
-        return ResponseBuilder.success(oidcTokenService.refreshTokens(request, deviceId));
+        oidcTokenService.refreshTokens(request, deviceId);
+        return ResponseBuilder.success("Successfully refreshed tokens.");
     }
 }

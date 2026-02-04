@@ -38,7 +38,8 @@ public class ProfileController {
     public ResponseEntity<ApiResponse<OidcTokenResponse>> select(
             @Valid @RequestBody ProfileSelectRequest req, @FlowId UUID flowId
     ) {
-        return ResponseBuilder.success(profileService.selectProfile(req, flowId));
+        profileService.selectProfile(req, flowId);
+        return ResponseBuilder.success("Profile selected successfully");
     }
 }
 

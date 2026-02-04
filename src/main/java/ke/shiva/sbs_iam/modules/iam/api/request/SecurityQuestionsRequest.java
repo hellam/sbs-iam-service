@@ -16,7 +16,7 @@ public class SecurityQuestionsRequest {
     @Data
     public static class QuestionAnswer {
         @NotNull
-        private Long questionId;
+        private String questionId;
 
         @NotBlank
         private String answer;

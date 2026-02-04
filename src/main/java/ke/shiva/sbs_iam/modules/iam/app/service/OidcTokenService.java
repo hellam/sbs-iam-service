@@ -63,7 +63,7 @@ public class OidcTokenService {
     private String expectedAudience;
 
     @Transactional
-    public OidcTokenResponse issueTokens(Long sessionId) {
+    public void issueTokens(Long sessionId) {
         SessionEntity session = sessionRepository.findByIdWithIamUser(sessionId).orElseThrow(
                 () -> new IllegalArgumentException("Session not found with ID: " + sessionId)
         );
@@ -114,17 +114,10 @@ public class OidcTokenService {
         loginFlowService.extend(session, 30); // Extend session by 30 minutes on token issue
 
         setTokenHeaders(accessToken, rawRefreshToken, accessTokenValidity, refreshTokenValidity);
-
-        OidcTokenResponse resp = new OidcTokenResponse();
-//        resp.setAccessToken(accessToken);
-//        resp.setRefreshToken(rawRefreshToken);
-        resp.setExpiresIn(accessTokenValidity);
-//        resp.setIdToken(buildIdToken(session, user, now, accessTokenValidity));
-        return resp;
     }
 
     @Transactional
-    public OidcTokenResponse refreshTokens(RefreshTokenRequest request, String deviceId) {
+    public void refreshTokens(RefreshTokenRequest request, String deviceId) {
         log.info("Refreshing tokens for device ID {}", deviceId);
         String refreshTokenHash = HashUtil.sha256(request.getRefreshToken());
         RefreshTokenEntity oldToken = refreshTokenRepository.findByTokenHash(refreshTokenHash)
@@ -179,14 +172,12 @@ public class OidcTokenService {
 
 
         // Issue new tokens
-        OidcTokenResponse response = issueTokens(oldToken.getSession().getId());
+       issueTokens(oldToken.getSession().getId());
 
         // Revoke the old refresh token
         oldToken.setRevokedAt(OffsetDateTime.now());
         oldToken.setRevokedReason("Replaced by new token");
         refreshTokenRepository.save(oldToken);
-
-        return response;
     }
 
     private String buildIdToken(SessionEntity session, IamUserEntity user, OffsetDateTime now, long expiresIn) {
