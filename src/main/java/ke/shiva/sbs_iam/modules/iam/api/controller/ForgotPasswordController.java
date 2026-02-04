@@ -26,6 +26,9 @@ import java.util.UUID;
 @RequestMapping("/forgot-password")
 @RequiredArgsConstructor
 @Tag(name = "Forgot Password")
+
+@RateLimit(capacity = 3, refillTokens = 3, refillDuration = "PT10M", keyType = KeyType.IP,
+        message = "Too many password reset attempts. Please try again in 10 minutes.")
 public class ForgotPasswordController {
 
     private final ForgotPasswordIdentifierService identifierService;
@@ -36,8 +39,6 @@ public class ForgotPasswordController {
 
     @Operation(summary = "1. Initiate Forgot Password - Backoffice")
     @PostMapping("/identifier/backoffice")
-    @RateLimit(capacity = 5, refillTokens = 5, refillDuration = "PT5M", keyType = KeyType.IP,
-            message = "Too many forgot password attempts. Please try again in 5 minutes.")
     public ResponseEntity<ApiResponse<ForgotPasswordIdentifierResponse>> identifierBackoffice(
             @RequestBody @Valid ForgotPasswordIdentifierRequest req,
             HttpServletRequest request
@@ -50,8 +51,6 @@ public class ForgotPasswordController {
 
     @Operation(summary = "1. Initiate Forgot Password - Mobile")
     @PostMapping("/identifier/mobile")
-    @RateLimit(capacity = 5, refillTokens = 5, refillDuration = "PT5M", keyType = KeyType.IP,
-            message = "Too many forgot password attempts. Please try again in 5 minutes.")
     public ResponseEntity<ApiResponse<ForgotPasswordIdentifierResponse>> identifierMobile(
             @RequestBody @Valid ForgotPasswordIdentifierRequest req,
             HttpServletRequest httpRequest
@@ -64,8 +63,6 @@ public class ForgotPasswordController {
 
     @Operation(summary = "1. Initiate Forgot Password - Internet Banking")
     @PostMapping("/identifier/internet-banking")
-    @RateLimit(capacity = 5, refillTokens = 5, refillDuration = "PT5M", keyType = KeyType.IP,
-            message = "Too many forgot password attempts. Please try again in 5 minutes.")
     public ResponseEntity<ApiResponse<ForgotPasswordIdentifierResponse>> identifierIB(
             @RequestBody @Valid ForgotPasswordIdentifierRequest req,
             HttpServletRequest httpRequest
@@ -79,8 +76,6 @@ public class ForgotPasswordController {
     @Operation(summary = "2. Verify Security Questions")
     @PostMapping("/security-questions/verify")
     @RequiresStage(LoginStage.FP_IDENTIFIER_OK)
-    @RateLimit(capacity = 3, refillTokens = 3, refillDuration = "PT10M", keyType = KeyType.IP,
-            message = "Too many security question attempts. Please try again in 10 minutes.")
     public ResponseEntity<ApiResponse<ForgotPasswordSecurityQuestionsResponse>> verifySecurityQuestions(
             @RequestBody @Valid ForgotPasswordSecurityQuestionsRequest req,
             @FlowId UUID flowId
@@ -90,8 +85,7 @@ public class ForgotPasswordController {
 
     @Operation(summary = "3. Initiate MFA for Forgot Password")
     @PostMapping("/mfa/initiate")
-    @RateLimit(capacity = 3, refillTokens = 3, refillDuration = "PT10M", keyType = KeyType.IP,
-            message = "Too many MFA attempts. Please try again in 10 minutes.")
+    @RequiresStage(LoginStage.FP_SEC_QNS_OK)
     public ResponseEntity<ApiResponse<Void>> initiateMfa(
             @Valid @RequestBody MfaInitRequest req,
             @FlowId UUID flowId
@@ -101,8 +95,7 @@ public class ForgotPasswordController {
 
     @Operation(summary = "4. Verify MFA for Forgot Password")
     @PostMapping("/mfa/verify")
-    @RateLimit(capacity = 3, refillTokens = 3, refillDuration = "PT10M", keyType = KeyType.IP,
-            message = "Too many MFA attempts. Please try again in 10 minutes.")
+    @RequiresStage(LoginStage.FP_SEC_QNS_OK)
     public ResponseEntity<ApiResponse<MfaVerifyResponse>> verifyMfa(
             @Valid @RequestBody MfaVerifyRequest req,
             @FlowId UUID flowId
@@ -112,8 +105,6 @@ public class ForgotPasswordController {
 
     @Operation(summary = "5. Reset Password")
     @PostMapping("/reset")
-    @RateLimit(capacity = 3, refillTokens = 3, refillDuration = "PT10M", keyType = KeyType.IP,
-            message = "Too many password reset attempts. Please try again in 10 minutes.")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @Valid @RequestBody ForgotPasswordResetRequest req,
             @FlowId UUID flowId

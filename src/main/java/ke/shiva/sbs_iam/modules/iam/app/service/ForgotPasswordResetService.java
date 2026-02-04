@@ -21,6 +21,7 @@ public class ForgotPasswordResetService {
 
     private final ForgotPasswordFlowService flowService;
     private final PasswordUpdateService passwordUpdateService;
+    private final SecurityQuestionManager securityQuestionManager;
     private final ObjectMapper objectMapper;
 
     @Transactional
@@ -46,6 +47,9 @@ public class ForgotPasswordResetService {
         // Complete flow
         flowService.complete(session);
 
+        //Delete iam user security questions
+        securityQuestionManager.deleteAllByUser(user);
+
         log.info("Password reset completed successfully for user ID: {}", user.getId());
     }
 
@@ -54,7 +58,7 @@ public class ForgotPasswordResetService {
 
         // If security questions were required, must be at least FP_SECURITY_QUESTIONS_OK
         if (requirements.isSecurityQuestionsRequired() &&
-            currentStage.ordinal() < LoginStage.FP_SECURITY_QUESTIONS_OK.ordinal()) {
+            currentStage.ordinal() < LoginStage.FP_SEC_QNS_OK.ordinal()) {
             log.warn("Security questions verification required but not completed for session: {}", session.getSessionId());
             throw BaseException.badRequest();
         }

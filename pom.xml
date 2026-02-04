@@ -97,7 +97,7 @@
         <dependency>
             <groupId>ke.shiva</groupId>
             <artifactId>shiva-spring-core-starter</artifactId>
-            <version>1.0.32</version>
+            <version>1.0.36</version>
         </dependency>
         <dependency>
             <groupId>ke.shiva</groupId>

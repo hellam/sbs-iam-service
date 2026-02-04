@@ -103,7 +103,7 @@ public class PasswordPolicyService {
      */
     public void validateAgainstHistory(IamUserEntity user, String newPassword, PasswordPolicyEntity p){
 
-        int lastN = Optional.ofNullable(p.getPasswordHistoryCount()).orElse((short) 0);
+        int lastN = Math.min(Optional.ofNullable(p.getPasswordHistoryCount()).orElse((short)0), 10);
 
         if (lastN <= 0) {
             return;

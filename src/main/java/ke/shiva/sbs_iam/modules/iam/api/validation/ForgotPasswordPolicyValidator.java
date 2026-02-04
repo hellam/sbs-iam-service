@@ -37,10 +37,19 @@ public class ForgotPasswordPolicyValidator implements ConstraintValidator<ValidF
             UUID flowId = flowIdProvider.getFlowId();
 
             // Load the forgot password session to get the context (channel, user)
-            SessionEntity session = forgotPasswordFlowService.requireAtLeast(flowId, LoginStage.FP_IDENTIFIER_OK);
-
+            SessionEntity session = forgotPasswordFlowService.requireAtLeast(flowId, LoginStage.FP_MFA_OK);
             // Decrypt the new password for validation
-//            request.setNewPassword(passwordManager.decryptPassword(request.getNewPassword(),session.getSessionId()));
+            request.setNewPassword(passwordManager.decryptPassword(request.getNewPassword(), session.getSessionId()));
+            request.setConfirmPassword(passwordManager.decryptPassword(request.getConfirmPassword(), session.getSessionId()));
+
+            // Ensure passwords match
+            if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+                context.disableDefaultConstraintViolation();
+                context.buildConstraintViolationWithTemplate("Password confirmation does not match")
+                       .addPropertyNode("confirmPassword") // Attach the error to the 'confirmPassword' field
+                       .addConstraintViolation();
+                return false;
+            }
 
             // Get password policy for the channel
             PasswordPolicyEntity policy = passwordPolicyService.resolvePolicy(session.getChannel());

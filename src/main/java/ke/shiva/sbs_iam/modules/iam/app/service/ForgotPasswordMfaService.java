@@ -28,11 +28,11 @@ public class ForgotPasswordMfaService {
     public String initiate(MfaInitRequest request, UUID flowId) {
         // Get and validate session - must be at least at FP_IDENTIFIER_OK
         // Could be FP_IDENTIFIER_OK (no security questions) or FP_SECURITY_QUESTIONS_OK
-        SessionEntity session = flowService.requireAtLeast(flowId, LoginStage.FP_IDENTIFIER_OK);
+        SessionEntity session = flowService.requireAtLeast(flowId, LoginStage.FP_SEC_QNS_OK);
 
         // Validate current stage
         LoginStage currentStage = session.getStatus();
-        if (currentStage != LoginStage.FP_IDENTIFIER_OK && currentStage != LoginStage.FP_SECURITY_QUESTIONS_OK) {
+        if (currentStage != LoginStage.FP_IDENTIFIER_OK && currentStage != LoginStage.FP_SEC_QNS_OK) {
             throw BaseException.invalidStage();
         }
 
@@ -55,11 +55,11 @@ public class ForgotPasswordMfaService {
     @Transactional
     public MfaVerifyResponse verify(MfaVerifyRequest request, UUID flowId) {
         // Get and validate session
-        SessionEntity session = flowService.requireAtLeast(flowId, LoginStage.FP_IDENTIFIER_OK);
+        SessionEntity session = flowService.requireAtLeast(flowId, LoginStage.FP_SEC_QNS_OK);
 
         // Validate current stage
         LoginStage currentStage = session.getStatus();
-        if (currentStage != LoginStage.FP_IDENTIFIER_OK && currentStage != LoginStage.FP_SECURITY_QUESTIONS_OK) {
+        if (currentStage != LoginStage.FP_IDENTIFIER_OK && currentStage != LoginStage.FP_SEC_QNS_OK) {
             throw BaseException.invalidStage();
         }
 

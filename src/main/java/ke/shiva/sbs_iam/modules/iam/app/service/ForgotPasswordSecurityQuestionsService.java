@@ -13,6 +13,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.model.ForgotPasswordRequirements;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SecurityChallengeAttemptRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
+import ke.shiva.shivacorestarter.util.EncryptionUtil;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class ForgotPasswordSecurityQuestionsService {
     private final AccountLockoutService accountLockoutService;
     private final RequestContextExtractor requestContextExtractor;
     private final SecurityChallengeAttemptRepository securityChallengeAttemptRepository;
+    private final EncryptionUtil encryptionUtil;
 
     @Transactional
     public ForgotPasswordSecurityQuestionsResponse handle(ForgotPasswordSecurityQuestionsRequest request, UUID flowId) {
@@ -64,7 +66,7 @@ public class ForgotPasswordSecurityQuestionsService {
         // Validate answers
         Map<Long, String> providedAnswers = request.getAnswers().stream()
                 .collect(Collectors.toMap(
-                        ForgotPasswordSecurityQuestionsRequest.SecurityQuestionAnswer::getQuestionId,
+                        answer -> Long.valueOf(encryptionUtil.decrypt(answer.getQuestionId())),
                         ForgotPasswordSecurityQuestionsRequest.SecurityQuestionAnswer::getAnswer
                 ));
 
@@ -109,14 +111,17 @@ public class ForgotPasswordSecurityQuestionsService {
                     user,
                     OffsetDateTime.now().minusHours(24)
             );
-            if (failedAttempts >= policy.getMaxVerifyAttempts())
+            if (failedAttempts >= policy.getMaxVerifyAttempts()) {
                 accountLockoutService.lockAccountAttemptFailure(user, session.getChannel());
+                log.warn("Account locked due to multiple failed security question attempts for user: {}", user.getPublicId());
+                throw BaseException.unauthorized("Account locked due to multiple failed security question attempts.");
+            }
 
-            throw BaseException.unauthorized("Security questions verification failed. Please try again.");
+            throw BaseException.badRequest("Security questions verification failed. Please try again.");
         }
 
         // Update stage
-        flowService.updateStage(session, LoginStage.FP_SECURITY_QUESTIONS_OK);
+        flowService.updateStage(session, LoginStage.FP_SEC_QNS_OK);
 
         // Determine next step
         String nextStep = requirements.isMfaRequired() ? "MFA" : "RESET_PASSWORD";

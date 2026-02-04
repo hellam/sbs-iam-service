@@ -4,7 +4,13 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.security.IamUserSecurityQuesti
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface IamUserSecurityQuestionRepository extends JpaRepository<IamUserSecurityQuestionEntity, Long> {
     void deleteAllByIamUserId(Long id);
+
+    List<IamUserSecurityQuestionEntity> findAllByIamUserId(Long id);
+
+    boolean existsByIamUserId(Long id);
 }

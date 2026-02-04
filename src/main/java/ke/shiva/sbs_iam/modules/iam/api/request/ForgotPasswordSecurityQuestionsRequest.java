@@ -8,16 +8,13 @@ import java.util.UUID;
 
 @Data
 public class ForgotPasswordSecurityQuestionsRequest {
-    @NotNull(message = "Flow ID is required")
-    private UUID flowId;
-
     @NotNull(message = "Answers are required")
     private List<SecurityQuestionAnswer> answers;
 
     @Data
     public static class SecurityQuestionAnswer {
         @NotNull(message = "Question ID is required")
-        private Long questionId;
+        private String questionId;
 
         @NotNull(message = "Answer is required")
         private String answer;

@@ -28,7 +28,7 @@ public class SecurityQuestionManager {
     public void save(IamUserEntity user, List<SecurityQuestionsRequest.QuestionAnswer> questions) {
 
         // Delete previous questions if any (optional)
-        userQuestionRepo.deleteAllByIamUserId(user.getId());
+        deleteAllByUser(user);
 
         for (var qa : questions) {
             Long questionId = Long.valueOf(encryptionUtil.decrypt(qa.getQuestionId()));
@@ -43,5 +43,13 @@ public class SecurityQuestionManager {
 
             userQuestionRepo.save(entity);
         }
+    }
+
+    public void deleteAllByUser(IamUserEntity user) {
+        userQuestionRepo.deleteAllByIamUserId(user.getId());
+    }
+
+    public boolean userHasSecurityQuestions(IamUserEntity user) {
+        return userQuestionRepo.existsByIamUserId(user.getId());
     }
 }

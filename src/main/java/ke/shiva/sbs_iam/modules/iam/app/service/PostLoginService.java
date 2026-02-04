@@ -35,9 +35,6 @@ public class PostLoginService {
     private final EncryptionUtil encryptionUtil;
 
     public void changePassword(PasswordChangeRequest req, UUID flowId) {
-        if (!req.getNewPassword().equals(req.getNewPasswordConfirmation())) {
-            throw BaseException.badRequest("Password confirmation does not match");
-        }
         SessionEntity session = loginFlowService.requireAtLeast(flowId, LoginStage.MFA_OK);
 
         passwordManager.changePassword(session, req);
