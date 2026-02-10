@@ -153,7 +153,7 @@ shiva:
     client:
       url: ${NOTIFICATION_SERVICE_URL:http://localhost:9003}
       kafka-topic: ${NOTIFICATION_KAFKA_TOPIC:notifications.bulk.v1}
-      timeout: ${NOTIFICATION_TIMEOUT:10}
+      timeout: ${NOTIFICATION_TIMEOUT:15} # in seconds
       kafka:
         enabled: false
       enabled: true

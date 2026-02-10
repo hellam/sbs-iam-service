@@ -94,7 +94,6 @@ public class OtpService {
         otpRecord.setVerifyAttempts((short) 0);
         otpRecord.setStatus("PENDING");
         otpRecord.setTo(contactValue);
-        log.info("Generated OTP: {} to: {} for session: {}", otp, contactValue, session.getSessionId());
 
         //Integrates with notification service to send the OTP via the specified channel
         SendNotificationResponse notificationResponse = notificationService.sendOtp(notificationChannel, contactValue, otp,mfaPolicy.getOtpExpirySeconds());
@@ -104,6 +103,8 @@ public class OtpService {
             contactValue = MaskingUtil.maskEmail(contactValue);
         else if (contactType == ContactType.PHONE)
             contactValue = MaskingUtil.maskPhone(contactValue);
+
+        log.info("Generated OTP to: {} for session: {}", contactValue, session.getSessionId());
         return "SENT".equals(notificationResponse.getStatus()) ? "OTP sent to " + contactValue + " via " + notificationChannel.getDescription() : notificationResponse.getMessage();
     }
 
