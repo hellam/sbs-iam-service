@@ -148,8 +148,18 @@ shiva:
       token-refresh-threshold-minutes: 1
       request-timeout-seconds: 30
       enable-logging: true
+  # Notification Client Configuration
+  notification:
+    client:
+      url: ${NOTIFICATION_SERVICE_URL:http://localhost:9003}
+      kafka-topic: ${NOTIFICATION_KAFKA_TOPIC:notifications.bulk.v1}
+      timeout: ${NOTIFICATION_TIMEOUT:10}
+      kafka:
+        enabled: true
+      enabled: true
 
 # Also enable DEBUG logging for the BRNetClient
 logging:
   level:
     ke.shiva.corebanking.provider.brnet.BRNetClient: DEBUG
+    ke.shiva.client.notification: DEBUG

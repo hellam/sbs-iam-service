@@ -1,11 +1,13 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
+import ke.shiva.client.notification.v1.dto.SendNotificationResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.UserContact;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.MfaPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.OtpRecordEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.ContactType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.NotificationChannel;
+import ke.shiva.sbs_iam.modules.iam.infra.external.NotificationService;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.OtpRecordRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.UserContactRepository;
@@ -34,6 +36,7 @@ public class OtpService {
     private final OtpGenerator otpGenerator;
     private final PolicyService policyService;
     private final AccountLockoutService accountLockoutService;
+    private final NotificationService notificationService;
 
     public String sendOtp(SessionEntity session, NotificationChannel notificationChannel) {
         MfaPolicyEntity mfaPolicy = policyService.getMfaPolicy(session.getChannel());
@@ -93,14 +96,15 @@ public class OtpService {
         otpRecord.setTo(contactValue);
         log.info("Generated OTP: {} to: {} for session: {}", otp, contactValue, session.getSessionId());
 
-        //TODO: Integrate with notification service to send the OTP via the specified channel
+        //Integrates with notification service to send the OTP via the specified channel
+        SendNotificationResponse notificationResponse = notificationService.sendOtp(notificationChannel, contactValue, otp,mfaPolicy.getOtpExpirySeconds());
 
         //mask contact value for return
         if (contactType == ContactType.EMAIL)
             contactValue = MaskingUtil.maskEmail(contactValue);
         else if (contactType == ContactType.PHONE)
             contactValue = MaskingUtil.maskPhone(contactValue);
-        return "OTP sent to " + contactValue + " via " + notificationChannel.getDescription();
+        return "SENT".equals(notificationResponse.getStatus()) ? "OTP sent to " + contactValue + " via " + notificationChannel.getDescription() : notificationResponse.getMessage();
     }
 
     public UserContact getContactForNotificationChannel(SessionEntity session, NotificationChannel notificationChannel) {

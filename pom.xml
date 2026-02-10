@@ -37,7 +37,7 @@
     </properties>
     <repositories>
         <repository>
-            <id>github</id>
+            <id>github-shiva-core</id>
             <name>Shiva Spring Core Starter</name>
             <url>https://maven.pkg.github.com/hellam/shiva-spring-core-starter</url>
             <snapshots>
@@ -45,7 +45,7 @@
             </snapshots>
         </repository>
         <repository>
-            <id>github</id>
+            <id>github-corebanking</id>
             <name>Shiva Corebanking Starter</name>
             <url>https://maven.pkg.github.com/hellam/sbs-corebanking-starter</url>
             <snapshots>
@@ -95,14 +95,20 @@
             <version>3.0.0</version>
         </dependency>
         <dependency>
-            <groupId>ke.shiva</groupId>
+            <groupId>ke.shiva.corestarter</groupId>
             <artifactId>shiva-spring-core-starter</artifactId>
             <version>1.0.36</version>
         </dependency>
         <dependency>
-            <groupId>ke.shiva</groupId>
+            <groupId>ke.shiva.corebanking</groupId>
             <artifactId>shiva-corebanking-starter</artifactId>
-            <version>1.0.2</version>
+            <version>1.0.11</version>
+        </dependency>
+        <!-- Notification Client for sending notifications -->
+        <dependency>
+            <groupId>ke.shiva</groupId>
+            <artifactId>notification-client</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
