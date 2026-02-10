@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/iam/register")
+@RequestMapping("/register")
 @RequiredArgsConstructor
-@Tag(name = "IAM Registration", description = "Customer registration for internet banking")
+@Tag(name = "IAM Registration", description = "Customer registration for internet and mobile banking channels")
 public class RegistrationController {
 
     private final CustomerRegistrationService customerRegistrationService;
@@ -31,6 +31,7 @@ public class RegistrationController {
             @RequestBody @Valid IamRegistrationDetailsRequest request) {
         log.info("Received IAM registration request for client ID: {}", request.getClientId());
         request.setChannel(Channel.INTERNET_BANKING);
-        return ResponseBuilder.success(customerRegistrationService.registerCustomer(request));
+        customerRegistrationService.registerCustomer(request);
+        return ResponseBuilder.success("Customer registration successful");
     }
 }

@@ -31,6 +31,15 @@ public class IamRegistrationDetailsRequest {
     @NotNull @NotEmpty
     private String email;
 
+    @NotNull @NotEmpty
+    private String city;
+
+    @NotNull @NotEmpty
+    private String country;
+
+    @NotNull @NotEmpty
+    private String address;
+
     // ==================== ACCOUNTS ====================
     @NotNull @NotEmpty
     private String accountNumber;
