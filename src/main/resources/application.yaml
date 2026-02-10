@@ -155,7 +155,7 @@ shiva:
       kafka-topic: ${NOTIFICATION_KAFKA_TOPIC:notifications.bulk.v1}
       timeout: ${NOTIFICATION_TIMEOUT:10}
       kafka:
-        enabled: true
+        enabled: false
       enabled: true
 
 # Also enable DEBUG logging for the BRNetClient
