@@ -1,7 +1,6 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
 import ke.shiva.sbs_iam.modules.iam.api.request.IamRegistrationDetailsRequest;
-import ke.shiva.sbs_iam.modules.iam.api.response.ClientDetailsResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.LoginIdentifierEntity;
@@ -35,7 +34,7 @@ public class CustomerRegistrationService {
 
     @Transactional
     public Void registerCustomer(IamRegistrationDetailsRequest request) {
-        log.info("Starting IAM customer registration for client ID: {}", request.getClientDetails().getClientId());
+        log.info("Starting IAM customer registration for client ID: {}", request.getClientId());
 
         // 1. Check for existing user (e.g., by username or client ID)
         //TODO generate username, check for channel if exists, if not generate and check for uniqueness, if exists throw exception, else proceed with registration
@@ -108,7 +107,7 @@ public class CustomerRegistrationService {
 //        ClientDetailsResponse clientDetails = request.getClientDetails();
         CustomerProfileEntity customerProfile = new CustomerProfileEntity();
         customerProfile.setIamUser(iamUser);
-        customerProfile.setCoreCustomerId(request.getClientDetails().getClientId());
+        customerProfile.setCoreCustomerId(request.getClientId());
         customerProfile.setSegment("RETAIL"); // Default segment, can be derived from clientDetails if available
         customerProfile.setLanguage("en");
         customerProfile.setTimezone("Africa/Nairobi"); // Default timezone
@@ -135,7 +134,7 @@ public class CustomerRegistrationService {
         customerAuth.setMfaEnabled(false);
         customerAuthRepository.save(customerAuth);
 
-        log.info("IAM customer registration successful for client ID: {}", request.getClientDetails().getClientId());
+        log.info("IAM customer registration successful for client ID: {}", request.getClientId());
 
         return null; // Void return type
     }

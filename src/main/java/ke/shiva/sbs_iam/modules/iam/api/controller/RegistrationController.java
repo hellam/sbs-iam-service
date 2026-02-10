@@ -29,7 +29,7 @@ public class RegistrationController {
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> registerInternetCustomer(
             @RequestBody @Valid IamRegistrationDetailsRequest request) {
-        log.info("Received IAM registration request for client ID: {}", request.getClientDetails());
+        log.info("Received IAM registration request for client ID: {}", request.getClientId());
         request.setChannel(Channel.INTERNET_BANKING);
         return ResponseBuilder.success(customerRegistrationService.registerCustomer(request));
     }

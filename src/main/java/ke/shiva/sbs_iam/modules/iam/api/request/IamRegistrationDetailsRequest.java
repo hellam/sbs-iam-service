@@ -1,20 +1,54 @@
 package ke.shiva.sbs_iam.modules.iam.api.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import ke.shiva.sbs_iam.modules.iam.api.response.AccountDetailsResponse;
-import ke.shiva.sbs_iam.modules.iam.api.response.ClientDetailsResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import lombok.Data;
 
 @Data
 public class IamRegistrationDetailsRequest {
-    @NotNull(message = "Client details cannot be null")
-    private ClientDetailsResponse clientDetails;
+    // ==================== CLIENT / IDENTITY ====================
+    @NotNull @NotEmpty
+    private String clientId;
 
-    @NotNull(message = "Account details cannot be null")
-    private AccountDetailsResponse accountDetails;
+    @NotNull @NotEmpty
+    private String firstName;
 
+    private String middleName; // Optional
+
+    @NotNull @NotEmpty
+    private String lastName;
+
+    @NotNull @NotEmpty
+    private String nationalId;
+
+    // ==================== CONTACTS ====================
+    @NotNull @NotEmpty
+    private String mobile;
+
+    @NotNull @NotEmpty
+    private String email;
+
+    // ==================== ACCOUNTS ====================
+    @NotNull @NotEmpty
+    private String accountNumber;
+
+    @NotNull @NotEmpty
+    private String productId;
+
+    @NotNull @NotEmpty
+    private String productName;
+
+    @NotNull @NotEmpty
+    private String currency;
+
+    @NotNull @NotEmpty
+    private String status;
+
+    // ==================== REGISTRATION CHANNEL ====================
     @JsonIgnore
     private Channel channel;
+
 }
