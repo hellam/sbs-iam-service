@@ -44,14 +44,6 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
-        <repository>
-            <id>github-corebanking</id>
-            <name>Shiva Corebanking Starter</name>
-            <url>https://maven.pkg.github.com/hellam/sbs-corebanking-starter</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
     </repositories>
     <dependencies>
         <dependency>
@@ -98,11 +90,6 @@
             <groupId>ke.shiva.corestarter</groupId>
             <artifactId>shiva-spring-core-starter</artifactId>
             <version>1.0.36</version>
-        </dependency>
-        <dependency>
-            <groupId>ke.shiva.corebanking</groupId>
-            <artifactId>shiva-corebanking-starter</artifactId>
-            <version>1.0.11</version>
         </dependency>
         <!-- Notification Client for sending notifications -->
         <dependency>

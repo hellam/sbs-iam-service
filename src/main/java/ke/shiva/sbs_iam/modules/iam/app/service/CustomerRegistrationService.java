@@ -1,6 +1,5 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
-import ke.shiva.corebanking.exception.RegistrationValidationException;
 import ke.shiva.sbs_iam.modules.iam.api.request.IamRegistrationDetailsRequest;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
@@ -18,6 +17,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.CountryEntity;
 import ke.shiva.sbs_iam.modules.reference.infra.repository.CountryRepository;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +52,7 @@ public class CustomerRegistrationService {
          * 0. We check if a customer profile already exists with the given core customer ID.
          * -------------------------------------------------- */
         if (customerProfileRepository.findByCoreCustomerId(request.getClientId()).isPresent()) {
-            throw new RegistrationValidationException("Client ID '" + request.getClientId() + "' is already registered.");
+            throw BaseException.badRequest("Client ID '" + request.getClientId() + "' is already registered.");
         }
 
         /* -------------------------------------------------
