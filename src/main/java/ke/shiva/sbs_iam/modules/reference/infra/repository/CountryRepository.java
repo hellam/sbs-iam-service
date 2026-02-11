@@ -11,5 +11,5 @@ import ke.shiva.sbs_iam.modules.reference.domain.entity.CountryEntity;
 public interface CountryRepository extends JpaRepository<CountryEntity, Long> {
     Optional<CountryEntity> findByCountryCode(String countryCode);
 
-    Optional<CountryEntity> findByCountryName(String name);
+    Optional<CountryEntity> findByCountryNameIgnoreCase(String name);
 }

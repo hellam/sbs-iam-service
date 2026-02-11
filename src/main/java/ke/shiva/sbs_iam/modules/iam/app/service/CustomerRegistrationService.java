@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -42,17 +43,17 @@ public class CustomerRegistrationService {
     private final CustomerProfileRepository customerProfileRepository;
     private final CustomerAuthRepository customerAuthRepository;
     private final CountryRepository countryRepository;
+    private static final SecureRandom RANDOM = new SecureRandom();
+
 
     @Transactional
     public void registerCustomer(IamRegistrationDetailsRequest request) {
-
-        log.info("Starting full IAM customer registration for clientId={}", request.getClientId());
-
-        // 1. Check for existing user (e.g., by username or client ID)
-        //TODO generate username, check for channel if exists, if not generate and check for uniqueness, if exists throw exception, else proceed with registration
-//        if (loginIdentifierRepository.findByIdentifierAndChannel("username", request.getChannel()).isPresent()) {
-//            throw new RegistrationValidationException("Username '" + request.getUsername() + "' is already taken.");
-//        }
+        /* -------------------------------------------------
+         * 0. We check if a customer profile already exists with the given core customer ID.
+         * -------------------------------------------------- */
+        if (customerProfileRepository.findByCoreCustomerId(request.getClientId()).isPresent()) {
+            throw new RegistrationValidationException("Client ID '" + request.getClientId() + "' is already registered.");
+        }
 
         /* -------------------------------------------------
          * 1. Create Party
@@ -70,11 +71,9 @@ public class CustomerRegistrationService {
         person.setParty(party);
         person.setFirstName(request.getFirstName());
         person.setLastName(request.getLastName());
-        person.setFullName(
-                request.getFirstName() + " " + request.getLastName()
-        );
+        person.setFullName(request.getFirstName() + " " + request.getMiddleName() + " " + request.getLastName());
         person.setNationalId(request.getNationalId());
-//        person.setCountryCode(getCountryCode(request.getCountry()));
+        person.setCountryCode(getCountryCode(request.getCountry()));
         person.setCity(request.getCity());
         person.setAddress(request.getAddress());
         person.setCreatedAt(OffsetDateTime.now());
@@ -138,7 +137,7 @@ public class CustomerRegistrationService {
         loginIdentifier.setIamUser(iamUser);
         loginIdentifier.setChannel(Channel.INTERNET_BANKING);
         loginIdentifier.setIdentifierType("username");
-        loginIdentifier.setIdentifier(generateUniqueUsername(request.getFirstName(), request.getLastName()));
+        loginIdentifier.setIdentifier(generateUniqueUsername(8));
         loginIdentifier.setStatus(IamStatus.ACTIVE);
         loginIdentifierRepository.save(loginIdentifier);
 
@@ -179,35 +178,41 @@ public class CustomerRegistrationService {
         log.info("Full IAM customer registration completed for clientId={}", request.getClientId());
     }
 
-    private String generateUniqueUsername(
-            String firstName,
-            String lastName
-    ) {
-        String base =
-                (firstName + "." + lastName)
-                        .toLowerCase()
-                        .replaceAll("[^a-z0-9.]", "");
+    private String generateUniqueUsername(int length) {
 
-        String candidate = base;
-        int suffix = 1;
+        if (length < 1) {
+            throw new IllegalArgumentException("Length must be >= 1");
+        }
 
-        while (loginIdentifierRepository
-                .findByChannelAndIdentifierTypeAndIdentifier(
+        String candidate;
+
+        do {
+
+            // First digit: 1–9 (no leading zero)
+            int firstDigit = 1 + RANDOM.nextInt(9);
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(firstDigit);
+
+            // Remaining digits: 0–9
+            for (int i = 1; i < length; i++) {
+                sb.append(RANDOM.nextInt(10));
+            }
+
+            candidate = sb.toString();
+
+        } while (loginIdentifierRepository
+                .existsByChannelAndIdentifierTypeAndIdentifier(
                         Channel.INTERNET_BANKING,
                         "username",
                         candidate
-                ).isPresent()) {
-
-            candidate = base + suffix;
-            suffix++;
-        }
+                ));
 
         return candidate;
     }
 
-    //generate country code from country name
     private CountryEntity getCountryCode(String countryName) {
-        return countryRepository.findByCountryName(countryName)
+        return countryRepository.findByCountryNameIgnoreCase(countryName.toLowerCase())
                 .orElseThrow(() -> new RuntimeException("Country not found: " + countryName));
     }
 

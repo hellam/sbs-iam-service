@@ -16,8 +16,7 @@ public interface LoginIdentifierRepository extends JpaRepository<LoginIdentifier
 
     Optional<LoginIdentifierEntity> findByIdentifierAndIdentifierType(String identifier, String identifierType);
 
-    Optional<LoginIdentifierEntity>
-    findByChannelAndIdentifierTypeAndIdentifier(
+    boolean existsByChannelAndIdentifierTypeAndIdentifier(
             Channel channel,
             String identifierType,
             String identifier
