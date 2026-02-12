@@ -2,11 +2,15 @@ package ke.shiva.sbs_iam.modules.iam.app.service;
 
 import ke.shiva.sbs_iam.modules.iam.api.request.MfaInitRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.MfaVerifyRequest;
+import ke.shiva.sbs_iam.modules.iam.api.response.MfaPolicyResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.MfaVerifyResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.MfaPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.MfaPolicyRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +25,7 @@ public class MfaService {
     private final CommonMfaService commonMfaService;
     private final SecurityEventService securityEventService;
     private final LoginHistoryService loginHistoryService;
+    private final MfaPolicyRepository mfaPolicyRepository;
 
     // Optional: if using OTP, trigger it here
     public String initiate(MfaInitRequest req, UUID flowId)  {
@@ -69,5 +74,24 @@ public class MfaService {
         resp.setNextIsProfileSelection(loginFlowService.getRequirements(session).nextIsProfileSelection());
 
         return resp;
+    }
+
+    public MfaPolicyResponse getMfaPolicy(Channel channel) {
+        MfaPolicyEntity policy = mfaPolicyRepository.findByChannel(channel);
+        if (policy == null) {
+            throw BaseException.notFound("MFA policy not found for channel: " + channel);
+        }
+
+        return MfaPolicyResponse.builder()
+                .channel(policy.getChannel())
+                .allowedNotificationChannels(policy.getAllowedNotificationChannels())
+                .allowTotp(policy.getAllowTotp())
+                .maxVerifyAttempts(policy.getMaxVerifyAttempts())
+                .otpType(policy.getOtpType())
+                .otpLength(policy.getOtpLength())
+                .otpExpirySeconds(policy.getOtpExpirySeconds())
+                .enforceOnNewDevice(policy.getEnforceOnNewDevice())
+                .enforceOnNewLocation(policy.getEnforceOnNewLocation())
+                .build();
     }
 }

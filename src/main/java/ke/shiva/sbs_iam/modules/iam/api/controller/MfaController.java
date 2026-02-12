@@ -5,21 +5,20 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.modules.iam.api.request.MfaInitRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.MfaVerifyRequest;
+import ke.shiva.sbs_iam.modules.iam.api.response.MfaPolicyResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.MfaVerifyResponse;
 import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
 import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
 import ke.shiva.sbs_iam.modules.iam.app.service.MfaService;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.shivacorestarter.dto.ApiResponse;
 import ke.shiva.shivacorestarter.ratelimit.KeyType;
 import ke.shiva.shivacorestarter.ratelimit.RateLimit;
 import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
@@ -46,5 +45,10 @@ public class MfaController {
     public ResponseEntity<ApiResponse<MfaVerifyResponse>> verify(@Valid @RequestBody MfaVerifyRequest req, @FlowId UUID flowId) {
         return ResponseBuilder.success("MFA verified successfully", mfaService.verify(req, flowId));
     }
-}
 
+    @Operation(summary = "Get MFA Policy by Channel")
+    @GetMapping("/policy/{channel}")
+    public ResponseEntity<ApiResponse<MfaPolicyResponse>> getMfaPolicy(@PathVariable Channel channel) {
+        return ResponseBuilder.success(mfaService.getMfaPolicy(channel));
+    }
+}
