@@ -11,7 +11,7 @@ springdoc:
     operations-sorter: alpha
     tags-sorter: alpha
     try-it-out-enabled: true
-  show-actuator: true
+  show-actuator: false
 
 management:
   endpoints:
@@ -43,10 +43,10 @@ security:
   allowed-domains:
     map:
       BACKOFFICE:
-        - "192.168.100.97:9000"
+        - "${GW_ADDRESS}"
         - "localhost"
       INTERNET_BANKING:
-        - "192.168.100.97:9000"
+        - "${GW_ADDRESS}"
         - "localhost"
       MOBILE_BANKING:
         - "localhost:44000"
