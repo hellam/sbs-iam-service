@@ -11,6 +11,7 @@ springdoc:
     operations-sorter: alpha
     tags-sorter: alpha
     try-it-out-enabled: true
+    defaultModelsExpandDepth: -1
   show-actuator: false
 
 management:
