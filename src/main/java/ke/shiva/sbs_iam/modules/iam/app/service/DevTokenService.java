@@ -62,7 +62,7 @@ public class DevTokenService {
         String deviceId = request.getDeviceId() != null ? request.getDeviceId() : "DEV_DEVICE";
         String channel = request.getChannel() != null ? request.getChannel() : "INTERNET_BANKING";
         String category = request.getCategory() != null ? request.getCategory() : "CUSTOMER";
-        Long expirySeconds = request.getExpirySeconds() != null ? request.getExpirySeconds() : 3600L;
+        long expirySeconds = request.getExpirySeconds() != null ? request.getExpirySeconds() : 3600L;
 
         // Validate and clamp expiry
         if (expirySeconds < 60) {

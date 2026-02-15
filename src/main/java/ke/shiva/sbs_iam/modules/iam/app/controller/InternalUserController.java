@@ -2,7 +2,10 @@ package ke.shiva.sbs_iam.modules.iam.app.controller;
 
 import ke.shiva.client.iam.dto.UserPiiResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.UserContact;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.ContactType;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.IamUserRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.UserContactRepository;
 import ke.shiva.shivacorestarter.dto.ApiResponse;
 import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Internal API controller for inter-service communication.
@@ -32,6 +37,7 @@ import org.springframework.web.bind.annotation.*;
 public class InternalUserController {
 
     private final IamUserRepository iamUserRepository;
+    private final UserContactRepository userContactRepository;
 
     /**
      * Retrieve user PII by user ID.
@@ -58,17 +64,18 @@ public class InternalUserController {
         String category = "CUSTOMER"; // Default
         boolean active = user.getStatus().name().equals("ACTIVE");
 
-        // TODO: Extract email and phone from user contacts if available
-//        if (user.getUserContacts() != null && !user.getUserContacts().isEmpty()) {
-//            for (var contact : user.getUserContacts()) {
-//                if ("EMAIL".equals(contact.getContactType()) && contact.isPrimary()) {
-//                    email = contact.getContactValue();
-//                }
-//                if ("PHONE".equals(contact.getContactType()) && contact.isPrimary()) {
-//                    phoneNumber = contact.getContactValue();
-//                }
-//            }
-//        }
+         List<UserContact> userContact =userContactRepository.findByIamUserAndPrimaryIsTrue(user)
+                .orElseThrow(() -> new IllegalStateException("No primary contacts found for user: " + user.getId()));
+
+        //loop and set by contact type
+        for(UserContact contact : userContact){
+            if(contact.getContactType().equals(ContactType.EMAIL)){
+                email = contact.getContactValue();
+            }
+            if(contact.getContactType().equals(ContactType.PHONE)){
+                phoneNumber = contact.getContactValue();
+            }
+        }
 
         // Determine category from profile
         if (user.getCustomerProfile() != null) {
