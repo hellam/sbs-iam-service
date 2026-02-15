@@ -34,4 +34,5 @@ build/
 
 ### Custom Files for SHIVA ###
 /.env
-logs/*
+logs/*.env.keys
+k8s-rsa-keys-secret.yaml

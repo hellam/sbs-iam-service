@@ -1,7 +1,10 @@
 package ke.shiva.sbs_iam.config;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.tags.Tag;
 import org.springdoc.core.customizers.OperationCustomizer;
@@ -26,6 +29,19 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI customOpenAPI() {
+        // Define JWT Bearer security scheme
+        SecurityScheme securityScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
+                .in(SecurityScheme.In.HEADER)
+                .name("Authorization")
+                .description("JWT token for authentication. Most IAM endpoints are public for authentication flow.");
+
+        // Define security requirement
+        SecurityRequirement securityRequirement = new SecurityRequirement()
+                .addList("BearerAuth");
+
         return new OpenAPI()
                 .info(new Info().title("IAM Service API").version("1.0"))
                 .tags(List.of(
@@ -38,7 +54,10 @@ public class OpenApiConfig {
                         new Tag().name("Authentication Flow").description("Endpoints for the user authentication flow"),
                         new Tag().name("Forgot Password").description("Endpoints for forgot password flow")
                 ))
-                .servers(getServerList());
+                .servers(getServerList())
+                .components(new Components()
+                        .addSecuritySchemes("BearerAuth", securityScheme))
+                .addSecurityItem(securityRequirement); // Apply to all operations by default
     }
 
     private List<Server> getServerList() {
@@ -53,8 +72,11 @@ public class OpenApiConfig {
     }
 
     @Bean
-    public OperationCustomizer addSignatureHeaders() {
+    public OperationCustomizer customizeOperations() {
         return (operation, handlerMethod) -> {
+            // Security requirement is applied globally via customOpenAPI()
+            // Most IAM endpoints are public for authentication flow
+            // Internal endpoints (/internal/**) require JWT
             return operation;
         };
     }

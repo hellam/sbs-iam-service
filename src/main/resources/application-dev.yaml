@@ -53,5 +53,9 @@ security:
         - "localhost:44000"
 
 shiva:
+  security:
+    downstream-jwt:
+      private-key: ${SHIVA_DOWNSTREAM_JWT_PRIVATE_KEY}
+      expected-audience: payment-service
   api-doc:
     servers: ${GW_ADDRESS}${spring.mvc.servlet.path},http://localhost:${server.port}${spring.mvc.servlet.path}

@@ -18,6 +18,7 @@ import ke.shiva.sbs_iam.modules.iam.infra.repository.RefreshTokenRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.RevokedTokenRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
+import ke.shiva.shivacorestarter.security.jwt.JwtClaimEncryption;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import ke.shiva.shivacorestarter.util.SecureRandomStringGen;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,7 @@ public class OidcTokenService {
     private final OtpService otpService;
     private final LoginFlowService loginFlowService;
     private final DeviceRepository deviceRepository;
+    private final JwtClaimEncryption jwtClaimEncryption;
 
 
     // expected issuer and audience configured via properties
@@ -80,24 +82,49 @@ public class OidcTokenService {
         long accessTokenValidity = 300L; // 5 minutes
         long refreshTokenValidity = 1800L; // 30 minutes
 
-        JwtClaimsSet accessClaims = JwtClaimsSet.builder()
+        // Extract customer ID from user profile
+        String customerId = extractCustomerId(user, category);
+
+        // Encrypt sensitive claims to prevent enumeration attacks
+        String encryptedUserId = jwtClaimEncryption.encryptUserId(user.getId());
+        String encryptedCustomerId = jwtClaimEncryption.encryptCustomerId(customerId);
+
+        JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
                 .issuer(expectedIssuer)
                 .issuedAt(now.toInstant())
                 .expiresAt(now.plusSeconds(accessTokenValidity).toInstant())
                 .audience(List.of(expectedAudience))
                 .subject(String.valueOf(user.getPublicId()))
+                .claim("user_id", encryptedUserId)           // ENCRYPTED IAM user ID
+                .claim("session_id", session.getSessionId()) // Session ID for tracking
                 .claim("channel", channel.name())
                 .claim("category", category.name())
                 .claim("scope", buildScopeFor(session))
-                .id(UUID.randomUUID().toString()) // JTI
-                .build();
+                .id(UUID.randomUUID().toString());           // JTI
 
+        // Add encrypted customer ID if available (for CUSTOMER category)
+        if (encryptedCustomerId != null) {
+            claimsBuilder.claim("customer_id", encryptedCustomerId);
+        }
+
+        // Add device ID for device binding and fraud detection
+        // Note: deviceId is already hashed, no need to encrypt again
+        if (session.getDeviceId() != null) {
+            claimsBuilder.claim("device_id", session.getDeviceId());
+        }
+
+        // Add profile type and ID if available (for multi-profile users)
         if (session.getProfileType() != null) {
-            accessClaims = JwtClaimsSet.from(accessClaims).claim("profile_type", session.getProfileType()).build();
+            claimsBuilder.claim("profile_type", session.getProfileType().name());
         }
         if (session.getProfileId() != null) {
-            accessClaims = JwtClaimsSet.from(accessClaims).claim("profile_id", session.getProfileId()).build();
+            String encryptedProfileId = jwtClaimEncryption.encryptProfileId(session.getProfileId());
+            claimsBuilder.claim("profile_id", encryptedProfileId);
         }
+
+        JwtClaimsSet accessClaims = claimsBuilder.build();
+
+        log.debug("Generated JWT with encrypted claims for user publicId: {}", user.getPublicId());
 
         String accessToken = jwtEncoder.encode(JwtEncoderParameters.from(accessClaims)).getTokenValue();
 
@@ -135,6 +162,7 @@ public class OidcTokenService {
                 String token = authHeader.substring(7);
                 Jwt decodedJwt = jwtDecoder.decode(token);
                 String jti = decodedJwt.getId();
+                assert decodedJwt.getExpiresAt() != null;
                 OffsetDateTime expiry = OffsetDateTime.ofInstant(decodedJwt.getExpiresAt(), java.time.ZoneId.systemDefault());
 
                 RevokedTokenEntity revokedToken = new RevokedTokenEntity();
@@ -180,19 +208,6 @@ public class OidcTokenService {
         refreshTokenRepository.save(oldToken);
     }
 
-    private String buildIdToken(SessionEntity session, IamUserEntity user, OffsetDateTime now, long expiresIn) {
-        JwtClaimsSet idClaims = JwtClaimsSet.builder()
-                .issuer("sbs-iam")
-                .issuedAt(now.toInstant())
-                .expiresAt(now.plusSeconds(expiresIn).toInstant())
-                .subject(String.valueOf(user.getPublicId()))
-                .claim("name", user.getParty().getPerson().getFullName())
-                .claim("email", otpService.getContactForNotificationChannel(session, NotificationChannel.EMAIL).getContactValue())
-                .claim("phone_number", otpService.getContactForNotificationChannel(session, NotificationChannel.SMS).getContactValue())
-                .build();
-        return jwtEncoder.encode(JwtEncoderParameters.from(idClaims)).getTokenValue();
-    }
-
     private String buildScopeFor(SessionEntity session) {
         // TODO: build scopes from roles/permissions (RBAC)
         // For now: return channel as scope
@@ -233,6 +248,31 @@ public class OidcTokenService {
 
         response.setHeader("X-Refresh-Token", refreshToken);
         response.setHeader("X-Refresh-Token-Expiry", String.valueOf(refreshTokenValidity));
+    }
+
+    /**
+     * Extract core banking customer ID from IAM user profile.
+     * Only applicable for CUSTOMER category users.
+     *
+     * @param user the IAM user
+     * @param category the user category
+     * @return customer ID or null if not applicable
+     */
+    private String extractCustomerId(IamUserEntity user, UserCategory category) {
+        if (category != UserCategory.CUSTOMER) {
+            return null;
+        }
+
+        try {
+            // Customer profile is eagerly loaded with user
+            if (user.getCustomerProfile() != null) {
+                return user.getCustomerProfile().getCoreCustomerId();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to extract customer ID for user {}: {}", user.getId(), e.getMessage());
+        }
+
+        return null;
     }
 
 }

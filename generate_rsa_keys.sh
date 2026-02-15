@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # RSA Key Generation Script for Shiva Banking Platform
-# Generates JWT and SPA RSA keypairs and outputs as environment variables
+# Generates JWT, Downstream JWT, and SPA RSA keypairs and outputs as environment variables
 
 set -e
 
@@ -25,8 +25,6 @@ generate_keypair() {
     local name=$1
     local bits=${2:-2048}
 
-    echo "Generating $name RSA keypair ($bits bits)..."
-
     # Generate private key
     openssl genrsa -out ${name}_private.pem $bits 2>/dev/null
 
@@ -34,10 +32,12 @@ generate_keypair() {
     openssl rsa -in ${name}_private.pem -pubout -out ${name}_public.pem 2>/dev/null
 
     # Convert private key to PKCS8 DER format and base64 encode
-    local private_key=$(openssl pkcs8 -topk8 -inform PEM -outform DER -in ${name}_private.pem -nocrypt | base64 | tr -d '\n')
+    local private_key
+    private_key=$(openssl pkcs8 -topk8 -inform PEM -outform DER -in ${name}_private.pem -nocrypt | base64 | tr -d '\n')
 
     # Convert public key to DER format and base64 encode
-    local public_key=$(openssl rsa -in ${name}_private.pem -pubout -outform DER 2>/dev/null | base64 | tr -d '\n')
+    local public_key
+    public_key=$(openssl rsa -in ${name}_private.pem -pubout -outform DER 2>/dev/null | base64 | tr -d '\n')
 
     # Clean up PEM files
     rm ${name}_private.pem ${name}_public.pem
@@ -48,16 +48,26 @@ generate_keypair() {
 # Generate JWT keys
 echo ""
 echo "1. Generating JWT Signing Keys..."
-echo "   Purpose: Sign and verify JWT tokens"
+echo "   Purpose: Sign and verify IAM-issued client JWT tokens"
 echo ""
 jwt_keys=$(generate_keypair "jwt" 2048)
 JWT_PUBLIC=$(echo $jwt_keys | cut -d'|' -f1)
 JWT_PRIVATE=$(echo $jwt_keys | cut -d'|' -f2)
 echo "✅ JWT keys generated"
 
+# Generate Downstream JWT keys (Gateway -> Services)
+echo ""
+echo "2. Generating Downstream JWT Keys..."
+echo "   Purpose: Gateway signs downstream JWT tokens that services verify"
+echo ""
+downstream_jwt_keys=$(generate_keypair "downstream_jwt" 2048)
+DOWNSTREAM_JWT_PUBLIC=$(echo $downstream_jwt_keys | cut -d'|' -f1)
+DOWNSTREAM_JWT_PRIVATE=$(echo $downstream_jwt_keys | cut -d'|' -f2)
+echo "✅ Downstream JWT keys generated"
+
 # Generate SPA keys
 echo ""
-echo "2. Generating SPA Password Encryption Keys..."
+echo "3. Generating SPA Password Encryption Keys..."
 echo "   Purpose: Encrypt/decrypt passwords from frontend"
 echo ""
 spa_keys=$(generate_keypair "spa" 2048)
@@ -78,10 +88,16 @@ cat > .env.keys << EOF
 # RSA Keys for Shiva Banking Platform
 
 # ============================================
-# JWT Keys (for token signing)
+# JWT Keys (IAM -> Client, for token signing)
 # ============================================
 SHIVA_SECURITY_JWT_PUBLIC_KEY=$JWT_PUBLIC
 SHIVA_SECURITY_JWT_PRIVATE_KEY=$JWT_PRIVATE
+
+# ============================================
+# Downstream JWT Keys (Gateway -> Services)
+# ============================================
+SHIVA_DOWNSTREAM_JWT_PUBLIC_KEY=$DOWNSTREAM_JWT_PUBLIC
+SHIVA_DOWNSTREAM_JWT_PRIVATE_KEY=$DOWNSTREAM_JWT_PRIVATE
 
 # ============================================
 # SPA Keys (for password encryption)
@@ -108,9 +124,13 @@ echo "=========================================="
 echo ""
 echo "Copy these to your environment or .env file:"
 echo ""
-echo "# JWT Keys"
+echo "# JWT Keys (IAM -> Client)"
 echo "export SHIVA_SECURITY_JWT_PUBLIC_KEY=\"$JWT_PUBLIC\""
 echo "export SHIVA_SECURITY_JWT_PRIVATE_KEY=\"$JWT_PRIVATE\""
+echo ""
+echo "# Downstream JWT Keys (Gateway -> Services)"
+echo "export SHIVA_DOWNSTREAM_JWT_PUBLIC_KEY=\"$DOWNSTREAM_JWT_PUBLIC\""
+echo "export SHIVA_DOWNSTREAM_JWT_PRIVATE_KEY=\"$DOWNSTREAM_JWT_PRIVATE\""
 echo ""
 echo "# SPA Keys"
 echo "export SHIVA_SECURITY_SPA_PUBLIC_KEY=\"$SPA_PUBLIC\""
@@ -129,6 +149,8 @@ type: Opaque
 data:
   jwt-public-key: $(echo -n "$JWT_PUBLIC" | base64)
   jwt-private-key: $(echo -n "$JWT_PRIVATE" | base64)
+  downstream-jwt-public-key: $(echo -n "$DOWNSTREAM_JWT_PUBLIC" | base64)
+  downstream-jwt-private-key: $(echo -n "$DOWNSTREAM_JWT_PRIVATE" | base64)
   spa-public-key: $(echo -n "$SPA_PUBLIC" | base64)
   spa-private-key: $(echo -n "$SPA_PRIVATE" | base64)
 EOF
@@ -182,4 +204,3 @@ echo ""
 echo "=========================================="
 echo "  ✨ Key Generation Complete!"
 echo "=========================================="
-
