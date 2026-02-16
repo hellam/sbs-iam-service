@@ -36,3 +36,4 @@ build/
 /.env
 logs/*.env.keys
 k8s-rsa-keys-secret.yaml
+logs/
