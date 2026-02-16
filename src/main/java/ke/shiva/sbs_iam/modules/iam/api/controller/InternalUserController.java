@@ -1,4 +1,4 @@
-package ke.shiva.sbs_iam.modules.iam.app.controller;
+package ke.shiva.sbs_iam.modules.iam.api.controller;
 
 import ke.shiva.client.iam.dto.UserPiiResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
@@ -10,7 +10,6 @@ import ke.shiva.shivacorestarter.dto.ApiResponse;
 import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
