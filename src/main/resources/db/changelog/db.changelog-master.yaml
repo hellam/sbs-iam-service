@@ -37,6 +37,8 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/iam/04-profiles/030-customer-profile.xml
   - include:
+      file: db/changelog/changes/iam/04-profiles/033-add-is-verified-to-customer-profile.xml
+  - include:
       file: db/changelog/changes/iam/04-profiles/031-organization-user.xml
   - include:
       file: db/changelog/changes/iam/04-profiles/032-employee-profile.xml

@@ -59,6 +59,9 @@ public class CustomerProfileEntity {
     @Column(name = "allow_push")
     private Boolean allowPush;
 
+    @Column(name = "is_verified", nullable = false)
+    private Boolean isVerified = false;
+
     @ColumnDefault("now()")
     @Column(name = "created_at")
     private LocalDateTime createdAt;
