@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.modules.iam.api.request.ProfileSelectRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSelectionResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.UserProfileResponse;
 import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
 import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
 import ke.shiva.sbs_iam.modules.iam.app.service.ProfileService;
@@ -34,11 +35,10 @@ public class ProfileController {
     @Operation(summary = "8. Select Profile")
     @PostMapping("/profiles/select")
     @RequiresStage(LoginStage.MFA_OK)
-    public ResponseEntity<ApiResponse<Void>> select(
+    public ResponseEntity<ApiResponse<UserProfileResponse>> select(
             @Valid @RequestBody ProfileSelectRequest req, @FlowId UUID flowId
     ) {
-        profileService.selectProfile(req, flowId);
-        return ResponseBuilder.success("Profile selected successfully");
+        return ResponseBuilder.success("Profile selected successfully", profileService.selectProfile(req, flowId));
     }
 }
 

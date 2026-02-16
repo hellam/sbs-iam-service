@@ -118,7 +118,7 @@ public class LoginFlowService {
 
         //check that  user is related to the selected profile
         if (!ownsProfile(s.getIamUser(), type, profileId)) {
-            throw BaseException.badRequest();
+            throw BaseException.badRequest("You do not have access to this profile.");
         }
 
         s.setSessionType(SessionType.LOGIN_ACTIVE);
@@ -134,10 +134,10 @@ public class LoginFlowService {
         return switch (type) {
             case CUSTOMER:
                 CustomerProfileEntity customerProfile = customerRepo.findById(profileId).orElseThrow(BaseException::badRequest);
-                yield Objects.requireNonNull(customerProfile.getIamUser()).equals(iamUser);
+                yield customerProfile.getIamUser().getId().equals(iamUser.getId());
             case ORG_USER:
                 OrganizationUserEntity orgUser = orgRepo.findById(profileId).orElseThrow(BaseException::badRequest);
-                yield Objects.requireNonNull(orgUser.getIamUser()).equals(iamUser);
+                yield orgUser.getIamUser().getId().equals(iamUser.getId());
         };
     }
 
