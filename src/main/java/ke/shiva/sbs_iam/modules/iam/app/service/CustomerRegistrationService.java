@@ -21,12 +21,12 @@ import ke.shiva.sbs_iam.modules.reference.infra.repository.CountryRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import ke.shiva.shivacorestarter.util.PasswordGeneratorUtil;
+import ke.shiva.shivacorestarter.util.UsernameGeneratorUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -46,8 +46,6 @@ public class CustomerRegistrationService {
     private final CustomerAuthRepository customerAuthRepository;
     private final CountryRepository countryRepository;
     private final PasswordPolicyService passwordPolicyService;
-    private static final SecureRandom RANDOM = new SecureRandom();
-
 
     @Transactional
     public void registerCustomer(IamRegistrationDetailsRequest request) {
@@ -136,11 +134,15 @@ public class CustomerRegistrationService {
         /* -------------------------------------------------
          * 6. Create Login Identifier
          * ------------------------------------------------- */
+        String uniqueUsername = UsernameGeneratorUtil.generateUniqueNumericUsername(8,
+                username -> loginIdentifierRepository.existsByChannelAndIdentifierTypeAndIdentifier(
+                        Channel.INTERNET_BANKING, "username", username));
+
         LoginIdentifierEntity loginIdentifier = new LoginIdentifierEntity();
         loginIdentifier.setIamUser(iamUser);
         loginIdentifier.setChannel(Channel.INTERNET_BANKING);
         loginIdentifier.setIdentifierType("username");
-        loginIdentifier.setIdentifier(generateUniqueUsername(8));
+        loginIdentifier.setIdentifier(uniqueUsername);
         loginIdentifier.setStatus(IamStatus.ACTIVE);
         loginIdentifierRepository.save(loginIdentifier);
 
@@ -185,42 +187,8 @@ public class CustomerRegistrationService {
         log.info("Full IAM customer registration completed for clientId={}", request.getClientId());
     }
 
-    private String generateUniqueUsername(int length) {
-
-        if (length < 1) {
-            throw new IllegalArgumentException("Length must be >= 1");
-        }
-
-        String candidate;
-
-        do {
-
-            // First digit: 1–9 (no leading zero)
-            int firstDigit = 1 + RANDOM.nextInt(9);
-
-            StringBuilder sb = new StringBuilder();
-            sb.append(firstDigit);
-
-            // Remaining digits: 0–9
-            for (int i = 1; i < length; i++) {
-                sb.append(RANDOM.nextInt(10));
-            }
-
-            candidate = sb.toString();
-
-        } while (loginIdentifierRepository
-                .existsByChannelAndIdentifierTypeAndIdentifier(
-                        Channel.INTERNET_BANKING,
-                        "username",
-                        candidate
-                ));
-
-        return candidate;
-    }
-
     private CountryEntity getCountryCode(String countryName) {
         return countryRepository.findByCountryNameIgnoreCase(countryName.toLowerCase())
                 .orElseThrow(() -> new RuntimeException("Country not found: " + countryName));
     }
-
 }
