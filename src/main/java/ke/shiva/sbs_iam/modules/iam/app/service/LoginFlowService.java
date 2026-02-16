@@ -4,6 +4,7 @@ import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSummary;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.SessionEventEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.CustomerProfileEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.ProfileType;
@@ -14,6 +15,7 @@ import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.EncryptionUtil;
 import ke.shiva.shivacorestarter.util.HashUtil;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -98,7 +100,8 @@ public class LoginFlowService {
 
         List<ProfileSummary> list = new ArrayList<>();
 
-        customerRepo.findByIamUser(iamUser).ifPresent(cp -> {
+        //only gets profiles for verified Customers, Org users with no bank acount are unverified
+        customerRepo.findByIamUserAndIsVerifiedTrue(iamUser).ifPresent(cp -> {
             list.add(new ProfileSummary("CUSTOMER", encryptionUtil.encrypt(cp.getId().toString()), cp.getFullName()));
         });
 
@@ -111,13 +114,36 @@ public class LoginFlowService {
     }
 
     // -------- SELECT PROFILE --------
-    public void selectProfile(SessionEntity s, ProfileType type, Long profileId) {
+    public void selectProfile(SessionEntity s, ProfileType type, @NonNull Long profileId) {
+
+        //check that  user is related to the selected profile
+        if (!ownsProfile(s.getIamUser(), type, profileId)) {
+            throw BaseException.badRequest();
+        }
+
         s.setSessionType(SessionType.LOGIN_ACTIVE);
         s.setProfileType(type);
         s.setProfileId(profileId);
 
+
         sessionRepo.save(s);
         logEvent(s, "PROFILE_SELECTED_" + type);
+    }
+
+    public boolean ownsProfile(IamUserEntity iamUser, ProfileType type, Long profileId) {
+        return switch (type) {
+            case CUSTOMER:
+                CustomerProfileEntity customerProfile = customerRepo.findById(profileId).orElseThrow(BaseException::badRequest);
+                yield Objects.requireNonNull(customerProfile.getIamUser()).equals(iamUser);
+            case ORG_USER:
+                OrganizationUserEntity orgUser = orgRepo.findById(profileId).orElseThrow(BaseException::badRequest);
+                yield Objects.requireNonNull(orgUser.getIamUser()).equals(iamUser);
+        };
+    }
+
+    public boolean hasProfile(IamUserEntity iamUser) {
+        return customerRepo.findByIamUserAndIsVerifiedTrue(iamUser).isPresent() ||
+                !orgRepo.findAllByIamUser(iamUser).isEmpty();
     }
 
     // -------- EVENT LOGGER --------
@@ -170,6 +196,7 @@ public class LoginFlowService {
         sessionRepo.save(s);
         logEvent(s, "SESSION_EXTENDED");
     }
+
     public void extend(SessionEntity s, int timeMinutes) {
         s.setExpiresAt(OffsetDateTime.now().plus(Duration.ofMinutes(timeMinutes)));
         sessionRepo.save(s);

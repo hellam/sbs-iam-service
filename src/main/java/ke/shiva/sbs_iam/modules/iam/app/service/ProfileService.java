@@ -2,7 +2,6 @@ package ke.shiva.sbs_iam.modules.iam.app.service;
 
 import ke.shiva.sbs_iam.modules.iam.api.request.ProfileSelectRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSummary;
-import ke.shiva.sbs_iam.modules.iam.api.response.OidcTokenResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSelectionResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;

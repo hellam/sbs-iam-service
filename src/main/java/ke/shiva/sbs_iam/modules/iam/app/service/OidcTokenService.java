@@ -2,15 +2,12 @@ package ke.shiva.sbs_iam.modules.iam.app.service;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import ke.shiva.sbs_iam.config.SecurityConfig.SecurityConstants;
 import ke.shiva.sbs_iam.modules.iam.api.request.RefreshTokenRequest;
-import ke.shiva.sbs_iam.modules.iam.api.response.OidcTokenResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.RefreshTokenEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.DeviceEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.RevokedTokenEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.enums.NotificationChannel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.UserCategory;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.DeviceRepository;
@@ -24,7 +21,6 @@ import ke.shiva.shivacorestarter.util.SecureRandomStringGen;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -36,7 +32,6 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;

@@ -59,6 +59,9 @@ public class IdentifierService {
 
         IamUserEntity user = identifier.getIamUser();
 
+        if (!loginFlowService.hasProfile(user))
+            throw BaseException.unauthorized("You do not have a profile assigned. Please contact support.");
+
         if (user.getStatus() != IamStatus.ACTIVE) {
             // Log failed identifier verification due to inactive user
             loginHistoryService.logIdentifierFailure(

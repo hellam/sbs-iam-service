@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import ke.shiva.sbs_iam.config.SecurityConfig.SecurityConstants;
 import ke.shiva.sbs_iam.modules.iam.api.request.RefreshTokenRequest;
-import ke.shiva.sbs_iam.modules.iam.api.response.OidcTokenResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.UserProfileResponse;
 import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
 import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
 import ke.shiva.sbs_iam.modules.iam.app.service.LoginFlowService;
@@ -15,6 +15,7 @@ import ke.shiva.sbs_iam.modules.iam.app.service.OidcTokenService;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.SessionType;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
 import ke.shiva.shivacorestarter.dto.ApiResponse;
 import ke.shiva.shivacorestarter.exception.BaseException;
@@ -39,10 +40,14 @@ public class FinalizeLoginController {
     @Operation(summary = "9. Finalize Login")
     @PostMapping("/finalize")
     @RequiresStage(LoginStage.MFA_OK)
-    public ResponseEntity<ApiResponse<Void>> finalize(
+    public ResponseEntity<ApiResponse<UserProfileResponse>> finalize(
             @FlowId UUID flowId
     ) {
         SessionEntity session = loginFlowService.requireStage(flowId, LoginStage.MFA_OK);
+
+        //Not allowed for internet banking
+        if (session.getChannel() == Channel.INTERNET_BANKING)
+            throw BaseException.forbidden("Access denied");
 
         LoginRequirements reqs = loginFlowService.getRequirements(session);
 
@@ -64,13 +69,18 @@ public class FinalizeLoginController {
         loginHistoryService.logLoginSuccess(session.getIamUser(), identifier, session);
 
         oidcTokenService.issueTokens(session.getId());
-        return ResponseBuilder.success("Welcome! You have successfully logged in.");
+
+        return ResponseBuilder.success("Welcome! You have successfully logged in.", UserProfileResponse.builder()
+                .identifier(identifier)
+                .profileType(session.getProfileType())
+                .displayName(session.getIamUser().getParty().getPerson().getFullName())
+                .build());
     }
 
     @Operation(summary = "Refresh OIDC tokens")
     @PostMapping("/refresh")
     @Hidden
-    public ResponseEntity<ApiResponse<OidcTokenResponse>> refreshToken(
+    public ResponseEntity<ApiResponse<Void>> refreshToken(
             @RequestBody RefreshTokenRequest request,
             HttpServletRequest httpRequest
     ) {

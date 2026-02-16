@@ -14,6 +14,7 @@ import java.util.Optional;
 public interface CustomerProfileRepository extends JpaRepository<CustomerProfileEntity, Long> {
 
     Optional<CustomerProfileEntity> findByIamUser(IamUserEntity iamUser);
+    Optional<CustomerProfileEntity> findByIamUserAndIsVerifiedTrue(IamUserEntity iamUser);
 
     Optional<CustomerProfileEntity> findByCoreCustomerId(String coreCustomerId);
 }
