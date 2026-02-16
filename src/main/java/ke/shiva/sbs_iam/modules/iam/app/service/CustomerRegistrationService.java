@@ -5,6 +5,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.LoginIdentifierEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.UserContact;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PasswordPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.CustomerProfileEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PartyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PersonEntity;
@@ -19,6 +20,7 @@ import ke.shiva.sbs_iam.modules.reference.domain.entity.CountryEntity;
 import ke.shiva.sbs_iam.modules.reference.infra.repository.CountryRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
+import ke.shiva.shivacorestarter.util.PasswordGeneratorUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,6 +45,7 @@ public class CustomerRegistrationService {
     private final CustomerProfileRepository customerProfileRepository;
     private final CustomerAuthRepository customerAuthRepository;
     private final CountryRepository countryRepository;
+    private final PasswordPolicyService passwordPolicyService;
     private static final SecureRandom RANDOM = new SecureRandom();
 
 
@@ -161,9 +164,13 @@ public class CustomerRegistrationService {
         /* -------------------------------------------------
          * 8. Create Customer Auth
          * ------------------------------------------------- */
+        PasswordPolicyEntity policy = passwordPolicyService.resolvePolicy(Channel.INTERNET_BANKING);
+        int passwordLength = (policy != null && policy.getMinLength() != null) ? policy.getMinLength() : 6;
+        String rawPassword = PasswordGeneratorUtil.generateRandomPassword(passwordLength);
+
         CustomerAuthEntity auth = new CustomerAuthEntity();
         auth.setIamUser(iamUser);
-        auth.setInternetPasswordHash(HashUtil.bcrypt("123456"));
+        auth.setInternetPasswordHash(HashUtil.bcrypt(rawPassword));
         auth.setInternetPasswordAlgo("bcrypt");
         auth.setInternetPasswordChangedAt(OffsetDateTime.now());
         auth.setInternetFirstTimeLogin(true);
