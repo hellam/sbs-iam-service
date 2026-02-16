@@ -45,7 +45,7 @@ public class DeviceIdFilter extends OncePerRequestFilter {
         // Gateway handles the device cookie and forwards the device ID via X-Device-ID header
         String deviceId = request.getHeader(SecurityConstants.Headers.DEVICE_ID);
 
-        log.warn("DeviceIdFilter: Extracted device ID from header: {}", deviceId);
+        log.debug("DeviceIdFilter: Extracted device ID from header: {}", deviceId);
 
         // If the device ID is missing and not required, skip validation
         if ((deviceId == null || deviceId.isBlank()) && !required) {

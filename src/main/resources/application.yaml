@@ -117,7 +117,7 @@ shiva:
     jwt:
       public-key: ${SHIVA_SECURITY_JWT_PUBLIC_KEY}
       private-key: ${SHIVA_SECURITY_JWT_PRIVATE_KEY}
-      expected-issuer: sbs.iam
+      expected-issuer: https://sbs.iam
       expected-audience: gateway-service
     downstream-jwt:
       expected-issuer: https://gateway.service
