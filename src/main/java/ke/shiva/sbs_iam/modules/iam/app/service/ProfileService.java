@@ -72,11 +72,14 @@ public class ProfileService {
         String orgDisplayName = session.getProfileType()== ProfileType.ORG_USER ?
                 session.getIamUser().getParty().getOrganization().getDisplayName() : null;
 
+        boolean multipleProfiles = loginFlowService.getProfiles(session.getIamUser()).size() > 1;
+
         return UserProfileResponse.builder()
                 .identifier(identifier)
                 .profileType(session.getProfileType())
                 .displayName(session.getIamUser().getParty().getPerson().getFullName())
                 .organization(orgDisplayName)
+                .hasMultipleProfiles(multipleProfiles)
                 .build();
     }
 

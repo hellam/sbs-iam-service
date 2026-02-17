@@ -13,4 +13,5 @@ public class UserProfileResponse {
     private String organization;
     private ProfileType profileType;
     private String identifier;
+    private boolean hasMultipleProfiles;
 }
