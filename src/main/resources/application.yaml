@@ -17,8 +17,8 @@ spring:
 
     hikari: # HikariCP settings for connection pooling, it helps managing DB connections efficiently
       pool-name: IamSvcHikariCP
-      maximum-pool-size: 10 # max connections in pool, adjust based on app load
-      minimum-idle: 5 # keep at least this many idle connections
+      maximum-pool-size: 50 # max connections in pool, adjust based on app load
+      minimum-idle: 10 # keep at least this many idle connections
       idle-timeout: 30000 # 30 seconds before an idle connection is closed
       max-lifetime: 600000 # recycle connections every 10 minutes
       connection-timeout: 30000 # 30 seconds max wait for a connection
@@ -34,9 +34,9 @@ spring:
       database: ${REDIS_DATABASE:0}
       lettuce:
         pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
+          max-active: 50           # Increased matching DB pool
+          max-idle: 20
+          min-idle: 5
           max-wait: -1ms
 
   #Tell Hibernate to validate the schema against the entities. ddl-auto can be set to 'update', 'create', 'create-drop', 'validate', 'none'
@@ -52,6 +52,9 @@ spring:
         default_schema: iam_service
         jdbc:
           timezone: Africa/Nairobi # Set JDBC timezone to Africa/Nairobi
+          batch_size: 50           # Enable batching for inserts
+          order_inserts: true
+          order_updates: true
 
   messages:
     basename: messages,ValidationMessages
@@ -78,6 +81,12 @@ geoip:
   database:
     path: ${GEOIP_DATABASE_PATH:/usr/local/share/GeoIP/GeoLite2-City.mmdb}
 
+server:
+  tomcat:
+    threads:
+      max: 200                     # Ensure Tomcat can handle incoming requests
+      min-spare: 20
+    connection-timeout: 20000      # 20s
 
 management:
   endpoints:
