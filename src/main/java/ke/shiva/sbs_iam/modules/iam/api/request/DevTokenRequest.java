@@ -75,6 +75,11 @@ public class DevTokenRequest {
     private Long profileId;
 
     /**
+     * Idempotency key (optional).
+     */
+    private String idempotencyKey;
+
+    /**
      * OAuth scope (optional).
      * Default: derived from channel
      */
