@@ -1,6 +1,6 @@
 package ke.shiva.sbs_iam.modules.iam.api.controller;
 
-import ke.shiva.client.iam.dto.UserPiiResponse;
+import ke.shiva.client.iam.dto.response.UserPiiResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.UserContact;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.ContactType;

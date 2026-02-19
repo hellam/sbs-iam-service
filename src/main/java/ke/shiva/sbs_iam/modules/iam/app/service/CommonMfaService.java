@@ -1,8 +1,16 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
+import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.EmployeeAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.CustomerProfileEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.NotificationChannel;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.ProfileType;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerAuthRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerProfileRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.EmployeeAuthRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +27,8 @@ public class CommonMfaService {
 
     private final OtpService otpService;
     private final TotpVerifier totpVerifier;
+    private final CustomerAuthRepository customerAuthRepository;
+    private final EmployeeAuthRepository employeeAuthRepository;
 
     /**
      * Send OTP for a session
@@ -35,7 +45,7 @@ public class CommonMfaService {
      * Verify OTP code
      *
      * @param sessionId The session ID
-     * @param code The OTP code to verify
+     * @param code      The OTP code to verify
      * @return true if valid, false otherwise
      */
     public boolean verifyOtp(String sessionId, String code) {
@@ -55,11 +65,30 @@ public class CommonMfaService {
         return totpVerifier.verify(user, code);
     }
 
+    public boolean verify(SessionEntity session, String code) {
+        //MFA Only Allowed for Internet Banking and Backoffice Channels
+        boolean isTotpRequired = switch (session.getChannel()) {
+            case Channel.INTERNET_BANKING -> {
+                CustomerAuthEntity customerProfile = customerAuthRepository.findByIamUser(session.getIamUser());
+                yield customerProfile.getMfaEnabled();
+            }
+            case Channel.BACKOFFICE -> {
+                EmployeeAuthEntity employeeProfile = employeeAuthRepository.findByIamUser(session.getIamUser());
+                yield employeeProfile.getMfaEnabled();
+            }
+            default -> false;
+        };
+
+        if(!verifyMfaCode(session, code, isTotpRequired))
+            throw BaseException.badRequest("Invalid code");
+        return true;
+    }
+
     /**
      * Verify MFA code (automatically determines if OTP or TOTP)
      *
-     * @param session The session entity
-     * @param code The code to verify
+     * @param session        The session entity
+     * @param code           The code to verify
      * @param isTotpRequired Whether TOTP is required
      * @return true if valid, false otherwise
      */
@@ -74,8 +103,8 @@ public class CommonMfaService {
     /**
      * Validate MFA code and throw exception if invalid
      *
-     * @param session The session entity
-     * @param code The code to verify
+     * @param session        The session entity
+     * @param code           The code to verify
      * @param isTotpRequired Whether TOTP is required
      * @throws BaseException if code is invalid
      */
