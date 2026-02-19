@@ -60,6 +60,7 @@ public class DevTokenService {
         String customerId = request.getCustomerId() != null ? request.getCustomerId() : "100004";
         String sessionId = request.getSessionId() != null ? request.getSessionId() : "sess_" + UUID.randomUUID().toString().substring(0, 8);
         String deviceId = request.getDeviceId() != null ? request.getDeviceId() : "DEV_DEVICE";
+        String idempotencyKey = request.getIdempotencyKey() != null ? request.getIdempotencyKey() : UUID.randomUUID().toString();
         String channel = request.getChannel() != null ? request.getChannel() : "INTERNET_BANKING";
         String category = request.getCategory() != null ? request.getCategory() : "CUSTOMER";
         long expirySeconds = request.getExpirySeconds() != null ? request.getExpirySeconds() : 3600L;
@@ -93,6 +94,7 @@ public class DevTokenService {
                 .claim("customer_id", encryptedCustomerId) // Encrypted (not plain customerId)
                 .claim("session_id", sessionId)
                 .claim("device_id", deviceId)
+                .claim("idempotency_key", idempotencyKey)
                 .claim("channel", channel)
                 .claim("category", category)
                 .claim("scope", scope)
