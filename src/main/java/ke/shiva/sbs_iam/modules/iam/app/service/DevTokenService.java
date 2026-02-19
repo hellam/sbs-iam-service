@@ -58,7 +58,7 @@ public class DevTokenService {
         // Apply defaults
         Long userId = request.getUserId() != null ? request.getUserId() : 1L;
         String customerId = request.getCustomerId() != null ? request.getCustomerId() : "100004";
-        String sessionId = request.getSessionId() != null ? request.getSessionId() : "sess_" + UUID.randomUUID().toString().substring(0, 8);
+        String sessionId = request.getSessionId() != null ? request.getSessionId() : UUID.randomUUID().toString();
         String deviceId = request.getDeviceId() != null ? request.getDeviceId() : "DEV_DEVICE";
         String idempotencyKey = request.getIdempotencyKey() != null ? request.getIdempotencyKey() : UUID.randomUUID().toString();
         String channel = request.getChannel() != null ? request.getChannel() : "INTERNET_BANKING";
