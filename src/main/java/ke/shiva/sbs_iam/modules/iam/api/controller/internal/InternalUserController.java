@@ -1,4 +1,4 @@
-package ke.shiva.sbs_iam.modules.iam.api.controller;
+package ke.shiva.sbs_iam.modules.iam.api.controller.internal;
 
 import ke.shiva.client.iam.dto.response.UserPiiResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
@@ -100,7 +100,7 @@ public class InternalUserController {
 
     /**
      * Health check endpoint for internal API
-     */
+     **/
     @GetMapping("/health")
     public ResponseEntity<ApiResponse<String>> health() {
         return ResponseBuilder.success("Internal API is healthy", "OK");
