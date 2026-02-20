@@ -36,11 +36,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class InternalCustomerController {
 
-    CustomerProfileRepository customerProfileRepository;
+    private final CustomerProfileRepository customerProfileRepository;
     /**
      * Retrieve Customer Profile by core_customer_id
      * */
-    @GetMapping({"/{customerId}", "/profile"})
+    @GetMapping({"/{customerId}/profile"})
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> getCustomerProfile(@PathVariable String customerId) {
         CustomerProfileEntity customerProfile = customerProfileRepository.findByCoreCustomerId(customerId).orElseThrow(() -> BaseException.notFound("Customer profile not found"));
         return ResponseBuilder.success(CustomerProfileResponse.builder()
