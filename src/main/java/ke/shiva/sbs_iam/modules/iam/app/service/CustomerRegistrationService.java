@@ -1,6 +1,8 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
-import ke.shiva.sbs_iam.modules.iam.api.request.IamRegistrationDetailsRequest;
+import ke.shiva.client.iam.dto.request.CustomerRegistrationDetailsRequest;
+import ke.shiva.client.iam.dto.request.CustomerRegistrationValidationRequest;
+import ke.shiva.client.iam.dto.response.CustomerRegistrationResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.LoginIdentifierEntity;
@@ -48,13 +50,15 @@ public class CustomerRegistrationService {
     private final PasswordPolicyService passwordPolicyService;
 
     @Transactional
-    public void registerCustomer(IamRegistrationDetailsRequest request) {
+    public CustomerRegistrationResponse registerCustomer(CustomerRegistrationDetailsRequest request) {
         /* -------------------------------------------------
-         * 0. We check if a customer profile already exists with the given core customer ID.
+         * 0. We check if a customer profile, Person, or Contact already exists with the given details
          * -------------------------------------------------- */
-        if (customerProfileRepository.findByCoreCustomerId(request.getClientId()).isPresent()) {
-            throw BaseException.badRequest("Client ID '" + request.getClientId() + "' is already registered.");
-        }
+        validateInternetCustomer(CustomerRegistrationValidationRequest.builder()
+                .clientId(request.getClientId()).nationalId(request.getNationalId())
+                .mobile(request.getMobile())
+                .email(request.getEmail())
+                .build());
 
         /* -------------------------------------------------
          * 1. Create Party
@@ -167,8 +171,8 @@ public class CustomerRegistrationService {
          * 8. Create Customer Auth
          * ------------------------------------------------- */
         PasswordPolicyEntity policy = passwordPolicyService.resolvePolicy(Channel.INTERNET_BANKING);
-        int passwordLength = (policy != null && policy.getMinLength() != null) ? policy.getMinLength() : 6;
-        String rawPassword = PasswordGeneratorUtil.generateRandomPassword(passwordLength);
+        int passwordLength = (policy != null && policy.getMinLength() != null) ? policy.getMinLength() : 8;
+        String rawPassword = PasswordGeneratorUtil.generateNumericPassword(passwordLength);
 
         CustomerAuthEntity auth = new CustomerAuthEntity();
         auth.setIamUser(iamUser);
@@ -184,7 +188,37 @@ public class CustomerRegistrationService {
         auth.setMfaEnabled(false);
         customerAuthRepository.save(auth);
 
-        log.info("Full IAM customer registration completed for clientId={}", request.getClientId());
+        log.info("Full IAM customer registration completed for clientId={}, iamUserId={}",
+                request.getClientId(), iamUser.getId());
+
+        /* -------------------------------------------------
+         * 9. Return Registration Response
+         * ------------------------------------------------- */
+        return CustomerRegistrationResponse.builder()
+                .iamUserId(iamUser.getId())
+                .username(uniqueUsername)
+                .name(request.getFirstName())
+                .generatedPassword(rawPassword)
+                .build();
+    }
+
+    public void validateInternetCustomer(CustomerRegistrationValidationRequest request) {
+        if (customerProfileRepository.findByCoreCustomerId(request.getClientId()).isPresent()) {
+            throw BaseException.badRequest("Client ID '" + request.getClientId() + "' is already registered.");
+        }
+
+        if (personRepository.existsByNationalId(request.getNationalId()))
+            throw BaseException.badRequest("National ID '" + request.getNationalId() + "' is already registered.");
+
+        //check if phone exists
+        String mobileNo = request.getMobile().substring(request.getMobile().length() - 9);
+        if (userContactRepository.existsByContactTypeAndContactValueContaining(ContactType.PHONE, mobileNo))
+            throw BaseException.badRequest("Phone number '" + request.getMobile() + "' is already registered.");
+
+        //check if email exists
+        if (request.getEmail() != null)
+            if (userContactRepository.existsByContactTypeAndContactValue(ContactType.EMAIL, request.getEmail()))
+                throw BaseException.badRequest("Email '" + request.getEmail() + "' is already registered.");
     }
 
     private CountryEntity getCountryCode(String countryName) {

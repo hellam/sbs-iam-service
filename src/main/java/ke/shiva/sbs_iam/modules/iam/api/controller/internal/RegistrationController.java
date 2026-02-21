@@ -3,9 +3,10 @@ package ke.shiva.sbs_iam.modules.iam.api.controller.internal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import ke.shiva.sbs_iam.modules.iam.api.request.IamRegistrationDetailsRequest;
+import ke.shiva.client.iam.dto.request.CustomerRegistrationDetailsRequest;
+import ke.shiva.client.iam.dto.request.CustomerRegistrationValidationRequest;
+import ke.shiva.client.iam.dto.response.CustomerRegistrationResponse;
 import ke.shiva.sbs_iam.modules.iam.app.service.CustomerRegistrationService;
-import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.shivacorestarter.dto.ApiResponse;
 import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/register")
+@RequestMapping("internal/register")
 @RequiredArgsConstructor
 @Tag(name = "IAM Registration", description = "Customer registration for internet and mobile banking channels")
 public class RegistrationController {
@@ -27,11 +28,18 @@ public class RegistrationController {
 
     @Operation(summary = "Register Customer in IAM", description = "Registers a new customer in IAM using pre-validated core banking details")
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> registerInternetCustomer(
-            @RequestBody @Valid IamRegistrationDetailsRequest request) {
+    public ResponseEntity<ApiResponse<CustomerRegistrationResponse>> registerInternetCustomer(
+            @RequestBody @Valid CustomerRegistrationDetailsRequest request) {
         log.info("Received IAM registration request for client ID: {}", request.getClientId());
-        request.setChannel(Channel.INTERNET_BANKING);
-        customerRegistrationService.registerCustomer(request);
-        return ResponseBuilder.success("Customer registration successful");
+        CustomerRegistrationResponse response = customerRegistrationService.registerCustomer(request);
+        return ResponseBuilder.success("Customer registration successful", response);
+    }
+
+    @PostMapping("/validate")
+    public ResponseEntity<ApiResponse<Void>> validateInternetCustomer(
+            @RequestBody @Valid CustomerRegistrationValidationRequest request) {
+        customerRegistrationService.validateInternetCustomer(request);
+
+        return ResponseBuilder.success("Customer validation successful");
     }
 }

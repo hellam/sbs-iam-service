@@ -12,6 +12,13 @@ import java.util.Optional;
 @Repository
 public interface UserContactRepository extends JpaRepository<UserContact, Long> {
     Optional<UserContact> findByIamUserAndContactTypeAndPrimaryIsTrue(IamUserEntity iamUser, ContactType contactType);
+
     Optional<List<UserContact>> findByIamUserAndPrimaryIsTrue(IamUserEntity iamUser);
+
+    boolean existsByContactTypeAndContactValueLike(ContactType contactType, String contactValue);
+
+    boolean existsByContactTypeAndContactValue(ContactType contactType, String contactValue);
+
+    boolean existsByContactTypeAndContactValueContaining(ContactType contactType, String contactValue);
 }
 
