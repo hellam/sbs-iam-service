@@ -160,6 +160,7 @@ public class CustomerRegistrationService {
         customerProfile.setLanguage("en");
         customerProfile.setTimezone("Africa/Nairobi");
         customerProfile.setTheme("light");
+        customerProfile.setIsVerified(true);
         customerProfile.setAllowEmail(true);
         customerProfile.setAllowSms(true);
         customerProfile.setAllowPush(false);
