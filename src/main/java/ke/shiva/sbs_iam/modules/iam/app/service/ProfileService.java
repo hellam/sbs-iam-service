@@ -79,7 +79,7 @@ public class ProfileService {
                 .profileType(session.getProfileType())
                 .displayName(session.getIamUser().getParty().getPerson().getFullName())
                 .organization(orgDisplayName)
-                .hasMultipleProfiles(true)
+                .hasMultipleProfiles(multipleProfiles)
                 .build();
     }
 
