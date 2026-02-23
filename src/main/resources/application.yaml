@@ -130,7 +130,7 @@ shiva:
       expected-audience: gateway-service
     downstream-jwt:
       expected-issuer: https://gateway.service
-      expected-audience: payments-service
+      expected-audience: integration-service
       public-key: ${SHIVA_DOWNSTREAM_JWT_PUBLIC_KEY}
     spa:
       public-key: ${SHIVA_SECURITY_SPA_PUBLIC_KEY}
