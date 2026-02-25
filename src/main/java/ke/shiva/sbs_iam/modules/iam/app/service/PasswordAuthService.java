@@ -8,10 +8,12 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
 import ke.shiva.shivacorestarter.exception.BaseException;
+import ke.shiva.shivacorestarter.util.MaskingUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 import java.util.UUID;
 @Service
 @RequiredArgsConstructor
@@ -21,6 +23,7 @@ public class PasswordAuthService {
     private final PasswordVerifier passwordVerifier;
     private final SecurityEventService securityEventService; // records LOGIN_FAILURE / SUCCESS
     private final LoginHistoryService loginHistoryService;
+    private final IamUserService iamUserService;
 
     @Transactional
     public PasswordStepResponse handle(PasswordLoginRequest req, UUID flowId) {
@@ -51,12 +54,18 @@ public class PasswordAuthService {
         loginFlowService.updateStage(session, LoginStage.PASSWORD_OK);
         loginFlowService.extend(session);
 
+        Map<String, String> contactInfo = iamUserService.getUserPrimaryContactInfo(user);
+        String email = MaskingUtil.maskEmail(contactInfo.get("email"));
+        String phone = MaskingUtil.maskPhone(contactInfo.get("phone"));
+
         PasswordStepResponse resp = new PasswordStepResponse();
         resp.setOtpRequired(reqs.isOtpRequired());
         resp.setTotpRequired(reqs.isTotpRequired());
         resp.setPasswordChangeRequired(reqs.isPasswordChangeRequired());
         resp.setSecurityQuestionsRequired(reqs.isQuestionsRequired());
         resp.setProfileSelectionRequired(reqs.isProfileSelectionRequired());
+        resp.setEmail(email);
+        resp.setPhoneNumber(phone);
 
         return resp;
     }

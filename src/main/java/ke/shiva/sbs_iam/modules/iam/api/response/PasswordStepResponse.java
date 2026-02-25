@@ -11,4 +11,6 @@ public class PasswordStepResponse {
     private boolean passwordChangeRequired;
     private boolean securityQuestionsRequired;
     private boolean profileSelectionRequired;
+    private String phoneNumber; // for OTP
+    private String email; // for OTP
 }

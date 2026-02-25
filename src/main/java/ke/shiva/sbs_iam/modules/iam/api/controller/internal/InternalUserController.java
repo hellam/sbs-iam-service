@@ -1,6 +1,7 @@
 package ke.shiva.sbs_iam.modules.iam.api.controller.internal;
 
 import ke.shiva.client.iam.dto.response.UserPiiResponse;
+import ke.shiva.sbs_iam.modules.iam.app.service.IamUserService;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.UserContact;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.ContactType;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Internal API controller for inter-service communication.
@@ -37,6 +39,7 @@ public class InternalUserController {
 
     private final IamUserRepository iamUserRepository;
     private final UserContactRepository userContactRepository;
+    private final IamUserService iamUserService;
 
     /**
      * Retrieve user PII by user ID.
@@ -57,24 +60,12 @@ public class InternalUserController {
 
         // Extract user details from nested entities
         String fullName = user.getParty() != null ? user.getParty().getPerson().getFullName() : "Unknown";
-        String email = null;
-        String phoneNumber = null;
+        Map<String, String> contactInfo = iamUserService.getUserPrimaryContactInfo(user);
+        String email = contactInfo.get("email");
+        String phoneNumber = contactInfo.get("phone");
         String preferredLanguage = "en";
         String category = "CUSTOMER"; // Default
         boolean active = user.getStatus().name().equals("ACTIVE");
-
-         List<UserContact> userContact =userContactRepository.findByIamUserAndPrimaryIsTrue(user)
-                .orElseThrow(() -> new IllegalStateException("No primary contacts found for user: " + user.getId()));
-
-        //loop and set by contact type
-        for(UserContact contact : userContact){
-            if(contact.getContactType().equals(ContactType.EMAIL)){
-                email = contact.getContactValue();
-            }
-            if(contact.getContactType().equals(ContactType.PHONE)){
-                phoneNumber = contact.getContactValue();
-            }
-        }
 
         // Determine category from profile
         if (user.getCustomerProfile() != null) {
