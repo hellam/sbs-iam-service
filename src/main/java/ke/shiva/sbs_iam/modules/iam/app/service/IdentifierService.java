@@ -59,7 +59,7 @@ public class IdentifierService {
 
         IamUserEntity user = identifier.getIamUser();
 
-        if (!loginFlowService.hasProfile(user))
+        if (!loginFlowService.hasProfile(user) && channel == Channel.INTERNET_BANKING)
             throw BaseException.unauthorized("You do not have a profile assigned. Please contact support.");
 
         if (user.getStatus() != IamStatus.ACTIVE) {
