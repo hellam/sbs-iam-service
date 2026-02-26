@@ -113,7 +113,7 @@ public class OidcTokenService {
             claimsBuilder.claim(JwtClaims.PROFILE_TYPE, session.getProfileType().name());
             if (session.getProfileType().name().equals(ProfileType.ORG_USER.name())){
                 OrganizationUserEntity orgUser = orgRepo.findById(session.getProfileId()).orElseThrow(() -> new IllegalArgumentException("Organization user profile not found with ID: " + session.getProfileId()));
-                claimsBuilder.claim("org_id", orgUser.getOrganization().getId());
+                claimsBuilder.claim(JwtClaims.TASK_ROLE, orgUser.getOrgRole().getTaskRole().name());
             }
         }
 
