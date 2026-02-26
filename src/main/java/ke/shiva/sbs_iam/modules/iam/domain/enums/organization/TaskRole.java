@@ -1,9 +1,7 @@
 package ke.shiva.sbs_iam.modules.iam.domain.enums.organization;
 
-public enum OrgUserRole {
-    VIEW_ONLY,
+public enum TaskRole {
     MAKER,
     CHECKER,
-    APPROVER,
-    ADMIN
+    APPROVER
 }

@@ -45,6 +45,11 @@
             <column name="org_role_id"/>
         </createIndex>
 
+        <createIndex tableName="org_role_permission"
+                     indexName="idx_org_role_permission_feature">
+            <column name="feature_id"/>
+        </createIndex>
+
     </changeSet>
 
 </databaseChangeLog>

@@ -18,8 +18,8 @@
             </column>
 
             <!-- party.id representing organization -->
-            <column name="organization_id" type="BIGINT">
-                <constraints nullable="false" unique="true"/>
+            <column name="organization_party_id" type="BIGINT">
+                <constraints nullable="false"/>
             </column>
 
             <column name="name" type="VARCHAR(255)">
@@ -27,6 +27,11 @@
             </column>
 
             <column name="description" type="TEXT"/>
+
+            <!-- Canonical workflow task role -->
+            <column name="task_role" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
 
             <column name="is_default" type="BOOLEAN" defaultValueBoolean="false"/>
             <column name="is_active" type="BOOLEAN" defaultValueBoolean="true"/>
@@ -40,15 +45,37 @@
 
         <addForeignKeyConstraint
                 baseTableName="org_role"
-                baseColumnNames="organization_id"
+                baseColumnNames="organization_party_id"
                 referencedTableName="party"
                 referencedColumnNames="id"
                 constraintName="fk_org_role_org"/>
 
         <createIndex tableName="org_role"
                      indexName="idx_org_role_org">
-            <column name="organization_id"/>
+            <column name="organization_party_id"/>
         </createIndex>
+
+        <createIndex tableName="org_role"
+                     indexName="idx_org_role_task_role">
+            <column name="task_role"/>
+        </createIndex>
+
+        <addUniqueConstraint
+                tableName="org_role"
+                constraintName="ux_org_role_org_name"
+                columnNames="organization_party_id,name"/>
+
+        <!-- Enables scoped FK from organization_user(org_role_id, organization_party_id) -->
+        <addUniqueConstraint
+                tableName="org_role"
+                constraintName="ux_org_role_id_org_party"
+                columnNames="id,organization_party_id"/>
+
+        <sql>
+            ALTER TABLE org_role
+            ADD CONSTRAINT ck_org_role_task_role
+            CHECK (task_role IN ('MAKER', 'CHECKER', 'APPROVER'));
+        </sql>
 
     </changeSet>
 

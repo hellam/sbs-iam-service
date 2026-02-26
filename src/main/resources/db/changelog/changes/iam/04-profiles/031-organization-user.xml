@@ -48,13 +48,10 @@
                 <constraints nullable="false"/>
             </column>
 
-            <!-- High-level role within the organization (e.g. MAKER, CHECKER, APPROVER, ADMIN, VIEW_ONLY) -->
-            <column name="org_role" type="VARCHAR(20)" defaultValue="VIEW_ONLY">
+            <!-- Primary role for this user inside the organization -->
+            <column name="org_role_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-
-            <!-- Monetary approval limit specific to this user in this organization -->
-            <column name="approval_limit" type="DECIMAL(18,2)"/>
 
             <!-- Indicates if this is a primary/lead signatory (optional) -->
             <column name="is_primary" type="BOOLEAN" defaultValueBoolean="false"/>
@@ -82,12 +79,27 @@
                 referencedTableName="party" referencedColumnNames="id"
                 constraintName="fk_org_user_org_party"/>
 
+        <addForeignKeyConstraint
+                baseTableName="organization_user" baseColumnNames="org_role_id"
+                referencedTableName="org_role" referencedColumnNames="id"
+                constraintName="fk_org_user_primary_role"/>
+
+        <!-- Prevent cross-organization mismatches between user membership and role -->
+        <addForeignKeyConstraint
+                baseTableName="organization_user" baseColumnNames="org_role_id,organization_party_id"
+                referencedTableName="org_role" referencedColumnNames="id,organization_party_id"
+                constraintName="fk_org_user_role_same_org"/>
+
         <createIndex tableName="organization_user" indexName="idx_org_user_user">
             <column name="iam_user_id"/>
         </createIndex>
 
         <createIndex tableName="organization_user" indexName="idx_org_user_org">
             <column name="organization_party_id"/>
+        </createIndex>
+
+        <createIndex tableName="organization_user" indexName="idx_org_user_org_role_id">
+            <column name="org_role_id"/>
         </createIndex>
 
         <!-- Ensure same user is not duplicated for the same organization -->

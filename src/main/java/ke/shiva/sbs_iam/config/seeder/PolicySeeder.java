@@ -223,6 +223,7 @@ public class PolicySeeder implements CommandLineRunner {
                     f.setName("RTGS Transfer");
                     f.setDescription("Allows users to transfer funds via RTGS");
                     f.setCategory("Transfers");
+                    f.setIsTransaction(true);
                     return featureRepository.save(f);
                 });
 
@@ -234,6 +235,7 @@ public class PolicySeeder implements CommandLineRunner {
                     f.setName("SWIFT Transfer");
                     f.setDescription("Allows users to transfer funds via SWIFT");
                     f.setCategory("Transfers");
+                    f.setIsTransaction(true);
                     return featureRepository.save(f);
                 });
 

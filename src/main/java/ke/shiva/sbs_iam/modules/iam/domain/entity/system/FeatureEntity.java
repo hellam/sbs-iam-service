@@ -3,15 +3,12 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.system;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.FeaturePolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.OffsetDateTime;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 @Setter
 @Getter
@@ -49,6 +46,11 @@ public class FeatureEntity {
     @ColumnDefault("true")
     @Column(name = "enabled", nullable = false)
     private Boolean enabled = false;
+
+    @NotNull
+    @ColumnDefault("false")
+    @Column(name = "is_transaction", nullable = false)
+    private Boolean isTransaction = false;
 
     @ColumnDefault("now()")
     @Column(name = "created_at")

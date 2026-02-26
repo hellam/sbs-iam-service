@@ -76,6 +76,17 @@ spring:
 encryption:
   key: ${APP_KEY}
 
+iam:
+  task-roles:
+    labels:
+      MAKER: Maker
+      CHECKER: Checker
+      APPROVER: Approver
+    descriptions:
+      MAKER: Creates and submits transaction instructions for review.
+      CHECKER: Reviews and verifies submitted transaction instructions.
+      APPROVER: Performs final approval before transaction execution.
+
 # GeoIP Configuration for IP geolocation
 geoip:
   database:

@@ -34,8 +34,18 @@
                 <constraints nullable="false"/>
             </column>
 
+            <!-- Distinguish transaction features from informational/non-transactional features -->
+            <column name="is_transaction" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+
             <column name="created_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
         </createTable>
+
+        <createIndex tableName="features" indexName="idx_features_txn_enabled">
+            <column name="is_transaction"/>
+            <column name="enabled"/>
+        </createIndex>
 
     </changeSet>
 

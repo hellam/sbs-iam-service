@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.FeaturePolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.OrgRoleEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.party.PartyType;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
@@ -52,8 +51,8 @@ public class PartyEntity extends BaseEntity {
     @OneToMany(mappedBy = "party")
     private Set<IamUserEntity> iamUsers = new LinkedHashSet<>();
 
-    @OneToOne(mappedBy = "organization")
-    private OrgRoleEntity orgRole;
+    @OneToMany(mappedBy = "organizationParty")
+    private Set<OrgRoleEntity> orgRoles = new LinkedHashSet<>();
 
     @OneToOne(mappedBy = "party")
     private OrganizationEntity organization;
