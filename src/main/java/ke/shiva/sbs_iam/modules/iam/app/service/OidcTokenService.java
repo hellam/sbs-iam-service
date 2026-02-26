@@ -6,16 +6,16 @@ import ke.shiva.sbs_iam.modules.iam.api.request.RefreshTokenRequest;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.RefreshTokenEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.DeviceEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.RevokedTokenEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.ProfileType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.UserCategory;
-import ke.shiva.sbs_iam.modules.iam.infra.repository.DeviceRepository;
-import ke.shiva.sbs_iam.modules.iam.infra.repository.RefreshTokenRepository;
-import ke.shiva.sbs_iam.modules.iam.infra.repository.RevokedTokenRepository;
-import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.security.jwt.JwtClaimEncryption;
+import ke.shiva.shivacorestarter.security.jwt.JwtClaims;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import ke.shiva.shivacorestarter.util.SecureRandomStringGen;
 import lombok.RequiredArgsConstructor;
@@ -46,10 +46,10 @@ public class OidcTokenService {
     private final SessionRepository sessionRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final RevokedTokenRepository revokedTokenRepository;
-    private final OtpService otpService;
     private final LoginFlowService loginFlowService;
     private final DeviceRepository deviceRepository;
     private final JwtClaimEncryption jwtClaimEncryption;
+    private final OrganizationUserRepository orgRepo;
 
 
     // expected issuer and audience configured via properties
@@ -90,31 +90,37 @@ public class OidcTokenService {
                 .expiresAt(now.plusSeconds(accessTokenValidity).toInstant())
                 .audience(List.of(expectedAudience))
                 .subject(String.valueOf(user.getPublicId()))
-                .claim("user_id", encryptedUserId)           // ENCRYPTED IAM user ID
-                .claim("session_id", session.getSessionId()) // Session ID for tracking
-                .claim("channel", channel.name())
-                .claim("category", category.name())
-                .claim("scope", buildScopeFor(session))
+                .claim(JwtClaims.USER_ID, encryptedUserId)           // ENCRYPTED IAM user ID
+                .claim(JwtClaims.SESSION_ID, session.getSessionId()) // Session ID for tracking
+                .claim(JwtClaims.CHANNEL, channel.name())
+                .claim(JwtClaims.CATEGORY, category.name())
+                .claim(JwtClaims.SCOPE, buildScopeFor(session))
                 .id(UUID.randomUUID().toString());           // JTI
 
         // Add encrypted customer ID if available (for CUSTOMER category)
         if (encryptedCustomerId != null) {
-            claimsBuilder.claim("customer_id", encryptedCustomerId);
+            claimsBuilder.claim(JwtClaims.CUSTOMER_ID, encryptedCustomerId);
         }
 
         // Add device ID for device binding and fraud detection
         // Note: deviceId is already hashed, no need to encrypt again
         if (session.getDeviceId() != null) {
-            claimsBuilder.claim("device_id", session.getDeviceId());
+            claimsBuilder.claim(JwtClaims.DEVICE_ID, session.getDeviceId());
         }
 
         // Add profile type and ID if available (for multi-profile users)
         if (session.getProfileType() != null) {
-            claimsBuilder.claim("profile_type", session.getProfileType().name());
+            claimsBuilder.claim(JwtClaims.PROFILE_TYPE, session.getProfileType().name());
+            if (session.getProfileType().name().equals(ProfileType.ORG_USER.name())){
+                OrganizationUserEntity orgUser = orgRepo.findById(session.getProfileId()).orElseThrow(() -> new IllegalArgumentException("Organization user profile not found with ID: " + session.getProfileId()));
+                claimsBuilder.claim("org_id", orgUser.getOrganization().getId());
+            }
         }
+
+
         if (session.getProfileId() != null) {
             String encryptedProfileId = jwtClaimEncryption.encryptProfileId(session.getProfileId());
-            claimsBuilder.claim("profile_id", encryptedProfileId);
+            claimsBuilder.claim(JwtClaims.PROFILE_ID, encryptedProfileId);
         }
 
         JwtClaimsSet accessClaims = claimsBuilder.build();
