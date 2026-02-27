@@ -9,6 +9,7 @@ import ke.shiva.sbs_iam.modules.iam.api.request.RefreshTokenRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.UserProfileResponse;
 import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
 import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
+import ke.shiva.sbs_iam.modules.iam.app.service.IamUserService;
 import ke.shiva.sbs_iam.modules.iam.app.service.LoginFlowService;
 import ke.shiva.sbs_iam.modules.iam.app.service.LoginHistoryService;
 import ke.shiva.sbs_iam.modules.iam.app.service.OidcTokenService;
@@ -36,6 +37,7 @@ public class FinalizeLoginController {
     private final LoginFlowService loginFlowService;
     private final OidcTokenService oidcTokenService;
     private final LoginHistoryService loginHistoryService;
+    private final IamUserService iamUserService;
 
     @Operation(summary = "9. Finalize Login")
     @PostMapping("/finalize")
@@ -70,10 +72,12 @@ public class FinalizeLoginController {
 
         oidcTokenService.issueTokens(session.getId());
 
+
+
         return ResponseBuilder.success("Welcome! You have successfully logged in.", UserProfileResponse.builder()
                 .identifier(identifier)
                 .profileType(session.getProfileType())
-                .displayName(session.getIamUser().getParty().getPerson().getFullName())
+                .displayName(iamUserService.getIamUserFullName(session.getIamUser().getId()))
                 .build());
     }
 
