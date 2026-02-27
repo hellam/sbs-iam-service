@@ -20,6 +20,7 @@ public class IamUserService {
     private final IamUserRepository iamUserRepository;
     private final UserContactRepository userContactRepository;
 
+
     /**
      * Get Iam User Primary Email and Phone Number by User ID.
      */
@@ -46,6 +47,16 @@ public class IamUserService {
                 "email", email,
                 "phone", phoneNumber
         );
+    }
+
+    public String getIamUserFullName(Long iamUserId){
+        IamUserEntity user = iamUserRepository.findById(iamUserId)
+                .orElseThrow(() -> {
+                    log.warn("User not found for userId={}", iamUserId);
+                    return new RuntimeException("User not found");
+                });
+
+        return user.getParty() != null ? user.getParty().getPerson().getFullName() : "Unknown";
     }
 
 }
