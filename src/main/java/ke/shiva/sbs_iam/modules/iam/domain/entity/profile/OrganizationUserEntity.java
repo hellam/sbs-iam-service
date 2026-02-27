@@ -57,6 +57,30 @@ public class OrganizationUserEntity extends BaseEntity {
 
 
     public String getOrgDisplayName() {
-        return organizationParty.getOrganization().getDisplayName();
+        if (organizationParty == null) {
+            return "Organization";
+        }
+
+        OrganizationEntity organization = organizationParty.getOrganization();
+        if (organization == null) {
+            if (organizationParty.getCoreCustomerId() != null && !organizationParty.getCoreCustomerId().isBlank()) {
+                return organizationParty.getCoreCustomerId();
+            }
+            return "Organization";
+        }
+
+        if (organization.getDisplayName() != null && !organization.getDisplayName().isBlank()) {
+            return organization.getDisplayName();
+        }
+
+        if (organization.getLegalName() != null && !organization.getLegalName().isBlank()) {
+            return organization.getLegalName();
+        }
+
+        if (organizationParty.getCoreCustomerId() != null && !organizationParty.getCoreCustomerId().isBlank()) {
+            return organizationParty.getCoreCustomerId();
+        }
+
+        return "Organization";
     }
 }

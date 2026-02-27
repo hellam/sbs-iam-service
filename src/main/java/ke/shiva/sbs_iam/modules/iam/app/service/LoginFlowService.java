@@ -19,6 +19,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -96,6 +97,7 @@ public class LoginFlowService {
     }
 
     // -------- LIST PROFILES FOR IB --------
+    @Transactional(readOnly = true)
     public List<ProfileSummary> getProfiles(IamUserEntity iamUser) {
 
         List<ProfileSummary> list = new ArrayList<>();

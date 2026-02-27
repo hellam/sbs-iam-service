@@ -77,12 +77,17 @@ public class OidcTokenService {
         long accessTokenValidity = 300L; // 5 minutes
         long refreshTokenValidity = 1800L; // 30 minutes
 
-        // Extract customer ID from user profile
-        String customerId = extractCustomerId(user, category);
+        // Resolve customer ID based on selected profile:
+        // ORG_USER -> organization core customer ID
+        // CUSTOMER -> customer profile core customer ID
+        String customerId = resolveCustomerIdForToken(session, user, category);
 
         // Encrypt sensitive claims to prevent enumeration attacks
         String encryptedUserId = jwtClaimEncryption.encryptUserId(user.getId());
-        String encryptedCustomerId = jwtClaimEncryption.encryptCustomerId(customerId);
+        String encryptedCustomerId = null;
+        if (customerId != null && !customerId.isBlank()) {
+            encryptedCustomerId = jwtClaimEncryption.encryptCustomerId(customerId);
+        }
 
         JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder()
                 .issuer(expectedIssuer)
@@ -251,26 +256,37 @@ public class OidcTokenService {
         response.setHeader("X-Refresh-Token-Expiry", String.valueOf(refreshTokenValidity));
     }
 
-    /**
-     * Extract core banking customer ID from IAM user profile.
-     * Only applicable for CUSTOMER category users.
-     *
-     * @param user the IAM user
-     * @param category the user category
-     * @return customer ID or null if not applicable
-     */
-    private String extractCustomerId(IamUserEntity user, UserCategory category) {
+    private String resolveCustomerIdForToken(SessionEntity session, IamUserEntity user, UserCategory category) {
+        if (session.getProfileType() == ProfileType.ORG_USER) {
+            Long orgProfileId = session.getProfileId();
+            if (orgProfileId == null) {
+                log.warn("Selected organization profile is missing.");
+                throw BaseException.badRequest();
+            }
+
+            OrganizationUserEntity orgUser = orgRepo.findById(orgProfileId)
+                    .orElseThrow(() -> BaseException.badRequest("Organization user profile not found"));
+
+            if (orgUser.getOrganizationParty() == null ||
+                    orgUser.getOrganizationParty().getCoreCustomerId() == null ||
+                    orgUser.getOrganizationParty().getCoreCustomerId().isBlank()) {
+                log.warn("Organization core customer ID is missing.");
+                throw BaseException.badRequest();
+            }
+
+            return orgUser.getOrganizationParty().getCoreCustomerId();
+        }
+
         if (category != UserCategory.CUSTOMER) {
             return null;
         }
 
         try {
-            // Customer profile is eagerly loaded with user
             if (user.getCustomerProfile() != null) {
                 return user.getCustomerProfile().getCoreCustomerId();
             }
         } catch (Exception e) {
-            log.warn("Failed to extract customer ID for user {}: {}", user.getId(), e.getMessage());
+            log.warn("Failed to extract customer profile ID for user {}: {}", user.getId(), e.getMessage());
         }
 
         return null;

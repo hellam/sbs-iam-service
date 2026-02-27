@@ -39,6 +39,31 @@ seeder:
     enabled: true
   security-question:
     enabled: true
+  corporate:
+    enabled: true
+    default-password: "ChangeMe123!"
+    reset-password-on-run: true
+    organization:
+      core-customer-id: "101058"
+      legal-name: "SHIVA SOFTWARES AFRICA LTD"
+      display-name: "SHIVA SOFTWARES AFRICA LTD"
+      customer-segment: "CORPORATE"
+      registration-no: "SHIVA-101058"
+      country-code: "KE"
+      city: "Nairobi"
+      address: "Nairobi, Kenya"
+      company-email: "ops@shiva.test"
+      company-phone: "+254700101058"
+    roles:
+      maker:
+        name: "Inputter"
+        description: "Initiates and submits corporate transactions."
+      checker:
+        name: "Verifier"
+        description: "Reviews and verifies submitted corporate transactions."
+      approver:
+        name: "Authorizer"
+        description: "Performs final transaction approval."
 
 security:
   allowed-domains:

@@ -5,9 +5,11 @@ import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSummary;
 import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSelectionResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.UserProfileResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.ProfileType;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.OrganizationUserRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.EncryptionUtil;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class ProfileService {
     private final OidcTokenService oidcTokenService;
     private final LoginHistoryService loginHistoryService;
     private final EncryptionUtil encryptionUtil;
+    private final OrganizationUserRepository organizationUserRepository;
 
     public ProfileSelectionResponse listProfiles(UUID flowId){
 
@@ -69,15 +72,23 @@ public class ProfileService {
         // Issue token with profile claims
         oidcTokenService.issueTokens(session.getId());
 
-        String orgDisplayName = session.getProfileType()== ProfileType.ORG_USER ?
-                session.getIamUser().getParty().getOrganization().getDisplayName() : null;
+        String orgDisplayName = null;
+        if (session.getProfileType() == ProfileType.ORG_USER) {
+            OrganizationUserEntity orgUser = organizationUserRepository.findById(session.getProfileId())
+                    .orElseThrow(() -> BaseException.badRequest("Organization user profile not found"));
+            orgDisplayName = orgUser.getOrgDisplayName();
+        }
+
+        String displayName = session.getIamUser().getParty() != null && session.getIamUser().getParty().getPerson() != null
+                ? session.getIamUser().getParty().getPerson().getFullName()
+                : identifier;
 
         boolean multipleProfiles = loginFlowService.getProfiles(session.getIamUser()).size() > 1;
 
         return UserProfileResponse.builder()
                 .identifier(identifier)
                 .profileType(session.getProfileType())
-                .displayName(session.getIamUser().getParty().getPerson().getFullName())
+                .displayName(displayName)
                 .organization(orgDisplayName)
                 .hasMultipleProfiles(multipleProfiles)
                 .build();
@@ -100,5 +111,4 @@ public class ProfileService {
         }
     }
 }
-
 
