@@ -124,13 +124,14 @@ shiva:
   # Security Headers Configuration
   security:
     jwt:
+      enabled: false
       public-key: ${SHIVA_SECURITY_JWT_PUBLIC_KEY}
       private-key: ${SHIVA_SECURITY_JWT_PRIVATE_KEY}
       expected-issuer: https://sbs.iam
       expected-audience: gateway-service
     downstream-jwt:
       expected-issuer: https://gateway.service
-      expected-audience: accounts-service
+      expected-audience: iam-service
       public-key: ${SHIVA_DOWNSTREAM_JWT_PUBLIC_KEY}
     spa:
       public-key: ${SHIVA_SECURITY_SPA_PUBLIC_KEY}
@@ -141,6 +142,31 @@ shiva:
       enabled: true
       secret-key: ${SIGNATURE_SECRET_KEY:change-this-secret-key-in-production}
       algorithm: HmacSHA256
+
+    risk:
+      impossible-travel:
+        enabled: true                     # Master switch for impossible-travel controls
+        lookback-hours: 24                # Compare against last successful login within this window
+        min-distance-km: 500              # Minimum geo distance before speed rule applies
+        speed-threshold-kmh: 900          # Above this calculated speed => suspicious
+        country-jump-window-minutes: 45   # Different-country jump within this window => suspicious
+      user-agent-drift:
+        enabled: true                     # Additional heuristic using existing login/device data
+        window-minutes: 30                # Only evaluate drift if previous login is recent
+
+    retention:
+      enabled: true                       # Scheduled cleanup to cap DB growth
+      cleanup-cron: "0 30 2 * * *"       # Daily at 02:30 server time
+      revoked-tokens-grace-days: 2        # Keep short grace after token expiry for forensics
+      refresh-tokens-days: 30             # Purge expired refresh token rows older than this
+      session-events-days: 180            # Operational session events retention
+      security-events-days: 365           # Security events retention
+      login-history-days: 365             # Login history retention
+
+    session-revocation:
+      redis-prefix: "iam:revoked-session:"  # Shared Redis key prefix consumed by gateway
+    session-version:
+      redis-prefix: "iam:session-version:"  # Shared Redis key prefix for current per-session version
 
   corebanking:
     enabled: true

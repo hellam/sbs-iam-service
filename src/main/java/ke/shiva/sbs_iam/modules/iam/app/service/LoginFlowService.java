@@ -1,6 +1,7 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
 import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSummary;
+import ke.shiva.sbs_iam.modules.iam.app.util.RequestContextExtractor;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.SessionEventEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
@@ -37,6 +38,7 @@ public class LoginFlowService {
     private final SessionRepository sessionRepository;
     private final DeviceRepository deviceRepository;
     private final EncryptionUtil encryptionUtil;
+    private final RequestContextExtractor requestContextExtractor;
 
     // -------- CREATE LOGIN FLOW --------
     public SessionEntity start(IamUserEntity user, Channel channel, LoginRequirements reqs, String identifier, String deviceId) {
@@ -154,6 +156,24 @@ public class LoginFlowService {
         event.setSession(s);
         event.setEventType(action);
         event.setEventAt(OffsetDateTime.now());
+
+        RequestContextExtractor.RequestContext context = requestContextExtractor.extractContext();
+        if (context != null) {
+            event.setIpAddress(context.getIpAddress());
+            if (context.getDeviceId() != null && !context.getDeviceId().isBlank()) {
+                event.setDeviceId(HashUtil.sha256(context.getDeviceId()));
+            }
+            Map<String, Object> metadata = new HashMap<>();
+            if (context.getLocationCountry() != null) {
+                metadata.put("country", context.getLocationCountry());
+            }
+            if (context.getLocationCity() != null) {
+                metadata.put("city", context.getLocationCity());
+            }
+            if (!metadata.isEmpty()) {
+                event.setMetadata(metadata);
+            }
+        }
         eventRepo.save(event);
     }
 

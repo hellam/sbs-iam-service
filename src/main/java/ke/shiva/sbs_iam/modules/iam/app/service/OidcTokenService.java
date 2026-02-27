@@ -3,13 +3,15 @@ package ke.shiva.sbs_iam.modules.iam.app.service;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import ke.shiva.sbs_iam.modules.iam.api.request.RefreshTokenRequest;
+import ke.shiva.sbs_iam.modules.iam.app.util.RequestContextExtractor;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.RefreshTokenEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.security.DeviceEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.security.SecurityEventEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.RevokedTokenEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.ProfileType;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.SessionType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.UserCategory;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
@@ -33,13 +35,16 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OidcTokenService {
+    private static final String SESSION_VERSION_KEY = "session_version";
 
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
@@ -47,9 +52,12 @@ public class OidcTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final RevokedTokenRepository revokedTokenRepository;
     private final LoginFlowService loginFlowService;
-    private final DeviceRepository deviceRepository;
     private final JwtClaimEncryption jwtClaimEncryption;
     private final OrganizationUserRepository orgRepo;
+    private final SessionRevocationService sessionRevocationService;
+    private final SecurityEventRepository securityEventRepository;
+    private final RequestContextExtractor requestContextExtractor;
+    private final ImpossibleTravelDetectionService impossibleTravelDetectionService;
 
 
     // expected issuer and audience configured via properties
@@ -61,9 +69,20 @@ public class OidcTokenService {
 
     @Transactional
     public void issueTokens(Long sessionId) {
+        issueTokens(sessionId, true);
+    }
+
+    @Transactional
+    public void issueTokens(Long sessionId, boolean bumpSessionVersion) {
         SessionEntity session = sessionRepository.findByIdWithIamUser(sessionId).orElseThrow(
                 () -> new IllegalArgumentException("Session not found with ID: " + sessionId)
         );
+        if (session.getRevokedAt() != null) {
+            throw BaseException.unauthorized("Session has been revoked");
+        }
+        if (session.getExpiresAt() != null && session.getExpiresAt().isBefore(OffsetDateTime.now())) {
+            throw BaseException.unauthorized("Session expired");
+        }
         IamUserEntity user = session.getIamUser();
         Channel channel = session.getChannel();
         UserCategory category = null;
@@ -76,6 +95,8 @@ public class OidcTokenService {
         OffsetDateTime now = OffsetDateTime.now();
         long accessTokenValidity = 300L; // 5 minutes
         long refreshTokenValidity = 1800L; // 30 minutes
+        // Keep a stable session_id, and invalidate prior tokens via session_version bumps.
+        long sessionVersion = resolveAndMaybeBumpSessionVersion(session, bumpSessionVersion);
 
         // Resolve customer ID based on selected profile:
         // ORG_USER -> organization core customer ID
@@ -97,6 +118,7 @@ public class OidcTokenService {
                 .subject(String.valueOf(user.getPublicId()))
                 .claim(JwtClaims.USER_ID, encryptedUserId)           // ENCRYPTED IAM user ID
                 .claim(JwtClaims.SESSION_ID, session.getSessionId()) // Session ID for tracking
+                .claim(SESSION_VERSION_KEY, sessionVersion)          // Monotonic version for scalable invalidation
                 .claim(JwtClaims.CHANNEL, channel.name())
                 .claim(JwtClaims.CATEGORY, category.name())
                 .claim(JwtClaims.SCOPE, buildScopeFor(session))
@@ -142,9 +164,12 @@ public class OidcTokenService {
         refreshTokenEntity.setTokenHash(refreshTokenHash);
         refreshTokenEntity.setIssuedAt(now);
         refreshTokenEntity.setExpiresAt(now.plusSeconds(refreshTokenValidity));
+        refreshTokenEntity.setIsActive(true);
         refreshTokenRepository.save(refreshTokenEntity);
 
         loginFlowService.extend(session, 30); // Extend session by 30 minutes on token issue
+        // Publish current session_version to Redis for gateway-side equality checks.
+        sessionRevocationService.cacheSessionVersion(session.getSessionId(), sessionVersion, session.getExpiresAt());
 
         setTokenHeaders(accessToken, rawRefreshToken, accessTokenValidity, refreshTokenValidity);
     }
@@ -156,7 +181,12 @@ public class OidcTokenService {
         RefreshTokenEntity oldToken = refreshTokenRepository.findByTokenHash(refreshTokenHash)
                 .orElseThrow(() -> BaseException.unauthorized("Invalid refresh token"));
 
-        if (oldToken.getRevokedAt() != null || oldToken.getExpiresAt().isBefore(OffsetDateTime.now())) {
+        if (Boolean.FALSE.equals(oldToken.getIsActive()) || oldToken.getRevokedAt() != null) {
+            // Reuse/replay of an already consumed refresh token is treated as credential theft.
+            handleRefreshTokenReplay(oldToken);
+            throw BaseException.unauthorized("Suspicious token activity detected. Please sign in again.");
+        }
+        if (oldToken.getExpiresAt().isBefore(OffsetDateTime.now())) {
             throw BaseException.unauthorized("Refresh token is revoked or expired");
         }
 
@@ -182,36 +212,133 @@ public class OidcTokenService {
 
         //get session and validate
         SessionEntity session = oldToken.getSession();
+        if (session.getRevokedAt() != null) {
+            throw BaseException.unauthorized("Session has been revoked");
+        }
         if (session.getExpiresAt().isBefore(OffsetDateTime.now())) {
             throw BaseException.unauthorized("Session expired");
         }
 
+        // Evaluate impossible travel during refresh too (not only during login success).
+        impossibleTravelDetectionService.enforce(session);
+
         //check device id matches
-        if (!session.getDeviceId().equals(HashUtil.sha256(deviceId))) {
-            //TODO: Log possible token theft attempt
+        if (deviceId == null || deviceId.isBlank() || !session.getDeviceId().equals(HashUtil.sha256(deviceId))) {
             log.warn("Refresh token device ID mismatch for session ID {}", session.getId());
-            DeviceEntity device = deviceRepository.findByDeviceIdAndActiveTrue(deviceId).orElseThrow(
-                    () -> BaseException.badRequest("Invalid Request")
-            );
-
-            device.setRiskLevel("HIGH");
-            device.setRiskScore(100);
-            deviceRepository.save(device);
-
-            //TODO: Revoke all tokens associated with this session
-            //TODO: Send event to GW to block further requests from this session
-
-            throw BaseException.badRequest("Invalid Request");
+            sessionRevocationService.revokeSessionAndDevice(session, "REFRESH_DEVICE_MISMATCH");
+            saveSecurityEvent("REFRESH_DEVICE_MISMATCH", "HIGH",
+                    "Refresh attempt failed due to device mismatch. Session revoked.", session, null);
+            throw BaseException.unauthorized("Invalid Request");
         }
 
 
         // Issue new tokens
-       issueTokens(oldToken.getSession().getId());
+       issueTokens(oldToken.getSession().getId(), false);
 
         // Revoke the old refresh token
         oldToken.setRevokedAt(OffsetDateTime.now());
         oldToken.setRevokedReason("Replaced by new token");
+        oldToken.setIsActive(false);
         refreshTokenRepository.save(oldToken);
+    }
+
+    private void handleRefreshTokenReplay(RefreshTokenEntity token) {
+        SessionEntity replaySession = token.getSession();
+        if (replaySession == null || replaySession.getIamUser() == null) {
+            return;
+        }
+
+        // Revoke every active session for this principal as containment.
+        int revokedCount = sessionRevocationService.revokeAllActiveSessionsForUser(
+                replaySession.getIamUser(),
+                "REFRESH_TOKEN_REUSE"
+        );
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("revoked_sessions_count", revokedCount);
+        metadata.put("refresh_token_id", token.getId());
+        metadata.put("refresh_token_issued_at", token.getIssuedAt() != null ? token.getIssuedAt().toString() : null);
+        metadata.put("refresh_token_revoked_at", token.getRevokedAt() != null ? token.getRevokedAt().toString() : null);
+        saveSecurityEvent("REFRESH_TOKEN_REUSE", "CRITICAL",
+                "Refresh token replay detected. Revoked all active sessions for principal.",
+                replaySession,
+                metadata);
+    }
+
+    private void saveSecurityEvent(String eventType,
+                                   String severity,
+                                   String description,
+                                   SessionEntity session,
+                                   Map<String, Object> metadata) {
+        SecurityEventEntity event = new SecurityEventEntity();
+        event.setEventType(eventType);
+        event.setSeverity(severity);
+        event.setDescription(description);
+        event.setCreatedAt(OffsetDateTime.now());
+        event.setRelatedSession(session);
+        event.setIamUser(session != null ? session.getIamUser() : null);
+        event.setDeviceId(session != null ? session.getDeviceId() : null);
+
+        RequestContextExtractor.RequestContext context = requestContextExtractor.extractContext();
+        if (context != null) {
+            event.setIpAddress(context.getIpAddress());
+            if (event.getLocationCountry() == null) {
+                event.setLocationCountry(context.getLocationCountry());
+            }
+            if (event.getLocationCity() == null) {
+                event.setLocationCity(context.getLocationCity());
+            }
+        }
+
+        if (metadata != null && !metadata.isEmpty()) {
+            event.setMetadata(metadata);
+        }
+        securityEventRepository.save(event);
+    }
+
+    private long resolveAndMaybeBumpSessionVersion(SessionEntity session, boolean bumpSessionVersion) {
+        // session_version rules:
+        // - First issuance initializes to 1
+        // - Security/context changes bump version
+        // - Refresh keeps version stable
+        Map<String, Object> metadata = session.getMetadata();
+        if (metadata == null) {
+            metadata = new HashMap<>();
+            session.setMetadata(metadata);
+        }
+
+        long current = parseLong(metadata.get(SESSION_VERSION_KEY), 0L);
+        long effective;
+        if (current <= 0) {
+            effective = 1L;
+        } else if (bumpSessionVersion && session.getSessionType() == SessionType.LOGIN_ACTIVE) {
+            effective = current + 1L;
+        } else {
+            effective = current;
+        }
+
+        if (effective != current) {
+            metadata.put(SESSION_VERSION_KEY, effective);
+            sessionRepository.save(session);
+        }
+
+        return effective;
+    }
+
+    private long parseLong(Object value, long fallback) {
+        if (value == null) {
+            return fallback;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        if (value instanceof String str) {
+            try {
+                return Long.parseLong(str);
+            } catch (NumberFormatException ignored) {
+                return fallback;
+            }
+        }
+        return fallback;
     }
 
     private String buildScopeFor(SessionEntity session) {

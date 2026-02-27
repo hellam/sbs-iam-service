@@ -1,8 +1,8 @@
 package ke.shiva.sbs_iam.config;
 
 import ke.shiva.sbs_iam.modules.iam.infra.repository.RevokedTokenRepository;
-import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -14,11 +14,18 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Component
-@RequiredArgsConstructor
 public class JwtRevocationFilter extends OncePerRequestFilter {
 
     private final RevokedTokenRepository revokedTokenRepository;
     private final JwtDecoder jwtDecoder;
+
+    public JwtRevocationFilter(
+            RevokedTokenRepository revokedTokenRepository,
+            @Qualifier("jwtDecoder") JwtDecoder jwtDecoder
+    ) {
+        this.revokedTokenRepository = revokedTokenRepository;
+        this.jwtDecoder = jwtDecoder;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
@@ -39,4 +46,3 @@ public class JwtRevocationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
-
