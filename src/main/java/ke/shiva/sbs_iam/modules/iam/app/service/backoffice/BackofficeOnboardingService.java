@@ -683,24 +683,74 @@ public class BackofficeOnboardingService {
                     if (account == null) {
                         throw BaseException.badRequest("Account '" + num + "' does not belong to client ID '" + clientId + "'.");
                     }
-                    if (account.getAccountName() == null || account.getAccountName().isBlank()) {
+
+                    ke.shiva.client.account.dto.response.BackofficeAccountDetailsResponse details = null;
+                    if (isBlank(account.getAccountName()) || isBlank(account.getCurrency())) {
+                        details = accountBackofficeClient.getAccountDetails(num)
+                                .orElseThrow(() -> BaseException.badRequest("Account details not found for '" + num + "'."));
+
+                        if (details.getClientId() != null && !details.getClientId().isBlank()
+                                && !details.getClientId().equals(clientId)) {
+                            throw BaseException.badRequest("Account '" + num + "' does not belong to client ID '" + clientId + "'.");
+                        }
+                    }
+
+                    String accountName = firstNonBlank(
+                            details != null ? details.getAccountName() : null,
+                            account.getAccountName()
+                    );
+                    String currency = firstNonBlank(
+                            details != null ? details.getCurrency() : null,
+                            account.getCurrency()
+                    );
+
+                    if (isBlank(accountName)) {
                         throw BaseException.badRequest("Account name missing for '" + num + "'.");
                     }
-                    //TODO check currency if it will be added, otherwise USD
-//                    if (account.getCurrency() == null || account.getCurrency().isBlank()) {
-//                        throw BaseException.badRequest("Account currency missing for '" + num + "'.");
-//                    }
+                    if (isBlank(currency)) {
+                        throw BaseException.badRequest("Account currency missing for '" + num + "'.");
+                    }
+
+                    String branchId = firstNonBlank(
+                            details != null ? details.getBranchId() : null,
+                            account.getBranchId()
+                    );
+                    String branchName = firstNonBlank(
+                            details != null ? details.getBranchName() : null,
+                            account.getBranchName()
+                    );
+                    String productId = firstNonBlank(
+                            details != null ? details.getProductId() : null,
+                            account.getProductId()
+                    );
+                    String productName = firstNonBlank(
+                            details != null ? details.getProductName() : null,
+                            account.getProductName()
+                    );
+                    String iban = firstNonBlank(
+                            details != null ? details.getIban() : null,
+                            account.getIban()
+                    );
+                    String mobile = firstNonBlank(
+                            details != null ? details.getMobile() : null,
+                            account.getMobile()
+                    );
+                    String email = firstNonBlank(
+                            details != null ? details.getEmail() : null,
+                            account.getEmail()
+                    );
+
                     return BackofficeAccountSeedItem.builder()
                             .accountNumber(account.getAccountNumber())
-                            .accountName(account.getAccountName())
-                            .currency(account.getCurrency())
-                            .iban(account.getIban())
-                            .branchId(account.getBranchId())
-                            .branchName(account.getBranchName())
-                            .phone(account.getMobile())
-                            .email(account.getEmail())
-                            .productId(account.getProductId())
-                            .productName(account.getProductName())
+                            .accountName(accountName)
+                            .currency(currency)
+                            .iban(iban)
+                            .branchId(branchId)
+                            .branchName(branchName)
+                            .phone(mobile)
+                            .email(email)
+                            .productId(productId)
+                            .productName(productName)
                             .build();
                 })
                 .toList();
@@ -770,6 +820,22 @@ public class BackofficeOnboardingService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (!isBlank(value)) {
+                return value.trim();
+            }
+        }
+        return null;
     }
 
     private String buildFullName(String firstName, String middleName, String lastName) {
