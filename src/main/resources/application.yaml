@@ -178,7 +178,7 @@ shiva:
   #Service Configuration
   services:
     account:
-      url: http://localhost:9001/api/v1/oauth
+      url: http://localhost:9002/api/v1/accounts
   # Notification Client Configuration
   notification:
     client:
