@@ -57,4 +57,11 @@ public class ProfileController {
     ) {
         return ResponseBuilder.success("Profile switched successfully", profileService.switchProfile(req, jwt));
     }
+
+    @Operation(summary = "Logout Active Session")
+    @PostMapping("/session/logout")
+    public ResponseEntity<ApiResponse<Void>> logoutSession(@AuthenticationPrincipal Jwt jwt) {
+        profileService.logoutSession(jwt);
+        return ResponseBuilder.success("Logged out successfully");
+    }
 }

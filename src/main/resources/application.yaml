@@ -152,6 +152,9 @@ shiva:
       redis-prefix: "iam:revoked-session:"  # Shared Redis key prefix consumed by gateway
     session-version:
       redis-prefix: "iam:session-version:"  # Shared Redis key prefix for current per-session version
+    session:
+      single-active-per-user:
+        enabled: true                      # If true, new LOGIN_ACTIVE issuance revokes other active login sessions
 
   corebanking:
     enabled: true

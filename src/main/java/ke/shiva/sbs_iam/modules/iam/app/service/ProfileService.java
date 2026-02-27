@@ -36,6 +36,7 @@ public class ProfileService {
     private final EncryptionUtil encryptionUtil;
     private final OrganizationUserRepository organizationUserRepository;
     private final SessionRepository sessionRepository;
+    private final SessionRevocationService sessionRevocationService;
 
     public ProfileSelectionResponse listProfiles(UUID flowId){
 
@@ -105,6 +106,12 @@ public class ProfileService {
         return buildUserProfileResponse(session, identifier);
     }
 
+    @Transactional
+    public void logoutSession(Jwt jwt) {
+        SessionEntity session = resolveSession(jwt);
+        sessionRevocationService.revokeSessionOnly(session, "USER_LOGOUT");
+    }
+
     private static void reviewRequirements(LoginRequirements reqs) {
         if (!reqs.isProfileSelectionRequired()) {
             log.warn("Profile selection not required for this channel");
@@ -137,6 +144,12 @@ public class ProfileService {
     }
 
     private SessionEntity resolveActiveSession(Jwt jwt) {
+        SessionEntity session = resolveSession(jwt);
+        validateActiveSessionForSwitch(session);
+        return session;
+    }
+
+    private SessionEntity resolveSession(Jwt jwt) {
         if (jwt == null) {
             throw BaseException.badRequest("Authenticated principal is required.");
         }
@@ -150,8 +163,6 @@ public class ProfileService {
         if (session == null) {
             throw BaseException.invalidFlow();
         }
-
-        validateActiveSessionForSwitch(session);
         return session;
     }
 

@@ -5,6 +5,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.RefreshTokenEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.security.DeviceEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.SessionType;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.DeviceRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.RefreshTokenRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionEventRepository;
@@ -39,6 +40,16 @@ public class SessionRevocationService {
 
     @Transactional
     public void revokeSessionAndDevice(SessionEntity session, String reason) {
+        revokeSession(session, reason, true);
+    }
+
+    @Transactional
+    public void revokeSessionOnly(SessionEntity session, String reason) {
+        revokeSession(session, reason, false);
+    }
+
+    @Transactional
+    public void revokeSession(SessionEntity session, String reason, boolean deactivateDevice) {
         if (session == null) {
             return;
         }
@@ -69,7 +80,7 @@ public class SessionRevocationService {
         // Publish revocation marker so gateway can block requests immediately.
         cacheRevokedSession(session, reason, now);
 
-        if (session.getDeviceId() != null && !session.getDeviceId().isBlank()) {
+        if (deactivateDevice && session.getDeviceId() != null && !session.getDeviceId().isBlank()) {
             deviceRepository.findByDeviceIdAndActiveTrue(session.getDeviceId()).ifPresent(device -> {
                 deactivateDevice(device, reason);
             });
@@ -80,7 +91,11 @@ public class SessionRevocationService {
         event.setEventType("SESSION_REVOKED");
         event.setEventAt(now);
         event.setDeviceId(session.getDeviceId());
-        event.setMetadata(java.util.Map.of("reason", reason, "refresh_tokens_revoked", activeTokens.size()));
+        event.setMetadata(java.util.Map.of(
+                "reason", reason,
+                "refresh_tokens_revoked", activeTokens.size(),
+                "device_deactivated", deactivateDevice
+        ));
         sessionEventRepository.save(event);
 
         log.warn("Session revoked. sessionId={}, reason={}, revokedRefreshTokens={}",
@@ -96,13 +111,43 @@ public class SessionRevocationService {
         List<SessionEntity> activeSessions = sessionRepository.findByIamUserAndRevokedAtIsNull(iamUser);
         int count = 0;
         for (SessionEntity session : activeSessions) {
-            revokeSessionAndDevice(session, reason);
+            revokeSession(session, reason, true);
             count++;
         }
 
         if (count > 0) {
             log.warn("Revoked all active sessions for userId={} count={} reason={}",
                     iamUser.getId(), count, reason);
+        }
+        return count;
+    }
+
+    @Transactional
+    public int revokeOtherActiveLoginSessionsForUser(IamUserEntity iamUser, String keepSessionId, String reason) {
+        if (iamUser == null) {
+            return 0;
+        }
+
+        List<SessionEntity> activeSessions = sessionRepository.findByIamUserAndSessionTypeAndRevokedAtIsNull(
+                iamUser, SessionType.LOGIN_ACTIVE
+        );
+        int count = 0;
+        OffsetDateTime now = OffsetDateTime.now();
+        for (SessionEntity session : activeSessions) {
+            if (session.getSessionId() != null && session.getSessionId().equals(keepSessionId)) {
+                continue;
+            }
+            if (session.getExpiresAt() != null && session.getExpiresAt().isBefore(now)) {
+                continue;
+            }
+            // Concurrent-session policy revokes sessions only; it should not mark devices as risky.
+            revokeSessionOnly(session, reason);
+            count++;
+        }
+
+        if (count > 0) {
+            log.info("Revoked {} concurrent active login sessions for userId={} reason={}",
+                    count, iamUser.getId(), reason);
         }
         return count;
     }

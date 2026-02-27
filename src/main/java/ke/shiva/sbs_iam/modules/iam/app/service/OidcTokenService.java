@@ -67,6 +67,9 @@ public class OidcTokenService {
     @Value("${shiva.security.jwt.expected-audience:gateway-service}")
     private String expectedAudience;
 
+    @Value("${shiva.security.session.single-active-per-user.enabled:true}")
+    private boolean singleActiveSessionPerUserEnabled;
+
     @Transactional
     public void issueTokens(Long sessionId) {
         issueTokens(sessionId, true);
@@ -90,6 +93,14 @@ public class OidcTokenService {
             case INTERNET_BANKING, MOBILE_BANKING -> category = UserCategory.CUSTOMER;
             case BACKOFFICE -> category = UserCategory.EMPLOYEE;
             default -> throw new IllegalArgumentException("Unsupported channel: " + channel);
+        }
+
+        // Optional strict mode: keep only one active LOGIN_ACTIVE session per principal.
+        // We run this on fresh token issuance (not refresh) and keep current session.
+        if (singleActiveSessionPerUserEnabled && bumpSessionVersion && session.getSessionType() == SessionType.LOGIN_ACTIVE) {
+            sessionRevocationService.revokeOtherActiveLoginSessionsForUser(
+                    user, session.getSessionId(), "CONCURRENT_LOGIN"
+            );
         }
 
         OffsetDateTime now = OffsetDateTime.now();
