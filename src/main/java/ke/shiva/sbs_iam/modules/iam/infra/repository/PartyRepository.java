@@ -6,5 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PartyRepository extends JpaRepository<PartyEntity, Long> {
+    boolean existsByCoreCustomerId(String coreCustomerId);
 }
 
