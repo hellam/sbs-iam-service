@@ -4,7 +4,10 @@ import ke.shiva.client.account.AccountBackofficeClient;
 import ke.shiva.client.account.dto.request.BackofficeAccountSeedItem;
 import ke.shiva.client.account.dto.request.BackofficeAccountSeedRequest;
 import ke.shiva.client.account.dto.response.BackofficeCustomerDetailsResponse;
+import ke.shiva.client.account.dto.response.GeneralClientAccountsResponse;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.*;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerAccountResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerLookupResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerOnboardingResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeEmployeeOnboardingResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationOnboardingResponse;
@@ -42,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -75,36 +79,88 @@ public class BackofficeOnboardingService {
         if (customerProfileRepository.findByCoreCustomerId(request.getClientId()).isPresent()) {
             throw BaseException.badRequest("Client ID '" + request.getClientId() + "' is already registered.");
         }
+    }
 
-        if (personRepository.existsByNationalId(request.getNationalId())) {
-            throw BaseException.badRequest("National ID '" + request.getNationalId() + "' is already registered.");
+    public BackofficeCustomerLookupResponse lookupCustomer(String clientId) {
+        if (clientId == null || clientId.isBlank()) {
+            throw BaseException.badRequest("Client ID is required.");
         }
 
-        validatePhoneUnique(request.getMobile());
-        validateEmailUnique(request.getEmail());
+        validateCustomer(BackofficeCustomerValidationRequest.builder()
+                .clientId(clientId)
+                .build());
+
+        BackofficeCustomerDetailsResponse response = ensureIndividualClientExists(clientId);
+        return toLookupResponse(response);
+    }
+
+    public List<BackofficeCustomerAccountResponse> lookupCustomerAccounts(
+            String clientId,
+            String query
+    ) {
+        ensureIndividualClientExists(clientId);
+
+        List<GeneralClientAccountsResponse> accounts =
+                accountBackofficeClient.getClientAccounts(clientId).orElse(List.of());
+
+        return accounts.stream()
+                .filter(account -> account.getAccountNumber() != null && !account.getAccountNumber().isBlank())
+                .filter(account -> query == null || query.isBlank()
+                        || account.getAccountNumber().toLowerCase().contains(query.toLowerCase()))
+                .map(account -> new BackofficeCustomerAccountResponse(account.getAccountNumber()))
+                .toList();
     }
 
     @Transactional
     public BackofficeCustomerOnboardingResponse createCustomer(BackofficeCustomerOnboardingRequest request) {
         validateCustomer(BackofficeCustomerValidationRequest.builder()
                 .clientId(request.getClientId())
-                .nationalId(request.getNationalId())
-                .mobile(request.getMobile())
-                .email(request.getEmail())
                 .build());
 
-        ensureClientExists(request.getClientId());
+        BackofficeCustomerDetailsResponse coreDetails = ensureIndividualClientExists(request.getClientId());
+
+        String[] names = resolvePersonNames(coreDetails);
+        String firstName = names[0];
+        String middleName = names[1];
+        String lastName = names[2];
+
+        String nationalId = trimToNull(coreDetails.getNationalId());
+        if (nationalId == null) {
+            throw BaseException.badRequest("National ID is required from core banking.");
+        }
+
+        String mobile = trimToNull(coreDetails.getMobile());
+        if (mobile == null) {
+            throw BaseException.badRequest("Mobile number is required from core banking.");
+        }
+
+        String email = trimToNull(coreDetails.getEmail());
+        if (email == null) {
+            throw BaseException.badRequest("Email is required from core banking.");
+        }
+
+        validateCustomerUniqueness(nationalId, mobile, email);
 
         PartyEntity party = createParty(PartyType.PERSON, request.getClientId());
-        PersonEntity person = createPerson(party, request.getFirstName(), request.getMiddleName(), request.getLastName(),
-                request.getNationalId(), request.getCountry(), request.getCity(), request.getAddress(), null, null);
+        createPerson(
+                party,
+                firstName,
+                middleName,
+                lastName,
+                nationalId,
+                resolveCountryInput(coreDetails),
+                coreDetails.getCity(),
+                coreDetails.getAddress1(),
+                null,
+                null
+        );
         IamUserEntity iamUser = createIamUser(party);
 
-        UserContact phone = createUserContact(iamUser, ContactType.PHONE, request.getMobile());
-        UserContact email = createUserContact(iamUser, ContactType.EMAIL, request.getEmail());
+        UserContact phone = createUserContact(iamUser, ContactType.PHONE, mobile);
+        UserContact emailContact = createUserContact(iamUser, ContactType.EMAIL, email);
 
         linkProfileContact(iamUser, phone, LoginProfiles.CUSTOMER, ContactType.PHONE);
-        linkProfileContact(iamUser, email, LoginProfiles.CUSTOMER, ContactType.EMAIL);
+        linkProfileContact(iamUser, emailContact, LoginProfiles.CUSTOMER, ContactType.EMAIL);
 
         String username = generateUniqueUsername(Channel.INTERNET_BANKING);
         createLoginIdentifier(iamUser, username, Channel.INTERNET_BANKING);
@@ -139,7 +195,7 @@ public class BackofficeOnboardingService {
         auth.setMfaEnabled(false);
         customerAuthRepository.save(auth);
 
-        seedAccountsIfPresent(request.getClientId(), request.getAccounts(), "backoffice");
+        seedSelectedAccountsIfPresent(request.getClientId(), request.getAccounts(), "backoffice");
 
         return BackofficeCustomerOnboardingResponse.builder()
                 .iamUserId(iamUser.getId())
@@ -542,12 +598,178 @@ public class BackofficeOnboardingService {
         }
     }
 
-    private void ensureClientExists(String clientId) {
+    private void validateCustomerUniqueness(String nationalId, String mobile, String email) {
+        if (nationalId != null && !nationalId.isBlank()) {
+            if (personRepository.existsByNationalId(nationalId)) {
+                throw BaseException.badRequest("National ID '" + nationalId + "' is already registered.");
+            }
+        }
+        validatePhoneUnique(mobile);
+        validateEmailUnique(email);
+    }
+
+    private BackofficeCustomerDetailsResponse ensureClientExists(String clientId) {
         BackofficeCustomerDetailsResponse response = accountBackofficeClient.getClientDetails(clientId)
                 .orElseThrow(() -> BaseException.notFound("Client ID '" + clientId + "' not found in core banking."));
         if (response.getClientId() == null || response.getClientId().isBlank()) {
             throw BaseException.notFound("Client ID '" + clientId + "' not found in core banking.");
         }
+        return response;
+    }
+
+    private BackofficeCustomerDetailsResponse ensureIndividualClientExists(String clientId) {
+        BackofficeCustomerDetailsResponse response = ensureClientExists(clientId);
+        if (response.getClientTypeId() == null || !"I".equalsIgnoreCase(response.getClientTypeId())) {
+            throw BaseException.badRequest("Only individual customers (ClientTypeID=I) are allowed.");
+        }
+        return response;
+    }
+
+    private BackofficeCustomerLookupResponse toLookupResponse(
+            BackofficeCustomerDetailsResponse response
+    ) {
+        String fullName = response.getFullName();
+        if (fullName == null || fullName.isBlank()) {
+            fullName = buildFullName(response.getFirstName(), response.getMiddleName(), response.getLastName());
+        }
+
+        return BackofficeCustomerLookupResponse.builder()
+                .clientId(response.getClientId())
+                .fullName(fullName)
+                .mobile(response.getMobile())
+                .email(response.getEmail())
+                .country(response.getCountryName())
+                .city(response.getCity())
+                .openedDate(response.getOpenedDate())
+                .address(response.getAddress1())
+                .build();
+    }
+
+    private void seedSelectedAccountsIfPresent(String clientId, List<String> accountNumbers, String createdBy) {
+        if (accountNumbers == null || accountNumbers.isEmpty()) {
+            return;
+        }
+
+        List<String> distinctNumbers = accountNumbers.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .distinct()
+                .toList();
+
+        if (distinctNumbers.isEmpty()) {
+            return;
+        }
+
+        List<GeneralClientAccountsResponse> coreAccounts =
+                accountBackofficeClient.getClientAccounts(clientId).orElse(List.of());
+
+        if (coreAccounts.isEmpty()) {
+            throw BaseException.badRequest("No accounts found for client ID '" + clientId + "'.");
+        }
+
+        Map<String, GeneralClientAccountsResponse> byNumber = coreAccounts.stream()
+                .filter(a -> a.getAccountNumber() != null && !a.getAccountNumber().isBlank())
+                .collect(java.util.stream.Collectors.toMap(
+                        a -> a.getAccountNumber().trim(),
+                        a -> a,
+                        (a, b) -> a,
+                        java.util.LinkedHashMap::new
+                ));
+
+        List<BackofficeAccountSeedItem> seedItems = distinctNumbers.stream()
+                .map(num -> {
+                    GeneralClientAccountsResponse account = byNumber.get(num);
+                    if (account == null) {
+                        throw BaseException.badRequest("Account '" + num + "' does not belong to client ID '" + clientId + "'.");
+                    }
+                    if (account.getAccountName() == null || account.getAccountName().isBlank()) {
+                        throw BaseException.badRequest("Account name missing for '" + num + "'.");
+                    }
+                    //TODO check currency if it will be added, otherwise USD
+//                    if (account.getCurrency() == null || account.getCurrency().isBlank()) {
+//                        throw BaseException.badRequest("Account currency missing for '" + num + "'.");
+//                    }
+                    return BackofficeAccountSeedItem.builder()
+                            .accountNumber(account.getAccountNumber())
+                            .accountName(account.getAccountName())
+                            .currency(account.getCurrency())
+                            .iban(account.getIban())
+                            .branchId(account.getBranchId())
+                            .branchName(account.getBranchName())
+                            .phone(account.getMobile())
+                            .email(account.getEmail())
+                            .productId(account.getProductId())
+                            .productName(account.getProductName())
+                            .build();
+                })
+                .toList();
+
+        if (!seedItems.isEmpty()) {
+            seedItems.get(0).setPrimary(true);
+        }
+
+        BackofficeAccountSeedRequest seedRequest = BackofficeAccountSeedRequest.builder()
+                .clientId(Long.parseLong(clientId))
+                .accounts(seedItems)
+                .createdBy(createdBy)
+                .build();
+
+        accountBackofficeClient.seedClientAccounts(seedRequest);
+    }
+
+    private String resolveCountryInput(BackofficeCustomerDetailsResponse response) {
+        if (response == null) {
+            return null;
+        }
+        String countryId = trimToNull(response.getCountryId());
+        if (countryId != null) {
+            return countryId;
+        }
+        return trimToNull(response.getCountryName());
+    }
+
+    private String[] resolvePersonNames(BackofficeCustomerDetailsResponse response) {
+        String first = trimToNull(response.getFirstName());
+        String middle = trimToNull(response.getMiddleName());
+        String last = trimToNull(response.getLastName());
+
+        if (first != null && last != null) {
+            return new String[]{first, middle, last};
+        }
+
+        String fullName = trimToNull(response.getFullName());
+        if (fullName == null) {
+            throw BaseException.badRequest("Full name is required from core banking.");
+        }
+
+        String[] parts = fullName.split("\\s+");
+        if (parts.length == 0) {
+            throw BaseException.badRequest("Full name is required from core banking.");
+        }
+
+        first = parts[0];
+        if (parts.length == 1) {
+            last = parts[0];
+            middle = null;
+        } else {
+            last = parts[parts.length - 1];
+            if (parts.length > 2) {
+                middle = String.join(" ", java.util.Arrays.copyOfRange(parts, 1, parts.length - 1));
+            } else {
+                middle = null;
+            }
+        }
+
+        return new String[]{first, middle, last};
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private String buildFullName(String firstName, String middleName, String lastName) {

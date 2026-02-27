@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.*;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerAccountResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerOnboardingResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerLookupResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeEmployeeOnboardingResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationOnboardingResponse;
 import ke.shiva.sbs_iam.modules.iam.app.service.backoffice.BackofficeOnboardingService;
@@ -14,20 +16,33 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/backoffice/onboarding")
+@RequestMapping("/onboarding")
 @RequiredArgsConstructor
 @Tag(name = "Backoffice Onboarding", description = "Customer, organization and employee onboarding")
 public class BackofficeOnboardingController {
 
     private final BackofficeOnboardingService onboardingService;
 
-    @Operation(summary = "Validate Customer Onboarding")
-    @PostMapping("/customers/validate")
-    public ResponseEntity<ApiResponse<Void>> validateCustomer(
+    @Operation(summary = "Lookup Customer Details (Core + IAM validation)")
+    @PostMapping("/customers/lookup")
+    public ResponseEntity<ApiResponse<BackofficeCustomerLookupResponse>> lookupCustomer(
             @RequestBody @Valid BackofficeCustomerValidationRequest request) {
-        onboardingService.validateCustomer(request);
-        return ResponseBuilder.success("Customer validation successful");
+        return ResponseBuilder.success("Customer lookup successful",
+                onboardingService.lookupCustomer(request.getClientId()));
+    }
+
+    @Operation(summary = "Lookup Customer Accounts (Individual clients only)")
+    @GetMapping("/customers/{clientId}/accounts")
+    public ResponseEntity<ApiResponse<List<BackofficeCustomerAccountResponse>>> lookupCustomerAccounts(
+            @PathVariable String clientId,
+            @RequestParam(name = "q", required = false) String query
+    ) {
+        List<BackofficeCustomerAccountResponse> response =
+                onboardingService.lookupCustomerAccounts(clientId, query);
+        return ResponseBuilder.success("Customer accounts retrieved", response);
     }
 
     @Operation(summary = "Create Customer Onboarding")

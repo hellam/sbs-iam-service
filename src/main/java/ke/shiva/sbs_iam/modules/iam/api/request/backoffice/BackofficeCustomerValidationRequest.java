@@ -13,12 +13,4 @@ import lombok.NoArgsConstructor;
 public class BackofficeCustomerValidationRequest {
     @NotBlank(message = "Client ID is required")
     private String clientId;
-
-    @NotBlank(message = "National ID is required")
-    private String nationalId;
-
-    @NotBlank(message = "Mobile number is required")
-    private String mobile;
-
-    private String email;
 }
