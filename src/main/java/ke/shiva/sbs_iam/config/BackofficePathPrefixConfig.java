@@ -12,6 +12,7 @@ public class BackofficePathPrefixConfig implements WebMvcConfigurer {
 
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
+
         configurer.addPathPrefix(
                 BACKOFFICE_PREFIX,
                 handlerType -> handlerType != null
