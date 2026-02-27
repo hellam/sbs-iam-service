@@ -5,6 +5,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.LoginHistoryEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.LoginHistoryRepository;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class LoginHistoryService {
 
     private final LoginHistoryRepository loginHistoryRepository;
     private final RequestContextExtractor requestContextExtractor;
+    private final ImpossibleTravelDetectionService impossibleTravelDetectionService;
 
     /**
      * Log a successful identifier verification
@@ -127,12 +129,17 @@ public class LoginHistoryService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logLoginSuccess(IamUserEntity user, String identifier, SessionEntity session) {
         try {
+            // Enforce high-risk travel checks before marking login as successful.
+            impossibleTravelDetectionService.enforce(session);
+
             LoginHistoryEntity history = createBaseHistory(user, identifier, session);
             history.setSuccess(true);
             history.setFailureReason(null);
             loginHistoryRepository.save(history);
             log.info("Logged successful login for user: {} from IP: {}",
                 user.getId(), history.getIpAddress());
+        } catch (BaseException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Failed to log login success: {}", e.getMessage(), e);
         }
@@ -182,4 +189,3 @@ public class LoginHistoryService {
         return history;
     }
 }
-

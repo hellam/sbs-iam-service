@@ -10,7 +10,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.oauth2.jwt.*;
+import org.springframework.context.annotation.Primary;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtClaimValidator;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
@@ -18,6 +27,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.List;
 
 @Slf4j
 @Configuration
@@ -29,6 +39,20 @@ public class JwtConfig {
     @Value("${shiva.security.jwt.private-key}")
     private String jwtPrivateKeyBase64;
 
+    @Value("${shiva.security.jwt.expected-issuer:https://sbs.iam}")
+    private String iamExpectedIssuer;
+
+    @Value("${shiva.security.jwt.expected-audience:gateway-service}")
+    private String iamExpectedAudience;
+
+    @Value("${shiva.security.downstream-jwt.public-key}")
+    private String downstreamJwtPublicKeyBase64;
+
+    @Value("${shiva.security.downstream-jwt.expected-issuer:https://gateway.service}")
+    private String downstreamExpectedIssuer;
+
+    @Value("${shiva.security.downstream-jwt.expected-audience:iam-service}")
+    private String downstreamExpectedAudience;
 
     @Bean
     public RSAPublicKey rsaPublicKey() {
@@ -120,10 +144,51 @@ public class JwtConfig {
     }
 
     @Bean
+    @Primary
     public JwtDecoder jwtDecoder(RSAPublicKey publicKey) {
         log.info("Initializing JWT Decoder with RSA public key");
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(publicKey).build();
+        decoder.setJwtValidator(buildValidator(iamExpectedIssuer, iamExpectedAudience));
         log.info("✅ JWT Decoder initialized successfully");
         return decoder;
+    }
+
+    @Bean("downstreamJwtDecoder")
+    public JwtDecoder downstreamJwtDecoder() {
+        log.info("Initializing downstream JWT Decoder with gateway RSA public key");
+        RSAPublicKey publicKey = parsePublicKey(downstreamJwtPublicKeyBase64, "shiva.security.downstream-jwt.public-key");
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(publicKey).build();
+        decoder.setJwtValidator(buildValidator(downstreamExpectedIssuer, downstreamExpectedAudience));
+        log.info("✅ Downstream JWT Decoder initialized successfully");
+        return decoder;
+    }
+
+    private RSAPublicKey parsePublicKey(String keyValue, String propertyName) {
+        try {
+            if (keyValue == null || keyValue.trim().isEmpty()) {
+                throw new IllegalStateException("JWT public key is not configured. Set " + propertyName);
+            }
+
+            String clean = keyValue
+                    .replace("-----BEGIN PUBLIC KEY-----", "")
+                    .replace("-----END PUBLIC KEY-----", "")
+                    .replaceAll("\\s", "");
+
+            byte[] decoded = Base64.getDecoder().decode(clean);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
+            return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(spec);
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("❌ Failed to parse RSA public key from {}: {}", propertyName, e.getMessage(), e);
+            throw new IllegalStateException("Cannot start application: invalid RSA public key for " + propertyName, e);
+        }
+    }
+
+    private OAuth2TokenValidator<Jwt> buildValidator(String expectedIssuer, String expectedAudience) {
+        OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(expectedIssuer);
+        OAuth2TokenValidator<Jwt> withAudience = new JwtClaimValidator<List<String>>("aud",
+                aud -> aud != null && aud.contains(expectedAudience));
+        return new DelegatingOAuth2TokenValidator<>(withIssuer, withAudience);
     }
 }

@@ -14,6 +14,8 @@ import ke.shiva.shivacorestarter.dto.ApiResponse;
 import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -32,6 +34,12 @@ public class ProfileController {
         return ResponseBuilder.success(profileService.listProfiles(flowId));
     }
 
+    @Operation(summary = "List Profiles for Active Session")
+    @GetMapping("/session/profiles")
+    public ResponseEntity<ApiResponse<ProfileSelectionResponse>> listSessionProfiles(@AuthenticationPrincipal Jwt jwt) {
+        return ResponseBuilder.success(profileService.listSessionProfiles(jwt));
+    }
+
     @Operation(summary = "8. Select Profile")
     @PostMapping("/profiles/select")
     @RequiresStage(LoginStage.MFA_OK)
@@ -40,5 +48,13 @@ public class ProfileController {
     ) {
         return ResponseBuilder.success("Profile selected successfully", profileService.selectProfile(req, flowId));
     }
-}
 
+    @Operation(summary = "Switch Active Profile")
+    @PostMapping("/session/profiles/switch")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> switchProfile(
+            @Valid @RequestBody ProfileSelectRequest req,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ResponseBuilder.success("Profile switched successfully", profileService.switchProfile(req, jwt));
+    }
+}

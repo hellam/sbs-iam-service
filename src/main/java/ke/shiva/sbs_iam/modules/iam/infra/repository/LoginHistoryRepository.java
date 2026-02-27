@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface LoginHistoryRepository extends JpaRepository<LoginHistoryEntity, Long> {
@@ -15,7 +16,10 @@ public interface LoginHistoryRepository extends JpaRepository<LoginHistoryEntity
 
     List<LoginHistoryEntity> findByIamUserAndSuccessTrueOrderByCreatedAtDesc(IamUserEntity iamUser);
 
+    Optional<LoginHistoryEntity> findFirstByIamUserAndSuccessTrueOrderByCreatedAtDesc(IamUserEntity iamUser);
+
     List<LoginHistoryEntity> findByIamUserAndCreatedAtAfterOrderByCreatedAtDesc(
             IamUserEntity iamUser, OffsetDateTime after);
-}
 
+    long deleteByCreatedAtBefore(OffsetDateTime cutoff);
+}
