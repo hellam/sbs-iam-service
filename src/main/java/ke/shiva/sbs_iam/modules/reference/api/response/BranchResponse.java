@@ -1,5 +1,6 @@
 package ke.shiva.sbs_iam.modules.reference.api.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import ke.shiva.sbs_iam.modules.reference.domain.enums.BranchTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class BranchResponse {
 
     private Long id;

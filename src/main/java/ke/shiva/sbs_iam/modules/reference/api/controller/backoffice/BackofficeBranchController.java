@@ -1,4 +1,4 @@
-package ke.shiva.sbs_iam.modules.reference.api.controller;
+package ke.shiva.sbs_iam.modules.reference.api.controller.backoffice;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,8 +25,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "Branch Management")
-@RequestMapping("/api/branches")
-public class BranchController {
+@RequestMapping("/branches")
+public class BackofficeBranchController {
 
     private final BranchService branchService;
     private final CountryService countryService;

@@ -33,7 +33,7 @@ import java.util.Map;
  */
 @Slf4j
 @RestController
-@RequestMapping("/internal/users")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 public class InternalUserController {
 

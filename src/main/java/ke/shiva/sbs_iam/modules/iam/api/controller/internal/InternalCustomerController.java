@@ -32,7 +32,7 @@ import java.util.Optional;
  */
 @Slf4j
 @RestController
-@RequestMapping("/internal/customer")
+@RequestMapping("/customer")
 @RequiredArgsConstructor
 public class InternalCustomerController {
 

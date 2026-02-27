@@ -7,7 +7,7 @@ import ke.shiva.sbs_iam.modules.reference.domain.entity.CountryEntity;
 
 public class BranchMapper {
 
-    public static BranchResponse toResponse(BranchEntity entity) {
+    public static BranchResponse toInternalResponse(BranchEntity entity) {
         if (entity == null) {
             return null;
         }
@@ -24,6 +24,18 @@ public class BranchMapper {
                 .latitude(entity.getLatitude())
                 .parentBranchId(entity.getParentBranch() != null ? entity.getParentBranch().getId() : null)
                 .parentBranchName(entity.getParentBranch() != null ? entity.getParentBranch().getBranchName() : null)
+                .build();
+    }
+
+
+    public static BranchResponse toPublicResponse(BranchEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        return BranchResponse.builder()
+                .branchCode(entity.getBranchCode())
+                .branchName(entity.getBranchName())
                 .build();
     }
 

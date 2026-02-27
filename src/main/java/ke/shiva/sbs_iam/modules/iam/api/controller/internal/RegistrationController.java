@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("internal/register")
+@RequestMapping("/register")
 @RequiredArgsConstructor
 @Tag(name = "IAM Registration", description = "Customer registration for internet and mobile banking channels")
 public class RegistrationController {

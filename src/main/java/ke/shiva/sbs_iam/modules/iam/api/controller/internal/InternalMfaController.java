@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/internal/mfa")
+@RequestMapping("/mfa")
 @RequiredArgsConstructor
 @Tag(name = "Internal MFA Operations", description = "Endpoints for internal MFA operations Not exposed to external clients.")
 public class InternalMfaController {
