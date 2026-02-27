@@ -59,8 +59,8 @@ spring:
     liquibase-schema: public
     default-schema: iam_service
     change-log: classpath:db/changelog/db.changelog-master.yaml
-    database-change-log-lock-table: iam_service_database_change_log_lock
-    database-change-log-table: iam_service_database_change_log
+#    database-change-log-lock-table: iam_service_database_change_log_lock
+#    database-change-log-table: iam_service_database_change_log
 
 encryption:
   key: ${APP_KEY}
