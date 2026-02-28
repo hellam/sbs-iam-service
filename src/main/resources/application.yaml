@@ -155,6 +155,8 @@ shiva:
     session:
       single-active-per-user:
         enabled: true                      # If true, new LOGIN_ACTIVE issuance revokes other active login sessions
+    refresh:
+      replay-grace-seconds: ${SHIVA_SECURITY_REFRESH_REPLAY_GRACE_SECONDS:5}  # short grace for same-device concurrent refresh
 
   corebanking:
     enabled: true
