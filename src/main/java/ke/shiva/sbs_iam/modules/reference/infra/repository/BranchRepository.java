@@ -9,5 +9,6 @@ import java.util.Optional;
 @Repository
 public interface BranchRepository extends JpaRepository<BranchEntity, Long> {
     Optional<BranchEntity> findByBranchCode(String branchCode);
-}
 
+    Optional<BranchEntity> findFirstByOrderByIdAsc();
+}

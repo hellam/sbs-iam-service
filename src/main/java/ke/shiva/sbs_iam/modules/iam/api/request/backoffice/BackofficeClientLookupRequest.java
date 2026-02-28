@@ -10,9 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BackofficeOrganizationValidationRequest {
+public class BackofficeClientLookupRequest {
     @NotBlank(message = "Client ID is required")
     private String clientId;
-
-    private String registrationNo;
 }

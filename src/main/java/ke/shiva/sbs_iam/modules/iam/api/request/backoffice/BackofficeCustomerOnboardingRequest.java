@@ -16,5 +16,5 @@ public class BackofficeCustomerOnboardingRequest {
     @NotBlank(message = "Client ID is required")
     private String clientId;
 
-    private List<@NotBlank(message = "Account number is required") String> accounts;
+    private List<String> accounts;
 }

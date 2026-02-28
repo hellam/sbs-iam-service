@@ -1,6 +1,7 @@
 package ke.shiva.sbs_iam.modules.iam.infra.repository;
 
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.LoginIdentifierEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -20,6 +21,12 @@ public interface LoginIdentifierRepository extends JpaRepository<LoginIdentifier
             Channel channel,
             String identifierType,
             String identifier
+    );
+
+    Optional<LoginIdentifierEntity> findByIamUserAndChannelAndIdentifierType(
+            IamUserEntity iamUser,
+            Channel channel,
+            String identifierType
     );
 
     //find by identifier and channel, regardless of status

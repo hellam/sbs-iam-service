@@ -5,7 +5,7 @@ import ke.shiva.client.account.dto.request.BackofficeAccountSeedItem;
 import ke.shiva.client.account.dto.request.BackofficeAccountSeedRequest;
 import ke.shiva.client.account.dto.response.BackofficeCustomerDetailsResponse;
 import ke.shiva.client.account.dto.response.GeneralClientAccountsResponse;
-import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.*;
+import ke.shiva.sbs_iam.modules.iam.app.service.backoffice.dto.BackofficeOnboardingCommand;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerAccountResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerLookupResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerOnboardingResponse;
@@ -20,7 +20,6 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.*;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.EmployeeProfileRoleEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.EmployeeProfileRoleIdEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.EmployeeRoleEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.OrgRoleEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.ContactType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginProfiles;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.employee.EmploymentStatus;
@@ -68,29 +67,51 @@ public class BackofficeOnboardingService {
     private final EmployeeRoleRepository employeeRoleRepository;
     private final EmployeeProfileRoleRepository employeeProfileRoleRepository;
     private final OrganizationRepository organizationRepository;
-    private final OrgRoleRepository orgRoleRepository;
-    private final OrganizationUserRepository organizationUserRepository;
     private final CountryRepository countryRepository;
     private final BranchRepository branchRepository;
     private final PasswordPolicyService passwordPolicyService;
     private final AccountBackofficeClient accountBackofficeClient;
-
-    public void validateCustomer(BackofficeCustomerValidationRequest request) {
-        if (customerProfileRepository.findByCoreCustomerId(request.getClientId()).isPresent()) {
-            throw BaseException.badRequest("Client ID '" + request.getClientId() + "' is already registered.");
-        }
-    }
 
     public BackofficeCustomerLookupResponse lookupCustomer(String clientId) {
         if (clientId == null || clientId.isBlank()) {
             throw BaseException.badRequest("Client ID is required.");
         }
 
-        validateCustomer(BackofficeCustomerValidationRequest.builder()
-                .clientId(clientId)
-                .build());
+        validateCustomer(clientId);
 
-        BackofficeCustomerDetailsResponse response = ensureIndividualClientExists(clientId);
+        BackofficeCustomerDetailsResponse response = ensureCustomerClientAllowed(clientId);
+        return toLookupResponse(response);
+    }
+
+    public BackofficeCustomerLookupResponse lookupEmployee(String clientId) {
+        if (clientId == null || clientId.isBlank()) {
+            throw BaseException.badRequest("Client ID is required.");
+        }
+
+        BackofficeCustomerDetailsResponse response = ensureEmployeeClientAllowed(clientId);
+
+        IamUserEntity iamUser = iamUserRepository.findFirstByParty_CoreCustomerId(clientId).orElse(null);
+        if (iamUser != null && employeeProfileRepository.findById(iamUser.getId()).isPresent()) {
+            throw BaseException.badRequest("Employee already exists for client ID '" + clientId + "'.");
+        }
+
+        return toLookupResponse(response);
+    }
+
+    public BackofficeCustomerLookupResponse lookupOrganization(String clientId) {
+        if (clientId == null || clientId.isBlank()) {
+            throw BaseException.badRequest("Client ID is required.");
+        }
+
+        PartyEntity party = partyRepository.findByCoreCustomerId(clientId).orElse(null);
+        if (party != null) {
+            if (party.getPartyType() == PartyType.ORGANIZATION) {
+                throw BaseException.badRequest("Client ID '" + clientId + "' is already registered.");
+            }
+            throw BaseException.badRequest("Individual clients must be onboarded via customer route.");
+        }
+
+        BackofficeCustomerDetailsResponse response = ensureOrganizationClientAllowed(clientId);
         return toLookupResponse(response);
     }
 
@@ -98,7 +119,7 @@ public class BackofficeOnboardingService {
             String clientId,
             String query
     ) {
-        ensureIndividualClientExists(clientId);
+        ensureCustomerClientAllowed(clientId);
 
         List<GeneralClientAccountsResponse> accounts =
                 accountBackofficeClient.getClientAccounts(clientId).orElse(List.of());
@@ -112,12 +133,10 @@ public class BackofficeOnboardingService {
     }
 
     @Transactional
-    public BackofficeCustomerOnboardingResponse createCustomer(BackofficeCustomerOnboardingRequest request) {
-        validateCustomer(BackofficeCustomerValidationRequest.builder()
-                .clientId(request.getClientId())
-                .build());
+    public BackofficeCustomerOnboardingResponse createCustomer(BackofficeOnboardingCommand request) {
+        validateCustomer(request.getClientId());
 
-        BackofficeCustomerDetailsResponse coreDetails = ensureIndividualClientExists(request.getClientId());
+        BackofficeCustomerDetailsResponse coreDetails = ensureCustomerClientAllowed(request.getClientId());
 
         String[] names = resolvePersonNames(coreDetails);
         String firstName = names[0];
@@ -139,31 +158,94 @@ public class BackofficeOnboardingService {
             throw BaseException.badRequest("Email is required from core banking.");
         }
 
-        validateCustomerUniqueness(nationalId, mobile, email);
+        PartyEntity existingParty = partyRepository.findByCoreCustomerId(request.getClientId()).orElse(null);
+        if (existingParty != null && existingParty.getPartyType() != PartyType.PERSON) {
+            throw BaseException.badRequest("Client ID '" + request.getClientId() + "' is not an individual.");
+        }
 
-        PartyEntity party = createParty(PartyType.PERSON, request.getClientId());
-        createPerson(
-                party,
-                firstName,
-                middleName,
-                lastName,
-                nationalId,
-                resolveCountryInput(coreDetails),
-                coreDetails.getCity(),
-                coreDetails.getAddress1(),
-                null,
-                null
-        );
-        IamUserEntity iamUser = createIamUser(party);
+        IamUserEntity iamUser = iamUserRepository.findFirstByParty_CoreCustomerId(request.getClientId())
+                .orElse(null);
 
-        UserContact phone = createUserContact(iamUser, ContactType.PHONE, mobile);
-        UserContact emailContact = createUserContact(iamUser, ContactType.EMAIL, email);
+        if (iamUser == null) {
+            validateCustomerUniqueness(nationalId, mobile, email);
+
+            PartyEntity party = existingParty != null
+                    ? existingParty
+                    : createParty(PartyType.PERSON, request.getClientId());
+
+            if (party.getCoreCustomerId() == null || party.getCoreCustomerId().isBlank()) {
+                party.setCoreCustomerId(request.getClientId());
+                partyRepository.save(party);
+            }
+
+            if (party.getPerson() == null) {
+                createPerson(
+                        party,
+                        firstName,
+                        middleName,
+                        lastName,
+                        nationalId,
+                        resolveCountryInput(coreDetails),
+                        coreDetails.getCity(),
+                        coreDetails.getAddress1(),
+                        null,
+                        null
+                );
+            }
+
+            iamUser = createIamUser(party);
+        } else {
+            PartyEntity party = iamUser.getParty();
+            if (party == null || party.getPartyType() != PartyType.PERSON) {
+                throw BaseException.badRequest("Client ID '" + request.getClientId() + "' is not an individual.");
+            }
+
+            PersonEntity person = party.getPerson();
+            if (person == null) {
+                if (personRepository.existsByNationalId(nationalId)) {
+                    throw BaseException.badRequest("National ID '" + nationalId + "' is already registered.");
+                }
+                createPerson(
+                        party,
+                        firstName,
+                        middleName,
+                        lastName,
+                        nationalId,
+                        resolveCountryInput(coreDetails),
+                        coreDetails.getCity(),
+                        coreDetails.getAddress1(),
+                        null,
+                        null
+                );
+            } else {
+                String existingNationalId = trimToNull(person.getNationalId());
+                if (existingNationalId != null && !existingNationalId.equals(nationalId)) {
+                    throw BaseException.badRequest("National ID does not match existing profile.");
+                }
+            }
+        }
+
+        if (customerProfileRepository.findByIamUser(iamUser).isPresent()) {
+            throw BaseException.badRequest("Client ID '" + request.getClientId() + "' is already registered as customer.");
+        }
+
+        UserContact phone = ensureUserContact(iamUser, ContactType.PHONE, mobile);
+        UserContact emailContact = ensureUserContact(iamUser, ContactType.EMAIL, email);
 
         linkProfileContact(iamUser, phone, LoginProfiles.CUSTOMER, ContactType.PHONE);
         linkProfileContact(iamUser, emailContact, LoginProfiles.CUSTOMER, ContactType.EMAIL);
 
-        String username = generateUniqueUsername(Channel.INTERNET_BANKING);
-        createLoginIdentifier(iamUser, username, Channel.INTERNET_BANKING);
+        LoginIdentifierEntity loginIdentifier = loginIdentifierRepository
+                .findByIamUserAndChannelAndIdentifierType(iamUser, Channel.INTERNET_BANKING, "username")
+                .orElse(null);
+
+        String username;
+        if (loginIdentifier == null) {
+            username = generateUniqueUsername(Channel.INTERNET_BANKING);
+            createLoginIdentifier(iamUser, username, Channel.INTERNET_BANKING);
+        } else {
+            username = loginIdentifier.getIdentifier();
+        }
 
         CustomerProfileEntity customerProfile = new CustomerProfileEntity();
         customerProfile.setIamUser(iamUser);
@@ -180,20 +262,23 @@ public class BackofficeOnboardingService {
         customerProfile.setUpdatedAt(LocalDateTime.now());
         customerProfileRepository.save(customerProfile);
 
-        String rawPassword = generatePassword(Channel.INTERNET_BANKING);
-        CustomerAuthEntity auth = new CustomerAuthEntity();
-        auth.setIamUser(iamUser);
-        auth.setInternetPasswordHash(HashUtil.bcrypt(rawPassword));
-        auth.setInternetPasswordAlgo("bcrypt");
-        auth.setInternetPasswordChangedAt(OffsetDateTime.now());
-        auth.setInternetFirstTimeLogin(true);
-        auth.setInternetFailedAttempts((short) 0);
-        auth.setInternetLocked(false);
-        auth.setMobileFirstTimeLogin(true);
-        auth.setMobileFailedAttempts((short) 0);
-        auth.setMobileLocked(false);
-        auth.setMfaEnabled(false);
-        customerAuthRepository.save(auth);
+        String rawPassword = null;
+        if (customerAuthRepository.findByIamUserId(iamUser.getId()).isEmpty()) {
+            rawPassword = generatePassword(Channel.INTERNET_BANKING);
+            CustomerAuthEntity auth = new CustomerAuthEntity();
+            auth.setIamUser(iamUser);
+            auth.setInternetPasswordHash(HashUtil.bcrypt(rawPassword));
+            auth.setInternetPasswordAlgo("bcrypt");
+            auth.setInternetPasswordChangedAt(OffsetDateTime.now());
+            auth.setInternetFirstTimeLogin(true);
+            auth.setInternetFailedAttempts((short) 0);
+            auth.setInternetLocked(false);
+            auth.setMobileFirstTimeLogin(true);
+            auth.setMobileFailedAttempts((short) 0);
+            auth.setMobileLocked(false);
+            auth.setMfaEnabled(false);
+            customerAuthRepository.save(auth);
+        }
 
         seedSelectedAccountsIfPresent(request.getClientId(), request.getAccounts(), "backoffice");
 
@@ -204,61 +289,88 @@ public class BackofficeOnboardingService {
                 .build();
     }
 
-    public void validateEmployee(BackofficeEmployeeValidationRequest request) {
-        if (employeeProfileRepository.existsByStaffNo(request.getStaffNo())) {
-            throw BaseException.badRequest("Staff number '" + request.getStaffNo() + "' is already registered.");
+    @Transactional
+    public BackofficeEmployeeOnboardingResponse createEmployee(BackofficeOnboardingCommand request) {
+        rejectAccountsForRoute(request.getAccounts(), "Employee");
+        String staffNo = resolveEmployeeStaffNo(request.getStaffNo(), request.getClientId());
+        BranchEntity branch = resolveEmployeeBranch(request.getBranchId());
+
+        BackofficeCustomerDetailsResponse coreDetails = ensureEmployeeClientAllowed(request.getClientId());
+
+        String[] names = resolvePersonNames(coreDetails);
+        String firstName = names[0];
+        String middleName = names[1];
+        String lastName = names[2];
+
+        String nationalId = trimToNull(coreDetails.getNationalId());
+        if (nationalId == null) {
+            throw BaseException.badRequest("National ID is required from core banking.");
         }
 
-        if (personRepository.existsByNationalId(request.getNationalId())) {
-            throw BaseException.badRequest("National ID '" + request.getNationalId() + "' is already registered.");
+        String mobile = trimToNull(coreDetails.getMobile());
+        if (mobile == null) {
+            throw BaseException.badRequest("Mobile number is required from core banking.");
         }
 
-        validatePhoneUnique(request.getMobile());
-        validateEmailUnique(request.getEmail());
+        String employeeEmail = trimToNull(coreDetails.getEmail());
+        if (employeeEmail == null) {
+            throw BaseException.badRequest("Email is required from core banking.");
+        }
 
-        if (request.getUsername() != null && !request.getUsername().isBlank()) {
-            if (loginIdentifierRepository.existsByChannelAndIdentifierTypeAndIdentifier(
-                    Channel.BACKOFFICE, "username", request.getUsername())) {
-                throw BaseException.badRequest("Username '" + request.getUsername() + "' is already registered.");
+        IamUserEntity iamUser = iamUserRepository.findFirstByParty_CoreCustomerId(request.getClientId())
+                .orElse(null);
+
+        if (iamUser == null) {
+            validateEmployeeOnCreate(request, null, staffNo, nationalId, mobile, employeeEmail);
+
+            PartyEntity party = createParty(PartyType.PERSON, request.getClientId());
+            createPerson(party, firstName, middleName, lastName,
+                    nationalId, resolveCountryInput(coreDetails), coreDetails.getCity(),
+                    coreDetails.getAddress1(), null, null);
+            iamUser = createIamUser(party);
+        } else {
+            PartyEntity party = iamUser.getParty();
+            if (party == null || party.getPartyType() != PartyType.PERSON) {
+                throw BaseException.badRequest("Client ID '" + request.getClientId() + "' is not an individual.");
+            }
+
+            validateEmployeeOnCreate(request, iamUser, staffNo, nationalId, mobile, employeeEmail);
+
+            if (party.getPerson() == null) {
+                createPerson(party, firstName, middleName, lastName,
+                        nationalId, resolveCountryInput(coreDetails), coreDetails.getCity(),
+                        coreDetails.getAddress1(), null, null);
             }
         }
-    }
 
-    @Transactional
-    public BackofficeEmployeeOnboardingResponse createEmployee(BackofficeEmployeeOnboardingRequest request) {
-        validateEmployee(BackofficeEmployeeValidationRequest.builder()
-                .staffNo(request.getStaffNo())
-                .nationalId(request.getNationalId())
-                .mobile(request.getMobile())
-                .email(request.getEmail())
-                .username(request.getUsername())
-                .build());
+        if (employeeProfileRepository.findById(iamUser.getId()).isPresent()) {
+            throw BaseException.badRequest("Employee already exists for client ID '" + request.getClientId() + "'.");
+        }
 
-        ensureClientExists(request.getClientId());
-
-        BranchEntity branch = branchRepository.findById(request.getBranchId())
-                .orElseThrow(() -> BaseException.notFound("Branch not found"));
-
-        PartyEntity party = createParty(PartyType.PERSON, request.getClientId());
-        createPerson(party, request.getFirstName(), request.getMiddleName(), request.getLastName(),
-                request.getNationalId(), request.getCountry(), request.getCity(), request.getAddress(), request.getDob(), request.getGender());
-        IamUserEntity iamUser = createIamUser(party);
-
-        UserContact phone = createUserContact(iamUser, ContactType.PHONE, request.getMobile());
-        UserContact email = createUserContact(iamUser, ContactType.EMAIL, request.getEmail());
+        UserContact phone = ensureUserContact(iamUser, ContactType.PHONE, mobile);
+        UserContact email = ensureUserContact(iamUser, ContactType.EMAIL, employeeEmail);
 
         linkProfileContact(iamUser, phone, LoginProfiles.EMPLOYEE, ContactType.PHONE);
         linkProfileContact(iamUser, email, LoginProfiles.EMPLOYEE, ContactType.EMAIL);
 
-        String username = request.getUsername();
-        if (username == null || username.isBlank()) {
-            username = generateUniqueUsername(Channel.BACKOFFICE);
+        LoginIdentifierEntity loginIdentifier = loginIdentifierRepository
+                .findByIamUserAndChannelAndIdentifierType(iamUser, Channel.BACKOFFICE, "username")
+                .orElse(null);
+
+        String username;
+        if (loginIdentifier == null) {
+            username = request.getUsername();
+            if (username == null || username.isBlank()) {
+                username = generateUniqueUsername(Channel.BACKOFFICE);
+            }
+            createLoginIdentifier(iamUser, username, Channel.BACKOFFICE);
+        } else {
+            username = loginIdentifier.getIdentifier();
         }
-        createLoginIdentifier(iamUser, username, Channel.BACKOFFICE);
 
         EmployeeProfileEntity employeeProfile = new EmployeeProfileEntity();
         employeeProfile.setIamUser(iamUser);
-        employeeProfile.setStaffNo(request.getStaffNo());
+        employeeProfile.setStaffNo(staffNo);
         employeeProfile.setJobTitle(request.getJobTitle());
         employeeProfile.setDepartment(request.getDepartment());
         employeeProfile.setEmploymentStatus(request.getEmploymentStatus() != null ? request.getEmploymentStatus() : EmploymentStatus.ACTIVE);
@@ -267,20 +379,21 @@ public class BackofficeOnboardingService {
         employeeProfile.setUpdatedAt(OffsetDateTime.now());
         employeeProfileRepository.save(employeeProfile);
 
-        String rawPassword = generatePassword(Channel.BACKOFFICE);
-        EmployeeAuthEntity auth = new EmployeeAuthEntity();
-        auth.setIamUser(iamUser);
-        auth.setStaffPasswordHash(HashUtil.bcrypt(rawPassword));
-        auth.setStaffPasswordAlgo("bcrypt");
-        auth.setStaffFailedAttempts((short) 0);
-        auth.setStaffLocked(false);
-        auth.setFirstTimeLogin(true);
-        auth.setMfaEnabled(false);
-        employeeAuthRepository.save(auth);
+        String rawPassword = null;
+        if (employeeAuthRepository.findByIamUserId(iamUser.getId()).isEmpty()) {
+            rawPassword = generatePassword(Channel.BACKOFFICE);
+            EmployeeAuthEntity auth = new EmployeeAuthEntity();
+            auth.setIamUser(iamUser);
+            auth.setStaffPasswordHash(HashUtil.bcrypt(rawPassword));
+            auth.setStaffPasswordAlgo("bcrypt");
+            auth.setStaffFailedAttempts((short) 0);
+            auth.setStaffLocked(false);
+            auth.setFirstTimeLogin(true);
+            auth.setMfaEnabled(false);
+            employeeAuthRepository.save(auth);
+        }
 
         assignEmployeeRoles(employeeProfile, request.getRoleIds());
-
-        seedAccountsIfPresent(request.getClientId(), request.getAccounts(), "backoffice");
 
         return BackofficeEmployeeOnboardingResponse.builder()
                 .iamUserId(iamUser.getId())
@@ -289,95 +402,54 @@ public class BackofficeOnboardingService {
                 .build();
     }
 
-    public void validateOrganization(BackofficeOrganizationValidationRequest request) {
-        if (partyRepository.existsByCoreCustomerId(request.getClientId())) {
-            throw BaseException.badRequest("Client ID '" + request.getClientId() + "' is already registered.");
-        }
-
-        if (request.getRegistrationNo() != null && !request.getRegistrationNo().isBlank()) {
-            if (organizationRepository.existsByRegistrationNo(request.getRegistrationNo())) {
-                throw BaseException.badRequest("Registration number '" + request.getRegistrationNo() + "' is already registered.");
-            }
-        }
-    }
-
     @Transactional
-    public BackofficeOrganizationOnboardingResponse createOrganization(BackofficeOrganizationOnboardingRequest request) {
-        validateOrganization(BackofficeOrganizationValidationRequest.builder()
-                .clientId(request.getClientId())
-                .registrationNo(request.getRegistrationNo())
-                .build());
+    public BackofficeOrganizationOnboardingResponse createOrganization(BackofficeOnboardingCommand request) {
+        rejectAccountsForRoute(request.getAccounts(), "Organization");
+        validateOrganization(request.getClientId(), request.getRegistrationNo());
 
-        ensureClientExists(request.getClientId());
+        BackofficeCustomerDetailsResponse coreDetails = ensureOrganizationClientAllowed(request.getClientId());
+
+        String legalName = firstNonBlank(
+                coreDetails.getFullName(),
+                buildFullName(coreDetails.getFirstName(), coreDetails.getMiddleName(), coreDetails.getLastName())
+        );
+        if (legalName == null) {
+            throw BaseException.badRequest("Legal name is required.");
+        }
+
+        String displayName = legalName;
+        String customerSegment = "CORPORATE";
+        String countryInput = resolveCountryInput(coreDetails);
+        String address = trimToNull(coreDetails.getAddress1());
+        String city = trimToNull(coreDetails.getCity());
+        String companyPhone = trimToNull(coreDetails.getMobile());
+        String companyEmail = trimToNull(coreDetails.getEmail());
 
         PartyEntity party = createParty(PartyType.ORGANIZATION, request.getClientId());
         OrganizationEntity organization = new OrganizationEntity();
         organization.setParty(party);
-        organization.setLegalName(request.getLegalName());
-        organization.setDisplayName(request.getDisplayName());
+        organization.setLegalName(legalName);
+        organization.setDisplayName(displayName);
         organization.setRegistrationNo(request.getRegistrationNo());
-        organization.setCustomerSegment(request.getCustomerSegment());
-        organization.setSmeMode(request.getSmeMode());
-        organization.setCountryCode(resolveCountry(request.getCountry()));
-        organization.setAddress(request.getAddress());
-        organization.setCity(request.getCity());
-        organization.setCompanyPhone(request.getCompanyPhone());
-        organization.setCompanyEmail(request.getCompanyEmail());
-        organization.setContactPersonName(request.getContactPersonName());
-        organization.setContactPersonEmail(request.getContactPersonEmail());
-        organization.setContactPersonPhone(request.getContactPersonPhone());
+        organization.setCustomerSegment(customerSegment);
+        organization.setSmeMode(Boolean.FALSE);
+        organization.setCountryCode(resolveCountry(countryInput));
+        organization.setAddress(address);
+        organization.setCity(city);
+        organization.setCompanyPhone(companyPhone);
+        organization.setCompanyEmail(companyEmail);
+        organization.setContactPersonName(null);
+        organization.setContactPersonEmail(null);
+        organization.setContactPersonPhone(null);
         organization.setCreatedAt(OffsetDateTime.now());
         organization.setUpdatedAt(OffsetDateTime.now());
         organizationRepository.save(organization);
-
-        maybeCreateOrganizationUser(party, request.getOrgUser());
-
-        seedAccountsIfPresent(request.getClientId(), request.getAccounts(), "backoffice");
 
         return BackofficeOrganizationOnboardingResponse.builder()
                 .partyId(party.getId())
                 .publicId(party.getPublicId())
                 .legalName(organization.getLegalName())
                 .build();
-    }
-
-    private void maybeCreateOrganizationUser(PartyEntity organizationParty, BackofficeOrganizationUserRequest request) {
-        if (request == null) {
-            return;
-        }
-        if (request.getOrgRoleId() == null) {
-            log.info("Skipping org user creation because orgRoleId was not provided.");
-            return;
-        }
-
-        OrgRoleEntity role = orgRoleRepository.findById(request.getOrgRoleId())
-                .orElseThrow(() -> BaseException.notFound("Organization role not found"));
-
-        if (!Objects.equals(role.getOrganizationParty().getId(), organizationParty.getId())) {
-            throw BaseException.badRequest("Organization role does not belong to this organization.");
-        }
-
-        PartyEntity party = createParty(PartyType.PERSON, null);
-        createPerson(party, request.getFirstName(), request.getMiddleName(), request.getLastName(),
-                request.getNationalId(), null, null, null, null, null);
-        IamUserEntity iamUser = createIamUser(party);
-
-        UserContact phone = createUserContact(iamUser, ContactType.PHONE, request.getMobile());
-        UserContact email = createUserContact(iamUser, ContactType.EMAIL, request.getEmail());
-
-        String username = request.getUsername();
-        if (username == null || username.isBlank()) {
-            username = generateUniqueUsername(Channel.INTERNET_BANKING);
-        }
-        createLoginIdentifier(iamUser, username, Channel.INTERNET_BANKING);
-
-        OrganizationUserEntity organizationUser = new OrganizationUserEntity();
-        organizationUser.setIamUser(iamUser);
-        organizationUser.setOrganizationParty(organizationParty);
-        organizationUser.setOrgRole(role);
-        organizationUser.setIsPrimary(Boolean.TRUE.equals(request.getPrimary()));
-        organizationUser.setStatus("ACTIVE");
-        organizationUserRepository.save(organizationUser);
     }
 
     private void assignEmployeeRoles(EmployeeProfileEntity employeeProfile, List<Long> roleIds) {
@@ -406,51 +478,6 @@ public class BackofficeOnboardingService {
                 .collect(Collectors.toList());
 
         employeeProfileRoleRepository.saveAll(links);
-    }
-
-    private void seedAccountsIfPresent(String clientId, List<BackofficeAccountRequest> accounts, String createdBy) {
-        if (accounts == null || accounts.isEmpty()) {
-            return;
-        }
-
-        Long clientIdLong;
-        try {
-            clientIdLong = Long.parseLong(clientId);
-        } catch (NumberFormatException ex) {
-            throw BaseException.badRequest("Client ID must be numeric for account seeding.");
-        }
-
-        List<BackofficeAccountSeedItem> seedItems = accounts.stream()
-                .filter(Objects::nonNull)
-                .map(account -> BackofficeAccountSeedItem.builder()
-                        .accountNumber(account.getAccountNumber())
-                        .accountName(account.getAccountName())
-                        .currency(account.getCurrency())
-                        .iban(account.getIban())
-                        .branchId(account.getBranchId())
-                        .branchName(account.getBranchName())
-                        .phone(account.getPhone())
-                        .email(account.getEmail())
-                        .productId(account.getProductId())
-                        .productName(account.getProductName())
-                        .allowCredit(account.getAllowCredit())
-                        .allowDebit(account.getAllowDebit())
-                        .allowWaafi(account.getAllowWaafi())
-                        .primary(account.getPrimary())
-                        .build())
-                .toList();
-
-        if (seedItems.isEmpty()) {
-            return;
-        }
-
-        BackofficeAccountSeedRequest seedRequest = BackofficeAccountSeedRequest.builder()
-                .clientId(clientIdLong)
-                .accounts(seedItems)
-                .createdBy(createdBy)
-                .build();
-
-        accountBackofficeClient.seedClientAccounts(seedRequest);
     }
 
     private PartyEntity createParty(PartyType type, String coreCustomerId) {
@@ -531,6 +558,22 @@ public class BackofficeOnboardingService {
         loginIdentifierRepository.save(loginIdentifier);
     }
 
+    private UserContact ensureUserContact(IamUserEntity iamUser, ContactType type, String value) {
+        if (value == null || value.isBlank()) {
+            throw BaseException.badRequest(type.name() + " contact value is required.");
+        }
+
+        return userContactRepository.findByIamUserAndContactTypeAndPrimaryIsTrue(iamUser, type)
+                .orElseGet(() -> {
+                    if (type == ContactType.PHONE) {
+                        validatePhoneUnique(value);
+                    } else if (type == ContactType.EMAIL) {
+                        validateEmailUnique(value);
+                    }
+                    return createUserContact(iamUser, type, value);
+                });
+    }
+
     private String generateUniqueUsername(Channel channel) {
         return UsernameGeneratorUtil.generateUniqueNumericUsername(8,
                 username -> loginIdentifierRepository.existsByChannelAndIdentifierTypeAndIdentifier(
@@ -608,6 +651,93 @@ public class BackofficeOnboardingService {
         validateEmailUnique(email);
     }
 
+    private void validateCustomer(String clientId) {
+        if (customerProfileRepository.findByCoreCustomerId(clientId).isPresent()) {
+            throw BaseException.badRequest("Client ID '" + clientId + "' is already registered.");
+        }
+    }
+
+    private void validateOrganization(String clientId, String registrationNo) {
+        if (partyRepository.existsByCoreCustomerId(clientId)) {
+            throw BaseException.badRequest("Client ID '" + clientId + "' is already registered.");
+        }
+
+        if (registrationNo != null && !registrationNo.isBlank()) {
+            if (organizationRepository.existsByRegistrationNo(registrationNo)) {
+                throw BaseException.badRequest("Registration number '" + registrationNo + "' is already registered.");
+            }
+        }
+    }
+
+    private void validateEmployeeOnCreate(BackofficeOnboardingCommand request,
+                                          IamUserEntity existingUser,
+                                          String staffNo,
+                                          String nationalId,
+                                          String mobile,
+                                          String email) {
+        if (employeeProfileRepository.existsByStaffNo(staffNo)) {
+            throw BaseException.badRequest("Staff number '" + staffNo + "' is already registered.");
+        }
+
+        PersonEntity existingPerson = null;
+        if (existingUser != null && existingUser.getParty() != null) {
+            existingPerson = existingUser.getParty().getPerson();
+        }
+
+        if (existingPerson != null && existingPerson.getNationalId() != null
+                && !existingPerson.getNationalId().equals(nationalId)) {
+            throw BaseException.badRequest("National ID does not match existing profile.");
+        }
+
+        boolean shouldCheckNationalId = existingPerson == null
+                || existingPerson.getNationalId() == null
+                || existingPerson.getNationalId().isBlank();
+
+        if (shouldCheckNationalId && nationalId != null && !nationalId.isBlank()) {
+            if (personRepository.existsByNationalId(nationalId)) {
+                throw BaseException.badRequest("National ID '" + nationalId + "' is already registered.");
+            }
+        }
+
+        boolean hasPhone = existingUser != null
+                && userContactRepository.findByIamUserAndContactTypeAndPrimaryIsTrue(existingUser, ContactType.PHONE)
+                .isPresent();
+        boolean hasEmail = existingUser != null
+                && userContactRepository.findByIamUserAndContactTypeAndPrimaryIsTrue(existingUser, ContactType.EMAIL)
+                .isPresent();
+
+        if (!hasPhone) {
+            validatePhoneUnique(mobile);
+        }
+        if (!hasEmail) {
+            validateEmailUnique(email);
+        }
+
+        boolean hasBackofficeLogin = existingUser != null && loginIdentifierRepository
+                .findByIamUserAndChannelAndIdentifierType(existingUser, Channel.BACKOFFICE, "username")
+                .isPresent();
+
+        if (!hasBackofficeLogin && request.getUsername() != null && !request.getUsername().isBlank()) {
+            if (loginIdentifierRepository.existsByChannelAndIdentifierTypeAndIdentifier(
+                    Channel.BACKOFFICE, "username", request.getUsername())) {
+                throw BaseException.badRequest("Username '" + request.getUsername() + "' is already registered.");
+            }
+        }
+    }
+
+    private void rejectAccountsForRoute(List<String> accounts, String context) {
+        if (accounts == null) {
+            return;
+        }
+        boolean hasValues = accounts.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .anyMatch(s -> !s.isBlank());
+        if (hasValues) {
+            throw BaseException.badRequest(context + " onboarding does not accept accounts.");
+        }
+    }
+
     private BackofficeCustomerDetailsResponse ensureClientExists(String clientId) {
         BackofficeCustomerDetailsResponse response = accountBackofficeClient.getClientDetails(clientId)
                 .orElseThrow(() -> BaseException.notFound("Client ID '" + clientId + "' not found in core banking."));
@@ -617,10 +747,68 @@ public class BackofficeOnboardingService {
         return response;
     }
 
-    private BackofficeCustomerDetailsResponse ensureIndividualClientExists(String clientId) {
+    private BackofficeCustomerDetailsResponse ensureCustomerClientAllowed(String clientId) {
         BackofficeCustomerDetailsResponse response = ensureClientExists(clientId);
-        if (response.getClientTypeId() == null || !"I".equalsIgnoreCase(response.getClientTypeId())) {
-            throw BaseException.badRequest("Only individual customers (ClientTypeID=I) are allowed.");
+        String clientTypeId = trimToNull(response.getClientTypeId());
+        if (clientTypeId == null) {
+            throw BaseException.badRequest("Client type is required from core banking.");
+        }
+        if (!"I".equalsIgnoreCase(clientTypeId) && !"E".equalsIgnoreCase(clientTypeId)) {
+            throw BaseException.badRequest("Only individual customers (ClientTypeID=I or E) are allowed.");
+        }
+        return response;
+    }
+
+    private BackofficeCustomerDetailsResponse ensureEmployeeClientAllowed(String clientId) {
+        BackofficeCustomerDetailsResponse response = ensureClientExists(clientId);
+        String clientTypeId = trimToNull(response.getClientTypeId());
+        if (clientTypeId == null) {
+            throw BaseException.badRequest("Client type is required from core banking.");
+        }
+        if (!"I".equalsIgnoreCase(clientTypeId) && !"E".equalsIgnoreCase(clientTypeId)) {
+            throw BaseException.badRequest("Corporate clients cannot be onboarded as employees.");
+        }
+        return response;
+    }
+
+    private BranchEntity resolveEmployeeBranch(Long branchId) {
+        if (branchId != null) {
+            return branchRepository.findById(branchId)
+                    .orElseThrow(() -> BaseException.notFound("Branch not found"));
+        }
+
+        return branchRepository.findFirstByOrderByIdAsc()
+                .orElseThrow(() -> BaseException.notFound("No branches available for employee onboarding."));
+    }
+
+    private String resolveEmployeeStaffNo(String staffNo, String clientId) {
+        String resolved = trimToNull(staffNo);
+        if (resolved == null) {
+            resolved = "EMP-" + clientId;
+        }
+
+        if (!employeeProfileRepository.existsByStaffNo(resolved)) {
+            return resolved;
+        }
+
+        for (int i = 1; i <= 9; i++) {
+            String candidate = resolved + "-" + i;
+            if (!employeeProfileRepository.existsByStaffNo(candidate)) {
+                return candidate;
+            }
+        }
+
+        throw BaseException.badRequest("Unable to generate a unique staff number.");
+    }
+
+    private BackofficeCustomerDetailsResponse ensureOrganizationClientAllowed(String clientId) {
+        BackofficeCustomerDetailsResponse response = ensureClientExists(clientId);
+        String clientTypeId = trimToNull(response.getClientTypeId());
+        if (clientTypeId == null) {
+            throw BaseException.badRequest("Client type is required from core banking.");
+        }
+        if ("I".equalsIgnoreCase(clientTypeId) || "E".equalsIgnoreCase(clientTypeId)) {
+            throw BaseException.badRequest("Individual clients must be onboarded via customer route.");
         }
         return response;
     }
