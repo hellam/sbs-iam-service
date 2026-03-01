@@ -34,17 +34,23 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OidcTokenService {
     private static final String SESSION_VERSION_KEY = "session_version";
+    private static final String TASK_ROLE_CLAIM = "task_role";
+    private static final String REFRESH_TOKEN_ROTATED_REASON = "Replaced by new token";
+    private static final String REFRESH_TOKEN_REPLAY_GRACE_EVENT = "REFRESH_TOKEN_REPLAY_GRACE";
 
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
@@ -58,6 +64,7 @@ public class OidcTokenService {
     private final SecurityEventRepository securityEventRepository;
     private final RequestContextExtractor requestContextExtractor;
     private final ImpossibleTravelDetectionService impossibleTravelDetectionService;
+    private final ConcurrentMap<String, ReplayTokenBundle> refreshReplayCache = new ConcurrentHashMap<>();
 
 
     // expected issuer and audience configured via properties
@@ -70,13 +77,20 @@ public class OidcTokenService {
     @Value("${shiva.security.session.single-active-per-user.enabled:true}")
     private boolean singleActiveSessionPerUserEnabled;
 
+    @Value("${shiva.security.refresh.replay-grace-seconds:5}")
+    private long refreshReplayGraceSeconds;
+
     @Transactional
     public void issueTokens(Long sessionId) {
-        issueTokens(sessionId, true);
+        issueTokensInternal(sessionId, true, true);
     }
 
     @Transactional
     public void issueTokens(Long sessionId, boolean bumpSessionVersion) {
+        issueTokensInternal(sessionId, bumpSessionVersion, true);
+    }
+
+    private IssuedTokens issueTokensInternal(Long sessionId, boolean bumpSessionVersion, boolean setHeaders) {
         SessionEntity session = sessionRepository.findByIdWithIamUser(sessionId).orElseThrow(
                 () -> new IllegalArgumentException("Session not found with ID: " + sessionId)
         );
@@ -151,7 +165,7 @@ public class OidcTokenService {
             claimsBuilder.claim(JwtClaims.PROFILE_TYPE, session.getProfileType().name());
             if (session.getProfileType().name().equals(ProfileType.ORG_USER.name())){
                 OrganizationUserEntity orgUser = orgRepo.findById(session.getProfileId()).orElseThrow(() -> new IllegalArgumentException("Organization user profile not found with ID: " + session.getProfileId()));
-                claimsBuilder.claim(JwtClaims.TASK_ROLE, orgUser.getOrgRole().getTaskRole().name());
+                claimsBuilder.claim(TASK_ROLE_CLAIM, orgUser.getOrgRole().getTaskRole().name());
             }
         }
 
@@ -182,22 +196,48 @@ public class OidcTokenService {
         // Publish current session_version to Redis for gateway-side equality checks.
         sessionRevocationService.cacheSessionVersion(session.getSessionId(), sessionVersion, session.getExpiresAt());
 
-        setTokenHeaders(accessToken, rawRefreshToken, accessTokenValidity, refreshTokenValidity);
+        if (setHeaders) {
+            setTokenHeaders(accessToken, rawRefreshToken, accessTokenValidity, refreshTokenValidity);
+        }
+
+        return new IssuedTokens(accessToken, rawRefreshToken, accessTokenValidity, refreshTokenValidity);
     }
 
     @Transactional
     public void refreshTokens(RefreshTokenRequest request, String deviceId) {
         log.info("Refreshing tokens for device ID {}", deviceId);
+        if (request == null || request.getRefreshToken() == null || request.getRefreshToken().isBlank()) {
+            throw BaseException.unauthorized("Invalid refresh token");
+        }
+
+        OffsetDateTime now = OffsetDateTime.now();
         String refreshTokenHash = HashUtil.sha256(request.getRefreshToken());
-        RefreshTokenEntity oldToken = refreshTokenRepository.findByTokenHash(refreshTokenHash)
+        RefreshTokenEntity oldToken = refreshTokenRepository.findByTokenHashForUpdate(refreshTokenHash)
                 .orElseThrow(() -> BaseException.unauthorized("Invalid refresh token"));
 
+        SessionEntity session = oldToken.getSession();
+        if (session == null) {
+            throw BaseException.unauthorized("Invalid refresh token");
+        }
+        if (session.getRevokedAt() != null) {
+            throw BaseException.unauthorized("Session has been revoked");
+        }
+        if (session.getExpiresAt() != null && session.getExpiresAt().isBefore(now)) {
+            throw BaseException.unauthorized("Session expired");
+        }
+
+        boolean deviceMatches = isDeviceMatch(session, deviceId);
+
         if (Boolean.FALSE.equals(oldToken.getIsActive()) || oldToken.getRevokedAt() != null) {
+            if (isReplayGraceEligible(oldToken, deviceMatches, now)) {
+                handleGraceReplay(oldToken, session, now);
+                return;
+            }
             // Reuse/replay of an already consumed refresh token is treated as credential theft.
             handleRefreshTokenReplay(oldToken);
             throw BaseException.unauthorized("Suspicious token activity detected. Please sign in again.");
         }
-        if (oldToken.getExpiresAt().isBefore(OffsetDateTime.now())) {
+        if (oldToken.getExpiresAt() == null || oldToken.getExpiresAt().isBefore(now)) {
             throw BaseException.unauthorized("Refresh token is revoked or expired");
         }
 
@@ -221,20 +261,11 @@ public class OidcTokenService {
             // Ignore if the token is invalid, it can't be used anyway
         }
 
-        //get session and validate
-        SessionEntity session = oldToken.getSession();
-        if (session.getRevokedAt() != null) {
-            throw BaseException.unauthorized("Session has been revoked");
-        }
-        if (session.getExpiresAt().isBefore(OffsetDateTime.now())) {
-            throw BaseException.unauthorized("Session expired");
-        }
-
         // Evaluate impossible travel during refresh too (not only during login success).
         impossibleTravelDetectionService.enforce(session);
 
         //check device id matches
-        if (deviceId == null || deviceId.isBlank() || !session.getDeviceId().equals(HashUtil.sha256(deviceId))) {
+        if (!deviceMatches) {
             log.warn("Refresh token device ID mismatch for session ID {}", session.getId());
             sessionRevocationService.revokeSessionAndDevice(session, "REFRESH_DEVICE_MISMATCH");
             saveSecurityEvent("REFRESH_DEVICE_MISMATCH", "HIGH",
@@ -244,13 +275,111 @@ public class OidcTokenService {
 
 
         // Issue new tokens
-       issueTokens(oldToken.getSession().getId(), false);
+        IssuedTokens issuedTokens = issueTokensInternal(session.getId(), false, true);
 
         // Revoke the old refresh token
-        oldToken.setRevokedAt(OffsetDateTime.now());
-        oldToken.setRevokedReason("Replaced by new token");
+        oldToken.setRevokedAt(now);
+        oldToken.setRevokedReason(REFRESH_TOKEN_ROTATED_REASON);
         oldToken.setIsActive(false);
+        oldToken.setLastUsedAt(now);
         refreshTokenRepository.save(oldToken);
+
+        cacheReplayBundle(refreshTokenHash, issuedTokens, now);
+    }
+
+    private boolean isDeviceMatch(SessionEntity session, String deviceId) {
+        if (session == null || deviceId == null || deviceId.isBlank()) {
+            return false;
+        }
+
+        String hashedDeviceId = session.getDeviceId();
+        if (hashedDeviceId == null || hashedDeviceId.isBlank()) {
+            return false;
+        }
+        return hashedDeviceId.equals(HashUtil.sha256(deviceId));
+    }
+
+    private boolean isReplayGraceEligible(RefreshTokenEntity oldToken, boolean deviceMatches, OffsetDateTime now) {
+        if (!deviceMatches) {
+            return false;
+        }
+        if (refreshReplayGraceSeconds <= 0) {
+            return false;
+        }
+        if (oldToken.getRevokedAt() == null) {
+            return false;
+        }
+        if (!REFRESH_TOKEN_ROTATED_REASON.equals(oldToken.getRevokedReason())) {
+            return false;
+        }
+
+        return !oldToken.getRevokedAt().isBefore(now.minusSeconds(refreshReplayGraceSeconds));
+    }
+
+    private void handleGraceReplay(RefreshTokenEntity replayedToken, SessionEntity session, OffsetDateTime now) {
+        ReplayTokenBundle cachedBundle = getReplayBundle(replayedToken.getTokenHash(), now.toInstant());
+        if (cachedBundle != null) {
+            setTokenHeaders(
+                    cachedBundle.accessToken(),
+                    cachedBundle.refreshToken(),
+                    cachedBundle.accessTokenValiditySeconds(),
+                    cachedBundle.refreshTokenValiditySeconds()
+            );
+            log.info("Handled refresh replay using cached token bundle. sessionId={}, tokenId={}",
+                    session.getSessionId(), replayedToken.getId());
+            return;
+        }
+
+        IssuedTokens issuedTokens = issueTokensInternal(session.getId(), false, true);
+        cacheReplayBundle(replayedToken.getTokenHash(), issuedTokens, now);
+
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("refresh_token_id", replayedToken.getId());
+        metadata.put("refresh_token_revoked_at", replayedToken.getRevokedAt() != null ? replayedToken.getRevokedAt().toString() : null);
+        metadata.put("grace_window_seconds", refreshReplayGraceSeconds);
+        saveSecurityEvent(
+                REFRESH_TOKEN_REPLAY_GRACE_EVENT,
+                "LOW",
+                "Refresh token replay handled within grace window for matching device.",
+                session,
+                metadata
+        );
+
+        log.warn("Handled refresh replay by issuing replacement tokens within grace window. sessionId={}, tokenId={}",
+                session.getSessionId(), replayedToken.getId());
+    }
+
+    private void cacheReplayBundle(String refreshTokenHash, IssuedTokens issuedTokens, OffsetDateTime now) {
+        if (refreshReplayGraceSeconds <= 0 || refreshTokenHash == null || refreshTokenHash.isBlank() || issuedTokens == null) {
+            return;
+        }
+
+        refreshReplayCache.put(
+                refreshTokenHash,
+                new ReplayTokenBundle(
+                        issuedTokens.accessToken(),
+                        issuedTokens.refreshToken(),
+                        issuedTokens.accessTokenValiditySeconds(),
+                        issuedTokens.refreshTokenValiditySeconds(),
+                        now.toInstant().plusSeconds(refreshReplayGraceSeconds)
+                )
+        );
+    }
+
+    private ReplayTokenBundle getReplayBundle(String refreshTokenHash, Instant now) {
+        if (refreshTokenHash == null || refreshTokenHash.isBlank()) {
+            return null;
+        }
+
+        ReplayTokenBundle cached = refreshReplayCache.get(refreshTokenHash);
+        if (cached == null) {
+            return null;
+        }
+        if (cached.expiresAt().isBefore(now)) {
+            refreshReplayCache.remove(refreshTokenHash, cached);
+            return null;
+        }
+        return cached;
     }
 
     private void handleRefreshTokenReplay(RefreshTokenEntity token) {
@@ -428,6 +557,19 @@ public class OidcTokenService {
         }
 
         return null;
+    }
+
+    private record IssuedTokens(String accessToken,
+                                String refreshToken,
+                                long accessTokenValiditySeconds,
+                                long refreshTokenValiditySeconds) {
+    }
+
+    private record ReplayTokenBundle(String accessToken,
+                                     String refreshToken,
+                                     long accessTokenValiditySeconds,
+                                     long refreshTokenValiditySeconds,
+                                     Instant expiresAt) {
     }
 
 }
