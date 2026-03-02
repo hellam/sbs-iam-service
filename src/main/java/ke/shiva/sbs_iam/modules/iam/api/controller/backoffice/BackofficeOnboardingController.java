@@ -51,8 +51,7 @@ public class BackofficeOnboardingController {
             @PathVariable String clientId,
             @RequestParam(name = "q", required = false) String query
     ) {
-        List<BackofficeCustomerAccountResponse> response =
-                onboardingService.lookupCustomerAccounts(clientId, query);
+        List<BackofficeCustomerAccountResponse> response = onboardingService.lookupCustomerAccounts(clientId, query);
         return ResponseBuilder.success("Customer accounts retrieved", response);
     }
 
