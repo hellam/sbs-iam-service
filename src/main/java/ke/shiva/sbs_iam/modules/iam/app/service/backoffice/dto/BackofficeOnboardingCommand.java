@@ -29,4 +29,5 @@ public class BackofficeOnboardingCommand {
 
     // Organization-only
     private String registrationNo;
+    private Boolean isSme;
 }

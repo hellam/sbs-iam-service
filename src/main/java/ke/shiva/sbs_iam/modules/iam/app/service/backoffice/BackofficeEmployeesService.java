@@ -21,6 +21,7 @@ import ke.shiva.shivacorestarter.util.PaginationUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class BackofficeEmployeesService {
     private final UserContactRepository userContactRepository;
     private final BranchRepository branchRepository;
 
+    @Transactional(readOnly = true)
     public PaginatedResponse<BackofficeEmployeeSummaryResponse> getEmployees(HttpServletRequest request) {
         validateFilters(request);
 

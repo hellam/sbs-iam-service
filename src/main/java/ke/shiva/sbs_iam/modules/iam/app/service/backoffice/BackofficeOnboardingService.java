@@ -73,10 +73,6 @@ public class BackofficeOnboardingService {
     private final AccountBackofficeClient accountBackofficeClient;
 
     public BackofficeCustomerLookupResponse lookupCustomer(String clientId) {
-        if (clientId == null || clientId.isBlank()) {
-            throw BaseException.badRequest("Client ID is required.");
-        }
-
         validateCustomer(clientId);
 
         BackofficeCustomerDetailsResponse response = ensureCustomerClientAllowed(clientId);
@@ -84,10 +80,6 @@ public class BackofficeOnboardingService {
     }
 
     public BackofficeCustomerLookupResponse lookupEmployee(String clientId) {
-        if (clientId == null || clientId.isBlank()) {
-            throw BaseException.badRequest("Client ID is required.");
-        }
-
         BackofficeCustomerDetailsResponse response = ensureEmployeeClientAllowed(clientId);
 
         IamUserEntity iamUser = iamUserRepository.findFirstByParty_CoreCustomerId(clientId).orElse(null);
@@ -99,10 +91,6 @@ public class BackofficeOnboardingService {
     }
 
     public BackofficeCustomerLookupResponse lookupOrganization(String clientId) {
-        if (clientId == null || clientId.isBlank()) {
-            throw BaseException.badRequest("Client ID is required.");
-        }
-
         PartyEntity party = partyRepository.findByCoreCustomerId(clientId).orElse(null);
         if (party != null) {
             if (party.getPartyType() == PartyType.ORGANIZATION) {
@@ -115,10 +103,7 @@ public class BackofficeOnboardingService {
         return toLookupResponse(response);
     }
 
-    public List<BackofficeCustomerAccountResponse> lookupCustomerAccounts(
-            String clientId,
-            String query
-    ) {
+    public List<BackofficeCustomerAccountResponse> lookupCustomerAccounts(String clientId, String query) {
         ensureCustomerClientAllowed(clientId);
 
         List<GeneralClientAccountsResponse> accounts =
@@ -432,7 +417,7 @@ public class BackofficeOnboardingService {
         organization.setDisplayName(displayName);
         organization.setRegistrationNo(request.getRegistrationNo());
         organization.setCustomerSegment(customerSegment);
-        organization.setSmeMode(Boolean.FALSE);
+        organization.setSmeMode(Boolean.TRUE.equals(request.getIsSme()));
         organization.setCountryCode(resolveCountry(countryInput));
         organization.setAddress(address);
         organization.setCity(city);
@@ -754,7 +739,7 @@ public class BackofficeOnboardingService {
             throw BaseException.badRequest("Client type is required from core banking.");
         }
         if (!"I".equalsIgnoreCase(clientTypeId) && !"E".equalsIgnoreCase(clientTypeId)) {
-            throw BaseException.badRequest("Only individual customers (ClientTypeID=I or E) are allowed.");
+            throw BaseException.badRequest("Only individual customers are allowed.");
         }
         return response;
     }
