@@ -12,6 +12,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.employee.EmploymentStatus;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.party.PartyType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.EmployeeProfileRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.PartyRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.UserContactRepository;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.BranchEntity;
 import ke.shiva.sbs_iam.modules.reference.infra.repository.BranchRepository;
@@ -35,6 +36,7 @@ public class BackofficeEmployeesService {
     private final EmployeeProfileRepository employeeProfileRepository;
     private final UserContactRepository userContactRepository;
     private final BranchRepository branchRepository;
+    private final PartyRepository partyRepository;
 
     public PaginatedResponse<BackofficeEmployeeSummaryResponse> getEmployees(HttpServletRequest request) {
         validateFilters(request);
@@ -87,7 +89,7 @@ public class BackofficeEmployeesService {
 
     private BackofficeEmployeeSummaryResponse toResponse(EmployeeProfileEntity profile, Map<Long, String> branchNamesById) {
         IamUserEntity iamUser = profile.getIamUser();
-        PartyEntity party = iamUser != null ? iamUser.getParty() : null;
+        PartyEntity party = iamUser.getParty();
         PersonEntity person = party != null ? party.getPerson() : null;
 
         String mobile = iamUser != null

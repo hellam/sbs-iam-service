@@ -6,6 +6,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PartyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.party.PartyType;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.OrganizationRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.PartyRepository;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.CountryEntity;
 import ke.shiva.shivacorestarter.dto.PaginatedResponse;
 import ke.shiva.shivacorestarter.exception.BaseException;
@@ -22,6 +23,7 @@ import java.util.List;
 public class BackofficeOrganizationsService {
 
     private final OrganizationRepository organizationRepository;
+    private final PartyRepository partyRepository;
 
     public PaginatedResponse<BackofficeOrganizationSummaryResponse> getOrganizations(HttpServletRequest request) {
         validateFilters(request);
@@ -71,7 +73,7 @@ public class BackofficeOrganizationsService {
     }
 
     private BackofficeOrganizationSummaryResponse toResponse(OrganizationEntity organization) {
-        PartyEntity party = organization.getParty();
+        PartyEntity party = partyRepository.findById(organization.getId()).orElse(null);
         CountryEntity country = organization.getCountryCode();
 
         String displayName = StringUtils.hasText(organization.getDisplayName())
