@@ -75,6 +75,7 @@ public class BackofficeOnboardingController {
         BackofficeOrganizationOnboardingResponse response = onboardingService.createOrganization(
                 BackofficeOnboardingCommand.builder()
                         .clientId(request.getClientId())
+                        .isSme(request.getIsSme())
                         .build()
         );
         return ResponseBuilder.success("Organization onboarding successful", response);

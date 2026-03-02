@@ -432,7 +432,7 @@ public class BackofficeOnboardingService {
         organization.setDisplayName(displayName);
         organization.setRegistrationNo(request.getRegistrationNo());
         organization.setCustomerSegment(customerSegment);
-        organization.setSmeMode(Boolean.FALSE);
+        organization.setSmeMode(Boolean.TRUE.equals(request.getIsSme()));
         organization.setCountryCode(resolveCountry(countryInput));
         organization.setAddress(address);
         organization.setCity(city);

@@ -13,4 +13,7 @@ import lombok.NoArgsConstructor;
 public class BackofficeClientLookupRequest {
     @NotBlank(message = "Client ID is required")
     private String clientId;
+
+    // Organization onboarding only (optional; defaults to false when omitted)
+    private Boolean isSme;
 }
