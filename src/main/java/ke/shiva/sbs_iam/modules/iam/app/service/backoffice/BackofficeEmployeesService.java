@@ -12,7 +12,6 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.employee.EmploymentStatus;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.party.PartyType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.EmployeeProfileRepository;
-import ke.shiva.sbs_iam.modules.iam.infra.repository.PartyRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.UserContactRepository;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.BranchEntity;
 import ke.shiva.sbs_iam.modules.reference.infra.repository.BranchRepository;
@@ -22,6 +21,7 @@ import ke.shiva.shivacorestarter.util.PaginationUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -36,8 +36,8 @@ public class BackofficeEmployeesService {
     private final EmployeeProfileRepository employeeProfileRepository;
     private final UserContactRepository userContactRepository;
     private final BranchRepository branchRepository;
-    private final PartyRepository partyRepository;
 
+    @Transactional(readOnly = true)
     public PaginatedResponse<BackofficeEmployeeSummaryResponse> getEmployees(HttpServletRequest request) {
         validateFilters(request);
 
@@ -89,7 +89,7 @@ public class BackofficeEmployeesService {
 
     private BackofficeEmployeeSummaryResponse toResponse(EmployeeProfileEntity profile, Map<Long, String> branchNamesById) {
         IamUserEntity iamUser = profile.getIamUser();
-        PartyEntity party = iamUser.getParty();
+        PartyEntity party = iamUser != null ? iamUser.getParty() : null;
         PersonEntity person = party != null ? party.getPerson() : null;
 
         String mobile = iamUser != null
