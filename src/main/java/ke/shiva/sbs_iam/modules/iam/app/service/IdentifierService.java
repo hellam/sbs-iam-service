@@ -89,6 +89,7 @@ public class IdentifierService {
         resp.setPasswordRequired(true);
         resp.setOtpRequired(requirements.isOtpRequired());
         resp.setTotpRequired(requirements.isTotpRequired());
+        resp.setOtpLength(requirements.getOtpLength());
         resp.setPasswordExpired(requirements.isPasswordExpired());
         resp.setFirstLogin(requirements.isFirstLogin());
         resp.setSecurityQuestionsRequired(requirements.isQuestionsRequired());

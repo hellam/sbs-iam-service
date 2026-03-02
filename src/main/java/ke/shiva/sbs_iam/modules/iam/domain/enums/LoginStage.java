@@ -5,6 +5,7 @@ public enum LoginStage {
     // Login flow stages
     IDENTIFIER_OK,
     PASSWORD_OK,
+    TOTP_ENROLL_REQUIRED,
     MFA_OK,
     PROFILE_PENDING,
     ACTIVE,

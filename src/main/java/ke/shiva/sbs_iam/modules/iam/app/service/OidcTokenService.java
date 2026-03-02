@@ -49,6 +49,7 @@ import java.util.concurrent.ConcurrentMap;
 public class OidcTokenService {
     private static final String SESSION_VERSION_KEY = "session_version";
     private static final String TASK_ROLE_CLAIM = "task_role";
+    private static final String IS_ORGANISATION_CLAIM = "is_organisation";
     private static final String REFRESH_TOKEN_ROTATED_REASON = "Replaced by new token";
     private static final String REFRESH_TOKEN_REPLAY_GRACE_EVENT = "REFRESH_TOKEN_REPLAY_GRACE";
 
@@ -123,10 +124,12 @@ public class OidcTokenService {
         // Keep a stable session_id, and invalidate prior tokens via session_version bumps.
         long sessionVersion = resolveAndMaybeBumpSessionVersion(session, bumpSessionVersion);
 
+        OrganizationUserEntity orgUser = resolveSelectedOrganizationUser(session);
+
         // Resolve customer ID based on selected profile:
         // ORG_USER -> organization core customer ID
         // CUSTOMER -> customer profile core customer ID
-        String customerId = resolveCustomerIdForToken(session, user, category);
+        String customerId = resolveCustomerIdForToken(session, user, category, orgUser);
 
         // Encrypt sensitive claims to prevent enumeration attacks
         String encryptedUserId = jwtClaimEncryption.encryptUserId(user.getId());
@@ -147,6 +150,7 @@ public class OidcTokenService {
                 .claim(JwtClaims.CHANNEL, channel.name())
                 .claim(JwtClaims.CATEGORY, category.name())
                 .claim(JwtClaims.SCOPE, buildScopeFor(session))
+                .claim(IS_ORGANISATION_CLAIM, resolveIsOrganisationFlag(session, orgUser))
                 .id(UUID.randomUUID().toString());           // JTI
 
         // Add encrypted customer ID if available (for CUSTOMER category)
@@ -164,7 +168,9 @@ public class OidcTokenService {
         if (session.getProfileType() != null) {
             claimsBuilder.claim(JwtClaims.PROFILE_TYPE, session.getProfileType().name());
             if (session.getProfileType().name().equals(ProfileType.ORG_USER.name())){
-                OrganizationUserEntity orgUser = orgRepo.findById(session.getProfileId()).orElseThrow(() -> new IllegalArgumentException("Organization user profile not found with ID: " + session.getProfileId()));
+                if (orgUser == null) {
+                    throw new IllegalArgumentException("Organization user profile not found with ID: " + session.getProfileId());
+                }
                 claimsBuilder.claim(TASK_ROLE_CLAIM, orgUser.getOrgRole().getTaskRole().name());
             }
         }
@@ -523,17 +529,12 @@ public class OidcTokenService {
         response.setHeader("X-Refresh-Token-Expiry", String.valueOf(refreshTokenValidity));
     }
 
-    private String resolveCustomerIdForToken(SessionEntity session, IamUserEntity user, UserCategory category) {
+    private String resolveCustomerIdForToken(SessionEntity session, IamUserEntity user, UserCategory category, OrganizationUserEntity orgUser) {
         if (session.getProfileType() == ProfileType.ORG_USER) {
-            Long orgProfileId = session.getProfileId();
-            if (orgProfileId == null) {
+            if (orgUser == null) {
                 log.warn("Selected organization profile is missing.");
                 throw BaseException.badRequest();
             }
-
-            OrganizationUserEntity orgUser = orgRepo.findById(orgProfileId)
-                    .orElseThrow(() -> BaseException.badRequest("Organization user profile not found"));
-
             if (orgUser.getOrganizationParty() == null ||
                     orgUser.getOrganizationParty().getCoreCustomerId() == null ||
                     orgUser.getOrganizationParty().getCoreCustomerId().isBlank()) {
@@ -557,6 +558,32 @@ public class OidcTokenService {
         }
 
         return null;
+    }
+
+    private OrganizationUserEntity resolveSelectedOrganizationUser(SessionEntity session) {
+        if (session == null || session.getProfileType() != ProfileType.ORG_USER) {
+            return null;
+        }
+        Long orgProfileId = session.getProfileId();
+        if (orgProfileId == null) {
+            log.warn("Selected organization profile id is missing.");
+            throw BaseException.badRequest();
+        }
+        return orgRepo.findById(orgProfileId)
+                .orElseThrow(() -> BaseException.badRequest("Organization user profile not found"));
+    }
+
+    private boolean resolveIsOrganisationFlag(SessionEntity session, OrganizationUserEntity orgUser) {
+        if (session == null || session.getChannel() != Channel.INTERNET_BANKING) {
+            return false;
+        }
+        if (session.getProfileType() != ProfileType.ORG_USER || orgUser == null) {
+            return false;
+        }
+        if (orgUser.getOrganizationParty() == null || orgUser.getOrganizationParty().getOrganization() == null) {
+            return false;
+        }
+        return !Boolean.TRUE.equals(orgUser.getOrganizationParty().getOrganization().getSmeMode());
     }
 
     private record IssuedTokens(String accessToken,

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="pg-iam-074-mfa-policy-transaction-controls" author="codex">
+        <addColumn tableName="mfa_policy" schemaName="iam_service">
+            <column name="transaction_mfa_mode" type="VARCHAR(15)" defaultValue="OTP"/>
+            <column name="enforce_on_transaction_initiation" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="enforce_on_transaction_approval" type="BOOLEAN" defaultValueBoolean="true"/>
+            <column name="enforce_on_transaction_rejection" type="BOOLEAN" defaultValueBoolean="true"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

@@ -78,6 +78,7 @@ public class FinalizeLoginController {
                 .identifier(identifier)
                 .profileType(session.getProfileType())
                 .displayName(iamUserService.getIamUserFullName(session.getIamUser().getId()))
+                .isOrganisation(Boolean.FALSE)
                 .build());
     }
 

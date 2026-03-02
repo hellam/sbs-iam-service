@@ -8,6 +8,7 @@ import java.util.UUID;
 public class PasswordStepResponse {
     private boolean otpRequired;
     private boolean totpRequired;
+    private short otpLength;
     private boolean passwordChangeRequired;
     private boolean securityQuestionsRequired;
     private boolean profileSelectionRequired;

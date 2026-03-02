@@ -189,6 +189,10 @@ public class LoginFlowService {
             reqs.setFirstLogin(Boolean.TRUE.equals(map.get("firstLogin")));
             reqs.setTotpRequired(Boolean.TRUE.equals(map.get("totpRequired")));
             reqs.setOtpRequired(Boolean.TRUE.equals(map.get("otpRequired")));
+            Object otpLength = map.get("otpLength");
+            if (otpLength instanceof Number number) {
+                reqs.setOtpLength(number.shortValue());
+            }
             reqs.setPasswordExpired(Boolean.TRUE.equals(map.get("passwordExpired")));
             reqs.setQuestionsRequired(Boolean.TRUE.equals(map.get("questionsRequired")));
             reqs.setProfileSelectionRequired(Boolean.TRUE.equals(map.get("profileSelectionRequired")));

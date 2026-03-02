@@ -10,6 +10,8 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.MfaPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerAuthRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.EmployeeAuthRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.MfaPolicyRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,8 @@ public class MfaService {
     private final SecurityEventService securityEventService;
     private final LoginHistoryService loginHistoryService;
     private final MfaPolicyRepository mfaPolicyRepository;
+    private final CustomerAuthRepository customerAuthRepository;
+    private final EmployeeAuthRepository employeeAuthRepository;
 
     // Optional: if using OTP, trigger it here
     public String initiate(MfaInitRequest req, UUID flowId)  {
@@ -66,14 +70,53 @@ public class MfaService {
 
         securityEventService.onLoginSuccess(user, "MFA_SUCCESS", session);
         loginHistoryService.logMfaSuccess(user, identifier, session);
+        MfaVerifyResponse resp = new MfaVerifyResponse();
+
+        // If channel policy allows TOTP and the user is not enrolled yet, redirect to enrollment before profile/token stages.
+        if (shouldRequireTotpEnrollment(session, reqs)) {
+            loginFlowService.updateStage(session, LoginStage.TOTP_ENROLL_REQUIRED);
+            loginFlowService.extend(session);
+            resp.setTotpEnrollmentRequired(true);
+            resp.setNextIsProfileSelection(false);
+            resp.setReloginRequired(false);
+            return resp;
+        }
 
         loginFlowService.updateStage(session, LoginStage.MFA_OK);
         loginFlowService.extend(session);
-
-        MfaVerifyResponse resp = new MfaVerifyResponse();
+        resp.setTotpEnrollmentRequired(false);
+        resp.setReloginRequired(false);
         resp.setNextIsProfileSelection(loginFlowService.getRequirements(session).nextIsProfileSelection());
 
         return resp;
+    }
+
+    private boolean shouldRequireTotpEnrollment(SessionEntity session, LoginRequirements reqs) {
+        if (!reqs.isOtpRequired() || reqs.isTotpRequired()) {
+            return false;
+        }
+        MfaPolicyEntity policy = mfaPolicyRepository.findByChannel(session.getChannel());
+        if (policy == null || !Boolean.TRUE.equals(policy.getAllowTotp())) {
+            return false;
+        }
+
+        return switch (session.getChannel()) {
+            case INTERNET_BANKING, MOBILE_BANKING -> {
+                var auth = customerAuthRepository.findByIamUser(session.getIamUser());
+                yield auth == null
+                        || !Boolean.TRUE.equals(auth.getMfaEnabled())
+                        || auth.getMfaSecret() == null
+                        || auth.getMfaSecret().isBlank();
+            }
+            case BACKOFFICE -> {
+                var auth = employeeAuthRepository.findByIamUser(session.getIamUser());
+                yield auth == null
+                        || !Boolean.TRUE.equals(auth.getMfaEnabled())
+                        || auth.getMfaSecret() == null
+                        || auth.getMfaSecret().isBlank();
+            }
+            default -> false;
+        };
     }
 
     public MfaPolicyResponse getMfaPolicy(Channel channel) {
@@ -89,6 +132,10 @@ public class MfaService {
                 .maxVerifyAttempts(policy.getMaxVerifyAttempts())
                 .otpType(policy.getOtpType())
                 .otpLength(policy.getOtpLength())
+                .transactionMfaMode(policy.getTransactionMfaMode())
+                .enforceOnTransactionInitiation(policy.getEnforceOnTransactionInitiation())
+                .enforceOnTransactionApproval(policy.getEnforceOnTransactionApproval())
+                .enforceOnTransactionRejection(policy.getEnforceOnTransactionRejection())
                 .otpExpirySeconds(policy.getOtpExpirySeconds())
                 .enforceOnNewDevice(policy.getEnforceOnNewDevice())
                 .enforceOnNewLocation(policy.getEnforceOnNewLocation())

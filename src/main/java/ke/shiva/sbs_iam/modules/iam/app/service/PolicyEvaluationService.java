@@ -26,9 +26,10 @@ public class PolicyEvaluationService {
     private final PolicyService policyService;
 
     public LoginRequirements evaluateLoginRequirements(IamUserEntity user, Channel channel) {
-
-        boolean otpRequired = isOtpRequired(channel);
-        boolean totpRequired = isTotpRequired(user, channel);
+        MfaPolicyEntity mfaPolicy = policyService.getMfaPolicy(channel);
+        boolean totpRequired = isTotpRequired(user, channel, mfaPolicy);
+        boolean otpRequired = isOtpRequired(mfaPolicy, totpRequired);
+        short otpLength = resolveOtpLength(mfaPolicy);
         boolean passwordExpired = isPasswordExpired(user, channel);
         boolean firstLogin = isFirstLogin(user, channel);
         boolean questionsRequired = areSecurityQuestionsRequired(user, channel);
@@ -37,6 +38,7 @@ public class PolicyEvaluationService {
         return new LoginRequirements(
                 otpRequired,
                 totpRequired,
+                otpLength,
                 passwordExpired,
                 firstLogin,
                 questionsRequired,
@@ -47,7 +49,7 @@ public class PolicyEvaluationService {
     public ForgotPasswordRequirements evaluateForgotPasswordRequirements(IamUserEntity user, Channel channel) {
         boolean securityQuestionsRequired = areSecurityQuestionsRequiredForForgotPassword(user, channel);
         int securityQuestionsCount = getSecurityQuestionsCount(channel);
-        boolean mfaRequired = isOtpRequired(channel);
+        boolean mfaRequired = policyService.getMfaPolicy(channel) != null;
 
         return ForgotPasswordRequirements.builder()
                 .securityQuestionsRequired(securityQuestionsRequired)
@@ -56,27 +58,45 @@ public class PolicyEvaluationService {
                 .build();
     }
 
-    private boolean isOtpRequired(Channel channel) {
-        MfaPolicyEntity mfaPolicy = policyService.getMfaPolicy(channel);
-        return mfaPolicy != null;
+    /**
+     * TOTP-enrolled users should be challenged with TOTP only.
+     */
+    private boolean isOtpRequired(MfaPolicyEntity mfaPolicy, boolean totpRequired) {
+        return mfaPolicy != null && !totpRequired;
     }
 
-    private boolean isTotpRequired(IamUserEntity user, Channel channel) {
-        MfaPolicyEntity mfaPolicy = policyService.getMfaPolicy(channel);
-        if (mfaPolicy != null && mfaPolicy.getAllowTotp()) {
+    private boolean isTotpRequired(IamUserEntity user, Channel channel, MfaPolicyEntity mfaPolicy) {
+        if (mfaPolicy != null && Boolean.TRUE.equals(mfaPolicy.getAllowTotp())) {
             return switch (channel) {
                 case BACKOFFICE -> {
                     EmployeeAuthEntity empAuth = employeeAuthRepo.findByIamUser(user);
-                    yield empAuth.getMfaEnabled() != null && empAuth.getMfaEnabled();
+                    yield empAuth != null
+                            && Boolean.TRUE.equals(empAuth.getMfaEnabled())
+                            && empAuth.getMfaSecret() != null
+                            && !empAuth.getMfaSecret().isBlank();
                 }
                 case INTERNET_BANKING, MOBILE_BANKING -> {
                     CustomerAuthEntity custAuth = customerAuthRepo.findByIamUser(user);
-                    yield custAuth.getMfaEnabled() != null && custAuth.getMfaEnabled();
+                    yield custAuth != null
+                            && Boolean.TRUE.equals(custAuth.getMfaEnabled())
+                            && custAuth.getMfaSecret() != null
+                            && !custAuth.getMfaSecret().isBlank();
                 }
                 default -> false;
             };
         }
         return false;
+    }
+
+    private short resolveOtpLength(MfaPolicyEntity mfaPolicy) {
+        if (mfaPolicy == null || mfaPolicy.getOtpLength() == null) {
+            return 6;
+        }
+        short configured = mfaPolicy.getOtpLength();
+        if (configured < 4) {
+            return 4;
+        }
+        return (short) Math.min(configured, 8);
     }
 
     private boolean isPasswordExpired(IamUserEntity user, Channel channel) {

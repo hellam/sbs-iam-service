@@ -4,17 +4,18 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.EmployeeAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.CustomerProfileEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.MfaPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.NotificationChannel;
-import ke.shiva.sbs_iam.modules.iam.domain.enums.ProfileType;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.TransactionMfaAction;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.TransactionMfaMode;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerAuthRepository;
-import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerProfileRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.EmployeeAuthRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /**
  * Common MFA service that handles OTP/TOTP operations
@@ -29,6 +30,7 @@ public class CommonMfaService {
     private final TotpVerifier totpVerifier;
     private final CustomerAuthRepository customerAuthRepository;
     private final EmployeeAuthRepository employeeAuthRepository;
+    private final PolicyService policyService;
 
     /**
      * Send OTP for a session
@@ -60,27 +62,50 @@ public class CommonMfaService {
      * @param code The TOTP code to verify
      * @return true if valid, false otherwise
      */
-    public boolean verifyTotp(IamUserEntity user, String code) {
+    public boolean verifyTotp(IamUserEntity user, String code, Channel channel) {
         log.debug("Verifying TOTP for user ID: {}", user.getId());
-        return totpVerifier.verify(user, code);
+        return totpVerifier.verify(user, code, channel);
     }
 
     public boolean verify(SessionEntity session, String code) {
-        //MFA Only Allowed for Internet Banking and Backoffice Channels
-        boolean isTotpRequired = switch (session.getChannel()) {
-            case Channel.INTERNET_BANKING -> {
-                CustomerAuthEntity customerProfile = customerAuthRepository.findByIamUser(session.getIamUser());
-                yield customerProfile.getMfaEnabled();
+        return verify(session, code, null);
+    }
+
+    public boolean verify(SessionEntity session, String code, TransactionMfaAction action) {
+        MfaPolicyEntity mfaPolicy = policyService.getMfaPolicy(session.getChannel());
+
+        // Legacy path used by non-transactional flows where TOTP is inferred from enrollment.
+        if (action == null) {
+            boolean isTotpRequired = isTotpEnrolled(session, mfaPolicy);
+            if (!verifyMfaCode(session, code, isTotpRequired)) {
+                throw BaseException.badRequest("Invalid code");
             }
-            case Channel.BACKOFFICE -> {
-                EmployeeAuthEntity employeeProfile = employeeAuthRepository.findByIamUser(session.getIamUser());
-                yield employeeProfile.getMfaEnabled();
+            return true;
+        }
+
+        if (!isTransactionMfaRequired(mfaPolicy, action)) {
+            log.debug("Skipping transaction MFA verification for session={} action={}", session.getSessionId(), action);
+            return true;
+        }
+
+        if (!StringUtils.hasText(code)) {
+            throw BaseException.badRequest("MFA code is required.");
+        }
+
+        TransactionMfaMode mode = resolveTransactionMfaMode(mfaPolicy);
+        boolean valid = switch (mode) {
+            case TOTP -> {
+                if (mfaPolicy == null || !Boolean.TRUE.equals(mfaPolicy.getAllowTotp()) || !isTotpEnrolled(session, mfaPolicy)) {
+                    throw BaseException.badRequest("TOTP is required for this action. Please enable authenticator setup.");
+                }
+                yield verifyTotp(session.getIamUser(), code, session.getChannel());
             }
-            default -> false;
+            case OTP -> verifyOtp(session.getSessionId(), code);
         };
 
-        if(!verifyMfaCode(session, code, isTotpRequired))
+        if (!valid) {
             throw BaseException.badRequest("Invalid code");
+        }
         return true;
     }
 
@@ -94,7 +119,7 @@ public class CommonMfaService {
      */
     public boolean verifyMfaCode(SessionEntity session, String code, boolean isTotpRequired) {
         if (isTotpRequired) {
-            return verifyTotp(session.getIamUser(), code);
+            return verifyTotp(session.getIamUser(), code, session.getChannel());
         } else {
             return verifyOtp(session.getSessionId(), code);
         }
@@ -114,5 +139,45 @@ public class CommonMfaService {
             log.warn("Invalid MFA code for session: {}", session.getSessionId());
             throw BaseException.badRequest("Invalid code");
         }
+    }
+
+    private boolean isTransactionMfaRequired(MfaPolicyEntity mfaPolicy, TransactionMfaAction action) {
+        if (mfaPolicy == null || action == null) {
+            return true;
+        }
+        return switch (action) {
+            case INITIATION -> !Boolean.FALSE.equals(mfaPolicy.getEnforceOnTransactionInitiation());
+            case APPROVAL -> !Boolean.FALSE.equals(mfaPolicy.getEnforceOnTransactionApproval());
+            case REJECTION -> !Boolean.FALSE.equals(mfaPolicy.getEnforceOnTransactionRejection());
+        };
+    }
+
+    private TransactionMfaMode resolveTransactionMfaMode(MfaPolicyEntity mfaPolicy) {
+        if (mfaPolicy == null || mfaPolicy.getTransactionMfaMode() == null) {
+            return TransactionMfaMode.OTP;
+        }
+        return mfaPolicy.getTransactionMfaMode();
+    }
+
+    private boolean isTotpEnrolled(SessionEntity session, MfaPolicyEntity mfaPolicy) {
+        return switch (session.getChannel()) {
+            case INTERNET_BANKING, MOBILE_BANKING -> {
+                CustomerAuthEntity customerProfile = customerAuthRepository.findByIamUser(session.getIamUser());
+                yield mfaPolicy != null
+                        && Boolean.TRUE.equals(mfaPolicy.getAllowTotp())
+                        && customerProfile != null
+                        && Boolean.TRUE.equals(customerProfile.getMfaEnabled())
+                        && StringUtils.hasText(customerProfile.getMfaSecret());
+            }
+            case BACKOFFICE -> {
+                EmployeeAuthEntity employeeProfile = employeeAuthRepository.findByIamUser(session.getIamUser());
+                yield mfaPolicy != null
+                        && Boolean.TRUE.equals(mfaPolicy.getAllowTotp())
+                        && employeeProfile != null
+                        && Boolean.TRUE.equals(employeeProfile.getMfaEnabled())
+                        && StringUtils.hasText(employeeProfile.getMfaSecret());
+            }
+            default -> false;
+        };
     }
 }

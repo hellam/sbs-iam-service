@@ -61,6 +61,7 @@ public class PasswordAuthService {
         PasswordStepResponse resp = new PasswordStepResponse();
         resp.setOtpRequired(reqs.isOtpRequired());
         resp.setTotpRequired(reqs.isTotpRequired());
+        resp.setOtpLength(reqs.getOtpLength());
         resp.setPasswordChangeRequired(reqs.isPasswordChangeRequired());
         resp.setSecurityQuestionsRequired(reqs.isQuestionsRequired());
         resp.setProfileSelectionRequired(reqs.isProfileSelectionRequired());

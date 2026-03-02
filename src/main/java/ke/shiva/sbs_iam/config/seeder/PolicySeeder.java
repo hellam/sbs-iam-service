@@ -3,6 +3,7 @@ package ke.shiva.sbs_iam.config.seeder;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.*;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.system.FeatureEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.OtpType;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.TransactionMfaMode;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.policy.PolicyScope;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.policy.PolicyType;
@@ -157,6 +158,10 @@ public class PolicySeeder implements CommandLineRunner {
             mfaPolicy.setMaxVerifyAttempts((short) 3);
             mfaPolicy.setOtpType(OtpType.NUMERIC);
             mfaPolicy.setOtpLength((short) 6);
+            mfaPolicy.setTransactionMfaMode(TransactionMfaMode.OTP);
+            mfaPolicy.setEnforceOnTransactionInitiation(true);
+            mfaPolicy.setEnforceOnTransactionApproval(true);
+            mfaPolicy.setEnforceOnTransactionRejection(true);
             mfaPolicy.setOtpExpirySeconds(120);
             mfaPolicy.setOtpDailyLimit((short) 10);
             mfaPolicy.setEnforceOnNewDevice(true);

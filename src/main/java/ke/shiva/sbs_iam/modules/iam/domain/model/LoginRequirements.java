@@ -11,6 +11,7 @@ public class LoginRequirements {
 
     private boolean otpRequired;
     private boolean totpRequired;
+    private short otpLength = 6;
     private boolean passwordExpired;
     private boolean firstLogin;
     private boolean questionsRequired;
@@ -28,5 +29,4 @@ public class LoginRequirements {
         return profileSelectionRequired && !isPasswordChangeRequired() && !questionsRequired;
     }
 }
-
 

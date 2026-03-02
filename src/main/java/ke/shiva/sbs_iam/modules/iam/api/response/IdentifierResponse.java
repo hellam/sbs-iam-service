@@ -11,6 +11,7 @@ public class IdentifierResponse {
     private boolean passwordRequired;
     private boolean otpRequired;
     private boolean totpRequired;
+    private short otpLength;
     private boolean passwordExpired;
     private boolean firstLogin;
     private boolean securityQuestionsRequired;
@@ -20,4 +21,3 @@ public class IdentifierResponse {
     // IB-specific
     private boolean profileSelectionRequired;
 }
-

@@ -157,6 +157,12 @@ shiva:
         enabled: true                      # If true, new LOGIN_ACTIVE issuance revokes other active login sessions
     refresh:
       replay-grace-seconds: ${SHIVA_SECURITY_REFRESH_REPLAY_GRACE_SECONDS:5}  # short grace for same-device concurrent refresh
+    totp:
+      issuer: ${SHIVA_SECURITY_TOTP_ISSUER:Shiva Banking}
+      time-step-seconds: ${SHIVA_SECURITY_TOTP_TIME_STEP_SECONDS:30}
+      allowed-past-windows: ${SHIVA_SECURITY_TOTP_ALLOWED_PAST_WINDOWS:1}
+      allowed-future-windows: ${SHIVA_SECURITY_TOTP_ALLOWED_FUTURE_WINDOWS:0}
+      secret-bytes: ${SHIVA_SECURITY_TOTP_SECRET_BYTES:20}
 
   corebanking:
     enabled: true

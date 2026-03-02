@@ -3,6 +3,7 @@ package ke.shiva.sbs_iam.modules.iam.domain.entity.policy;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.OtpType;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.TransactionMfaMode;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.shivacorestarter.entity.BaseEntity;
 import lombok.Getter;
@@ -53,6 +54,23 @@ public class MfaPolicyEntity extends BaseEntity {
     @ColumnDefault("6")
     @Column(name = "otp_length")
     private Short otpLength;
+
+    @ColumnDefault("'OTP'")
+    @Column(name = "transaction_mfa_mode", length = 15)
+    @Enumerated(EnumType.STRING)
+    private TransactionMfaMode transactionMfaMode;
+
+    @ColumnDefault("true")
+    @Column(name = "enforce_on_transaction_initiation")
+    private Boolean enforceOnTransactionInitiation;
+
+    @ColumnDefault("true")
+    @Column(name = "enforce_on_transaction_approval")
+    private Boolean enforceOnTransactionApproval;
+
+    @ColumnDefault("true")
+    @Column(name = "enforce_on_transaction_rejection")
+    private Boolean enforceOnTransactionRejection;
 
     @ColumnDefault("120")
     @Column(name = "otp_expiry_seconds")

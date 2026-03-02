@@ -64,6 +64,8 @@ public class DevTokenService {
         String channel = request.getChannel() != null ? request.getChannel() : "INTERNET_BANKING";
         String category = request.getCategory() != null ? request.getCategory() : "CUSTOMER";
         long expirySeconds = request.getExpirySeconds() != null ? request.getExpirySeconds() : 3600L;
+        boolean isOrganisation = "INTERNET_BANKING".equalsIgnoreCase(channel)
+                && "ORG_USER".equalsIgnoreCase(request.getProfileType());
 
         // Validate and clamp expiry
         if (expirySeconds < 60) {
@@ -98,6 +100,7 @@ public class DevTokenService {
                 .claim("channel", channel)
                 .claim("category", category)
                 .claim("scope", scope)
+                .claim("is_organisation", isOrganisation)
                 .id(UUID.randomUUID().toString());
 
         // Add optional claims
@@ -127,6 +130,7 @@ public class DevTokenService {
         claimsMap.put("channel", channel);
         claimsMap.put("category", category);
         claimsMap.put("scope", scope);
+        claimsMap.put("is_organisation", isOrganisation);
         claimsMap.put("iat", issuedAt.toString());
         claimsMap.put("exp", expiresAt.toString());
 

@@ -9,6 +9,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.ProfileType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.SessionType;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.OrganizationUserRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository;
@@ -167,9 +168,10 @@ public class ProfileService {
     }
 
     private UserProfileResponse buildUserProfileResponse(SessionEntity session, String identifier) {
+        OrganizationUserEntity orgUser = null;
         String orgDisplayName = null;
         if (session.getProfileType() == ProfileType.ORG_USER) {
-            OrganizationUserEntity orgUser = organizationUserRepository.findById(session.getProfileId())
+            orgUser = organizationUserRepository.findById(session.getProfileId())
                     .orElseThrow(() -> BaseException.badRequest("Organization user profile not found"));
             orgDisplayName = orgUser.getOrgDisplayName();
         }
@@ -185,7 +187,22 @@ public class ProfileService {
                 .profileType(session.getProfileType())
                 .displayName(displayName)
                 .organization(orgDisplayName)
+                .isOrganisation(resolveIsOrganisation(session, orgUser))
                 .hasMultipleProfiles(multipleProfiles)
                 .build();
+    }
+
+    private Boolean resolveIsOrganisation(SessionEntity session, OrganizationUserEntity orgUser) {
+        if (session == null || session.getChannel() != Channel.INTERNET_BANKING) {
+            return Boolean.FALSE;
+        }
+        if (session.getProfileType() != ProfileType.ORG_USER || orgUser == null) {
+            return Boolean.FALSE;
+        }
+        if (orgUser.getOrganizationParty() == null || orgUser.getOrganizationParty().getOrganization() == null) {
+            return Boolean.FALSE;
+        }
+        // SME profiles are treated as non-organisation for approvals in internet banking.
+        return !Boolean.TRUE.equals(orgUser.getOrganizationParty().getOrganization().getSmeMode());
     }
 }

@@ -11,6 +11,7 @@ import lombok.Data;
 public class UserProfileResponse {
     private String displayName;
     private String organization;
+    private Boolean isOrganisation;
     private ProfileType profileType;
     private String identifier;
     private boolean hasMultipleProfiles;

@@ -42,7 +42,7 @@ public class InternalMfaController {
      public ResponseEntity<ApiResponse<Void>> verifyMfa(@Valid @RequestBody MfaVerifyRequest req, @FlowId UUID flowId) {
          SessionEntity session = loginFlowService.requireStage(flowId, LoginStage.ACTIVE);
 
-         commonMfaService.verify(session,  req.getCode());
+         commonMfaService.verify(session, req.getCode(), req.getAction());
          return ResponseBuilder.success("MFA verified successfully");
      }
 }
