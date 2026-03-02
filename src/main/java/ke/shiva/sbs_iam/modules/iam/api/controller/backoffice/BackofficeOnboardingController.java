@@ -3,8 +3,9 @@ package ke.shiva.sbs_iam.modules.iam.api.controller.backoffice;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeCustomerOnboardingRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeClientLookupRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeCustomerOnboardingRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationOnboardingRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerAccountResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerOnboardingResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerLookupResponse;
@@ -71,7 +72,7 @@ public class BackofficeOnboardingController {
     @Operation(summary = "Create Organization Onboarding")
     @PostMapping("/organizations")
     public ResponseEntity<ApiResponse<BackofficeOrganizationOnboardingResponse>> createOrganization(
-            @RequestBody @Valid BackofficeClientLookupRequest request) {
+            @RequestBody @Valid BackofficeOrganizationOnboardingRequest request) {
         BackofficeOrganizationOnboardingResponse response = onboardingService.createOrganization(
                 BackofficeOnboardingCommand.builder()
                         .clientId(request.getClientId())
