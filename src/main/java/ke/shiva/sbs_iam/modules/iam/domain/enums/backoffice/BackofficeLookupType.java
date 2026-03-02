@@ -1,4 +1,4 @@
-package ke.shiva.sbs_iam.modules.iam.api.request.backoffice;
+package ke.shiva.sbs_iam.modules.iam.domain.enums.backoffice;
 
 import java.util.Locale;
 

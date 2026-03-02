@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeClientLookupRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeCustomerOnboardingRequest;
-import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeLookupType;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.backoffice.BackofficeLookupType;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationOnboardingRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerAccountResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerOnboardingResponse;
@@ -15,7 +15,6 @@ import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizati
 import ke.shiva.sbs_iam.modules.iam.app.service.backoffice.BackofficeOnboardingService;
 import ke.shiva.sbs_iam.modules.iam.app.service.backoffice.dto.BackofficeOnboardingCommand;
 import ke.shiva.shivacorestarter.dto.ApiResponse;
-import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
