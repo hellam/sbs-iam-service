@@ -87,6 +87,28 @@ public class BackofficeEmployeesService {
         return PaginationUtil.toPaginatedResponse(dtoPage);
     }
 
+    @Transactional(readOnly = true)
+    public List<BackofficeEmployeeSummaryResponse> getEmployeesByClientId(String clientId) {
+        String normalizedClientId = StringUtils.hasText(clientId) ? clientId.trim() : null;
+        if (!StringUtils.hasText(normalizedClientId)) {
+            throw BaseException.badRequest("Client ID is required.");
+        }
+
+        List<EmployeeProfileEntity> employees =
+                employeeProfileRepository.findByIamUser_Party_CoreCustomerIdOrderByCreatedAtDesc(normalizedClientId);
+
+        Set<Long> branchIds = employees.stream()
+                .map(EmployeeProfileEntity::getBranch)
+                .filter(id -> id != null)
+                .collect(Collectors.toSet());
+        Map<Long, String> branchNamesById = branchRepository.findAllById(branchIds).stream()
+                .collect(Collectors.toMap(BranchEntity::getId, BranchEntity::getBranchName, (existing, ignored) -> existing));
+
+        return employees.stream()
+                .map(entity -> toResponse(entity, branchNamesById))
+                .toList();
+    }
+
     private BackofficeEmployeeSummaryResponse toResponse(EmployeeProfileEntity profile, Map<Long, String> branchNamesById) {
         IamUserEntity iamUser = profile.getIamUser();
         PartyEntity party = iamUser != null ? iamUser.getParty() : null;

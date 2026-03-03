@@ -3,7 +3,9 @@ package ke.shiva.sbs_iam.modules.iam.api.controller.backoffice;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeEmployeeSummaryResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationSummaryResponse;
+import ke.shiva.sbs_iam.modules.iam.app.service.backoffice.BackofficeEmployeesService;
 import ke.shiva.sbs_iam.modules.iam.app.service.backoffice.BackofficeOrganizationsService;
 import ke.shiva.shivacorestarter.dto.ApiResponse;
 import ke.shiva.shivacorestarter.dto.PaginatedResponse;
@@ -11,8 +13,11 @@ import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/organizations")
@@ -21,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class BackofficeOrganizationsController {
 
     private final BackofficeOrganizationsService backofficeOrganizationsService;
+    private final BackofficeEmployeesService backofficeEmployeesService;
 
     @Operation(summary = "List organizations", description = "Returns a paginated organization list for backoffice")
     @GetMapping
@@ -28,5 +34,16 @@ public class BackofficeOrganizationsController {
             HttpServletRequest request
     ) {
         return ResponseBuilder.success("Organizations retrieved", backofficeOrganizationsService.getOrganizations(request));
+    }
+
+    @Operation(summary = "List organization users", description = "Returns users linked to an organization client ID")
+    @GetMapping("/{clientId}/users")
+    public ResponseEntity<ApiResponse<List<BackofficeEmployeeSummaryResponse>>> getOrganizationUsers(
+            @PathVariable String clientId
+    ) {
+        return ResponseBuilder.success(
+                "Organization users retrieved",
+                backofficeEmployeesService.getEmployeesByClientId(clientId)
+        );
     }
 }
