@@ -2,9 +2,11 @@ package ke.shiva.sbs_iam.modules.iam.app.service.backoffice;
 
 import jakarta.servlet.http.HttpServletRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeEmployeeSummaryResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.UserContact;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.EmployeeProfileEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PartyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PersonEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.ContactType;
@@ -12,6 +14,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.employee.EmploymentStatus;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.party.PartyType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.EmployeeProfileRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.OrganizationUserRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.UserContactRepository;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.BranchEntity;
 import ke.shiva.sbs_iam.modules.reference.infra.repository.BranchRepository;
@@ -34,6 +37,7 @@ import java.util.stream.Collectors;
 public class BackofficeEmployeesService {
 
     private final EmployeeProfileRepository employeeProfileRepository;
+    private final OrganizationUserRepository organizationUserRepository;
     private final UserContactRepository userContactRepository;
     private final BranchRepository branchRepository;
 
@@ -88,24 +92,17 @@ public class BackofficeEmployeesService {
     }
 
     @Transactional(readOnly = true)
-    public List<BackofficeEmployeeSummaryResponse> getEmployeesByClientId(String clientId) {
+    public List<BackofficeOrganizationUserResponse> getOrganizationUsersByClientId(String clientId) {
         String normalizedClientId = StringUtils.hasText(clientId) ? clientId.trim() : null;
         if (!StringUtils.hasText(normalizedClientId)) {
             throw BaseException.badRequest("Client ID is required.");
         }
 
-        List<EmployeeProfileEntity> employees =
-                employeeProfileRepository.findByIamUser_Party_CoreCustomerIdOrderByCreatedAtDesc(normalizedClientId);
+        List<OrganizationUserEntity> organizationUsers =
+                organizationUserRepository.findByOrganizationParty_CoreCustomerIdOrderByCreatedAtDesc(normalizedClientId);
 
-        Set<Long> branchIds = employees.stream()
-                .map(EmployeeProfileEntity::getBranch)
-                .filter(id -> id != null)
-                .collect(Collectors.toSet());
-        Map<Long, String> branchNamesById = branchRepository.findAllById(branchIds).stream()
-                .collect(Collectors.toMap(BranchEntity::getId, BranchEntity::getBranchName, (existing, ignored) -> existing));
-
-        return employees.stream()
-                .map(entity -> toResponse(entity, branchNamesById))
+        return organizationUsers.stream()
+                .map(this::toOrganizationUserResponse)
                 .toList();
     }
 
@@ -178,5 +175,58 @@ public class BackofficeEmployeesService {
             }
         }
         return null;
+    }
+
+    private BackofficeOrganizationUserResponse toOrganizationUserResponse(OrganizationUserEntity entity) {
+        IamUserEntity iamUser = entity.getIamUser();
+        PartyEntity party = iamUser != null ? iamUser.getParty() : null;
+        PersonEntity person = party != null ? party.getPerson() : null;
+
+        String mobile = null;
+        String email = null;
+
+        if (iamUser != null && iamUser.getContacts() != null) {
+            mobile = iamUser.getContacts().stream()
+                    .filter(contact -> contact.getContactType() == ContactType.PHONE)
+                    .filter(UserContact::isPrimary)
+                    .map(UserContact::getContactValue)
+                    .findFirst()
+                    .orElseGet(() -> iamUser.getContacts().stream()
+                            .filter(contact -> contact.getContactType() == ContactType.PHONE)
+                            .map(UserContact::getContactValue)
+                            .findFirst()
+                            .orElse(null));
+
+            email = iamUser.getContacts().stream()
+                    .filter(contact -> contact.getContactType() == ContactType.EMAIL)
+                    .filter(UserContact::isPrimary)
+                    .map(UserContact::getContactValue)
+                    .findFirst()
+                    .orElseGet(() -> iamUser.getContacts().stream()
+                            .filter(contact -> contact.getContactType() == ContactType.EMAIL)
+                            .map(UserContact::getContactValue)
+                            .findFirst()
+                            .orElse(null));
+        }
+
+        String roleName = entity.getOrgRole() != null ? entity.getOrgRole().getName() : null;
+        String taskRole = entity.getOrgRole() != null && entity.getOrgRole().getTaskRole() != null
+                ? entity.getOrgRole().getTaskRole().name()
+                : null;
+
+        return BackofficeOrganizationUserResponse.builder()
+                .organizationUserId(entity.getId())
+                .iamUserId(iamUser != null ? iamUser.getId() : null)
+                .clientId(entity.getOrganizationParty() != null ? entity.getOrganizationParty().getCoreCustomerId() : null)
+                .fullName(person != null ? person.getFullName() : null)
+                .mobile(mobile)
+                .email(email)
+                .roleName(roleName)
+                .taskRole(taskRole)
+                .primary(entity.getIsPrimary())
+                .status(entity.getStatus())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
     }
 }

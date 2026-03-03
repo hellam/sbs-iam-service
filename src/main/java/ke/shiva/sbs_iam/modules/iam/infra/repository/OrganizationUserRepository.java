@@ -35,4 +35,14 @@ public interface OrganizationUserRepository extends JpaRepository<OrganizationUs
     List<Long> findActiveIamUserIdsByCustomerAndTaskRoles(@Param("customerId") String customerId,
                                                           @Param("taskRoles") Collection<TaskRole> taskRoles,
                                                           @Param("iamStatus") IamStatus iamStatus);
+
+    @EntityGraph(attributePaths = {
+            "iamUser",
+            "iamUser.party",
+            "iamUser.party.person",
+            "iamUser.contacts",
+            "orgRole",
+            "organizationParty"
+    })
+    List<OrganizationUserEntity> findByOrganizationParty_CoreCustomerIdOrderByCreatedAtDesc(String coreCustomerId);
 }
