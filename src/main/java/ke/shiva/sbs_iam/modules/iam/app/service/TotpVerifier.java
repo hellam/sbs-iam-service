@@ -54,7 +54,7 @@ public class TotpVerifier {
             return false;
         }
 
-        String secret = resolveUserSecret(user);
+        String secret = resolveUserSecret(user, channel);
         if (!StringUtils.hasText(secret)) {
             return false;
         }
@@ -149,12 +149,32 @@ public class TotpVerifier {
         return generateCodeForCounter(secret, timeCounter, digits);
     }
 
-    private String resolveUserSecret(IamUserEntity user) {
+    private String resolveUserSecret(IamUserEntity user, Channel channel) {
+        if (channel == Channel.BACKOFFICE) {
+            return resolveEmployeeSecret(user);
+        }
+
+        if (channel == Channel.INTERNET_BANKING || channel == Channel.MOBILE_BANKING) {
+            return resolveCustomerSecret(user);
+        }
+
+        // Backward-compatible fallback for unsupported/null channels.
+        String customerSecret = resolveCustomerSecret(user);
+        if (StringUtils.hasText(customerSecret)) {
+            return customerSecret;
+        }
+        return resolveEmployeeSecret(user);
+    }
+
+    private String resolveCustomerSecret(IamUserEntity user) {
         CustomerAuthEntity customerAuth = customerAuthRepository.findByIamUser(user);
         if (customerAuth != null && Boolean.TRUE.equals(customerAuth.getMfaEnabled()) && StringUtils.hasText(customerAuth.getMfaSecret())) {
             return decryptIfEncrypted(customerAuth.getMfaSecret());
         }
+        return null;
+    }
 
+    private String resolveEmployeeSecret(IamUserEntity user) {
         EmployeeAuthEntity employeeAuth = employeeAuthRepository.findByIamUser(user);
         if (employeeAuth != null && Boolean.TRUE.equals(employeeAuth.getMfaEnabled()) && StringUtils.hasText(employeeAuth.getMfaSecret())) {
             return decryptIfEncrypted(employeeAuth.getMfaSecret());
