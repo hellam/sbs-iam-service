@@ -1,8 +1,11 @@
 package ke.shiva.sbs_iam.modules.iam.app.service.backoffice;
 
 import jakarta.servlet.http.HttpServletRequest;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeAuditTrailResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeEmployeeDetailResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeEmployeeSummaryResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserResponse;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.IamAuditLogEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.UserContact;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.EmployeeProfileEntity;
@@ -14,6 +17,8 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.employee.EmploymentStatus;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.party.PartyType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.EmployeeProfileRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.IamAuditLogRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.IamUserRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.OrganizationUserRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.UserContactRepository;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.BranchEntity;
@@ -27,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +46,8 @@ public class BackofficeEmployeesService {
     private final OrganizationUserRepository organizationUserRepository;
     private final UserContactRepository userContactRepository;
     private final BranchRepository branchRepository;
+    private final IamUserRepository iamUserRepository;
+    private final IamAuditLogRepository iamAuditLogRepository;
 
     @Transactional(readOnly = true)
     public PaginatedResponse<BackofficeEmployeeSummaryResponse> getEmployees(HttpServletRequest request) {
@@ -106,22 +114,51 @@ public class BackofficeEmployeesService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public BackofficeEmployeeDetailResponse getEmployee(String clientId) {
+        EmployeeProfileEntity profile = getRequiredEmployeeProfile(clientId);
+        return toDetailResponse(profile);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BackofficeAuditTrailResponse> getEmployeeAuditTrail(String clientId) {
+        EmployeeProfileEntity profile = getRequiredEmployeeProfile(clientId);
+        IamUserEntity iamUser = profile.getIamUser();
+        if (iamUser == null || iamUser.getId() == null) {
+            return List.of();
+        }
+
+        return iamAuditLogRepository.findTop100ByIamUser_IdOrderByCreatedAtDesc(iamUser.getId()).stream()
+                .map(this::toAuditTrailResponse)
+                .toList();
+    }
+
+    @Transactional
+    public BackofficeEmployeeDetailResponse updateEmployeeStatus(String clientId, IamStatus status) {
+        if (status == null) {
+            throw BaseException.badRequest("status is required.");
+        }
+
+        EmployeeProfileEntity profile = getRequiredEmployeeProfile(clientId);
+        IamUserEntity iamUser = profile.getIamUser();
+        if (iamUser == null) {
+            throw BaseException.notFound("IAM user not found for employee.");
+        }
+
+        iamUser.setStatus(status);
+        iamUser.setUpdatedAt(OffsetDateTime.now());
+        iamUserRepository.save(iamUser);
+
+        return toDetailResponse(profile);
+    }
+
     private BackofficeEmployeeSummaryResponse toResponse(EmployeeProfileEntity profile, Map<Long, String> branchNamesById) {
         IamUserEntity iamUser = profile.getIamUser();
         PartyEntity party = iamUser != null ? iamUser.getParty() : null;
         PersonEntity person = party != null ? party.getPerson() : null;
 
-        String mobile = iamUser != null
-                ? userContactRepository.findByIamUserAndContactTypeAndPrimaryIsTrue(iamUser, ContactType.PHONE)
-                .map(UserContact::getContactValue)
-                .orElse(null)
-                : null;
-
-        String email = iamUser != null
-                ? userContactRepository.findByIamUserAndContactTypeAndPrimaryIsTrue(iamUser, ContactType.EMAIL)
-                .map(UserContact::getContactValue)
-                .orElse(null)
-                : null;
+        String mobile = resolvePrimaryContact(iamUser, ContactType.PHONE);
+        String email = resolvePrimaryContact(iamUser, ContactType.EMAIL);
 
         return BackofficeEmployeeSummaryResponse.builder()
                 .iamUserId(iamUser != null ? iamUser.getId() : null)
@@ -138,6 +175,57 @@ public class BackofficeEmployeesService {
                 .status(iamUser != null && iamUser.getStatus() != null ? iamUser.getStatus().name() : null)
                 .createdAt(profile.getCreatedAt())
                 .updatedAt(profile.getUpdatedAt())
+                .build();
+    }
+
+    private BackofficeEmployeeDetailResponse toDetailResponse(EmployeeProfileEntity profile) {
+        IamUserEntity iamUser = profile.getIamUser();
+        PartyEntity party = iamUser != null ? iamUser.getParty() : null;
+        PersonEntity person = party != null ? party.getPerson() : null;
+
+        Map<Long, String> branchNameMap = branchRepository.findAllById(
+                profile.getBranch() == null ? Set.<Long>of() : Set.of(profile.getBranch())
+        ).stream().collect(Collectors.toMap(BranchEntity::getId, BranchEntity::getBranchName, (existing, ignored) -> existing));
+
+        return BackofficeEmployeeDetailResponse.builder()
+                .iamUserId(iamUser != null ? iamUser.getId() : null)
+                .clientId(party != null ? party.getCoreCustomerId() : null)
+                .fullName(person != null ? person.getFullName() : null)
+                .firstName(person != null ? person.getFirstName() : null)
+                .lastName(person != null ? person.getLastName() : null)
+                .nationalId(person != null ? person.getNationalId() : null)
+                .dateOfBirth(person != null ? person.getDob() : null)
+                .gender(person != null ? person.getGender() : null)
+                .city(person != null ? person.getCity() : null)
+                .address(person != null ? person.getAddress() : null)
+                .countryCode(person != null && person.getCountryCode() != null ? person.getCountryCode().getCountryCode() : null)
+                .mobile(resolvePrimaryContact(iamUser, ContactType.PHONE))
+                .email(resolvePrimaryContact(iamUser, ContactType.EMAIL))
+                .status(iamUser != null && iamUser.getStatus() != null ? iamUser.getStatus().name() : null)
+                .staffNo(profile.getStaffNo())
+                .jobTitle(profile.getJobTitle())
+                .department(profile.getDepartment())
+                .employmentStatus(profile.getEmploymentStatus() != null ? profile.getEmploymentStatus().name() : null)
+                .branchId(profile.getBranch())
+                .branchName(profile.getBranch() != null ? branchNameMap.get(profile.getBranch()) : null)
+                .lastLoginAt(iamUser != null ? iamUser.getLastLoginAt() : null)
+                .createdAt(profile.getCreatedAt())
+                .updatedAt(profile.getUpdatedAt())
+                .build();
+    }
+
+    private BackofficeAuditTrailResponse toAuditTrailResponse(IamAuditLogEntity entry) {
+        return BackofficeAuditTrailResponse.builder()
+                .id(entry.getId())
+                .eventType(entry.getEventType())
+                .userCategory(entry.getUserCategory())
+                .channel(entry.getChannel())
+                .ipAddress(entry.getIpAddress())
+                .deviceId(entry.getDeviceId())
+                .entityType(entry.getEntityType())
+                .entityId(entry.getEntityId())
+                .createdAt(entry.getCreatedAt())
+                .metadata(entry.getMetadata())
                 .build();
     }
 
@@ -175,6 +263,33 @@ public class BackofficeEmployeesService {
             }
         }
         return null;
+    }
+
+    private EmployeeProfileEntity getRequiredEmployeeProfile(String clientId) {
+        String normalizedClientId = StringUtils.hasText(clientId) ? clientId.trim() : null;
+        if (!StringUtils.hasText(normalizedClientId)) {
+            throw BaseException.badRequest("Client ID is required.");
+        }
+
+        EmployeeProfileEntity profile = employeeProfileRepository.findFirstByIamUser_Party_CoreCustomerId(normalizedClientId)
+                .orElseThrow(() -> BaseException.notFound("Employee " + normalizedClientId + " not found."));
+
+        IamUserEntity iamUser = profile.getIamUser();
+        PartyEntity party = iamUser != null ? iamUser.getParty() : null;
+        if (party == null || party.getPartyType() != PartyType.PERSON) {
+            throw BaseException.notFound("Employee " + normalizedClientId + " is not a person profile.");
+        }
+
+        return profile;
+    }
+
+    private String resolvePrimaryContact(IamUserEntity iamUser, ContactType type) {
+        if (iamUser == null || type == null) {
+            return null;
+        }
+        return userContactRepository.findByIamUserAndContactTypeAndPrimaryIsTrue(iamUser, type)
+                .map(UserContact::getContactValue)
+                .orElse(null);
     }
 
     private BackofficeOrganizationUserResponse toOrganizationUserResponse(OrganizationUserEntity entity) {
