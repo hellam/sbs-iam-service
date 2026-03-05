@@ -12,6 +12,7 @@ import java.util.List;
 @Builder
 public class BackofficeMfaPolicyDetailsResponse {
     private Channel channel;
+    private List<String> availableNotificationChannels;
     private List<String> allowedNotificationChannels;
     private Boolean allowTotp;
     private Short maxVerifyAttempts;

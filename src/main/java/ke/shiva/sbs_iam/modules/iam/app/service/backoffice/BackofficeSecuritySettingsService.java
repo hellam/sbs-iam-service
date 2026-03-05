@@ -10,6 +10,7 @@ import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeSecuritySe
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.MfaPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PasswordPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.SecurityQuestionPolicyEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.NotificationChannel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.MfaPolicyRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.PasswordPolicyRepository;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -292,6 +294,7 @@ public class BackofficeSecuritySettingsService {
     private BackofficeMfaPolicyDetailsResponse toMfaPolicyResponse(MfaPolicyEntity policy) {
         return BackofficeMfaPolicyDetailsResponse.builder()
                 .channel(policy.getChannel())
+                .availableNotificationChannels(Arrays.stream(NotificationChannel.values()).map(Enum::name).toList())
                 .allowedNotificationChannels(policy.getAllowedNotificationChannels())
                 .allowTotp(policy.getAllowTotp())
                 .maxVerifyAttempts(policy.getMaxVerifyAttempts())
