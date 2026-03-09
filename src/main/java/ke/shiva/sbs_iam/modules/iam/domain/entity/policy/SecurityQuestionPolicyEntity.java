@@ -30,35 +30,35 @@ public class SecurityQuestionPolicyEntity extends BaseEntity {
 
     @ColumnDefault("false")
     @Column(name = "enabled")
-    private Boolean enabled;
+    private Boolean enabled = false;
 
     @ColumnDefault("0")
     @Column(name = "min_questions")
-    private Short minQuestions;
+    private Short minQuestions = (short) 0;
 
     @ColumnDefault("0")
     @Column(name = "max_questions")
-    private Short maxQuestions;
+    private Short maxQuestions = (short) 0;
 
     @ColumnDefault("false")
     @Column(name = "mandatory")
-    private Boolean mandatory;
+    private Boolean mandatory = false;
 
     @ColumnDefault("false")
     @Column(name = "ask_on_forgot_password")
-    private Boolean askOnForgotPassword;
+    private Boolean askOnForgotPassword = false;
 
     @ColumnDefault("false")
     @Column(name = "ask_on_sensitive_action")
-    private Boolean askOnSensitiveAction;
+    private Boolean askOnSensitiveAction = false;
 
     @ColumnDefault("true")
     @Column(name = "is_active")
-    private Boolean isActive;
+    private Boolean isActive = true;
 
     @NotNull
     @ColumnDefault("3")
     @Column(name = "max_verify_attempts", nullable = false)
-    private Short maxVerifyAttempts;
+    private Short maxVerifyAttempts = (short) 3;
 
 }

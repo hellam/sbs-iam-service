@@ -86,16 +86,22 @@ public class PolicySeeder implements CommandLineRunner {
 
         PolicyEntity policy = upsertPolicy(PolicyType.PIN_POLICY, channel);
 
-        // Check if PinPolicyEntity already exists for this channel
-        boolean pinPolicyExists = pinPolicyRepository.findAll().stream()
-                .anyMatch(pp -> pp.getPolicy().getId().equals(policy.getId()) && pp.getChannel() == channel);
+        Optional<PinPolicyEntity> existingPinPolicy =
+                pinPolicyRepository.findByPolicyIdAndChannel(policy.getId(), channel);
 
-        if (!pinPolicyExists) {
+        if (existingPinPolicy.isEmpty()) {
             log.info("Creating PinPolicyEntity for channel: {}", channel);
             PinPolicyEntity pinPolicy = new PinPolicyEntity();
             pinPolicy.setPolicy(policy);
             pinPolicy.setChannel(channel);
-            // Use default values from entity
+            setPinPolicyDefaults(pinPolicy);
+            pinPolicyRepository.save(pinPolicy);
+            return;
+        }
+
+        PinPolicyEntity pinPolicy = existingPinPolicy.get();
+        if (setMissingPinPolicyDefaults(pinPolicy)) {
+            log.info("Backfilling missing PIN policy defaults for channel: {}", channel);
             pinPolicyRepository.save(pinPolicy);
         } else {
             log.info("PinPolicyEntity for channel {} already exists", channel);
@@ -177,21 +183,131 @@ public class PolicySeeder implements CommandLineRunner {
 
         PolicyEntity policy = upsertPolicy(PolicyType.SEC_QN_POLICY, channel);
 
-        // Check if SecurityQuestionPolicyEntity already exists for this channel
-        boolean sqPolicyExists = securityQuestionPolicyRepository.findAll().stream()
-                .anyMatch(sqp -> sqp.getPolicy().getId().equals(policy.getId()) && sqp.getChannel() == channel);
+        Optional<SecurityQuestionPolicyEntity> existingSqPolicy =
+                securityQuestionPolicyRepository.findByPolicyIdAndChannel(policy.getId(), channel);
 
-        if (!sqPolicyExists) {
+        if (existingSqPolicy.isEmpty()) {
             log.info("Creating SecurityQuestionPolicyEntity for channel: {}", channel);
             SecurityQuestionPolicyEntity sqPolicy = new SecurityQuestionPolicyEntity();
             sqPolicy.setPolicy(policy);
             sqPolicy.setChannel(channel);
-            sqPolicy.setMaxVerifyAttempts(Short.valueOf("3"));
-            // Use default values
+            setSecurityQuestionPolicyDefaults(sqPolicy);
+            securityQuestionPolicyRepository.save(sqPolicy);
+            return;
+        }
+
+        SecurityQuestionPolicyEntity sqPolicy = existingSqPolicy.get();
+        if (setMissingSecurityQuestionPolicyDefaults(sqPolicy)) {
+            log.info("Backfilling missing Security Question policy defaults for channel: {}", channel);
             securityQuestionPolicyRepository.save(sqPolicy);
         } else {
             log.info("SecurityQuestionPolicyEntity for channel {} already exists", channel);
         }
+    }
+
+    private void setPinPolicyDefaults(PinPolicyEntity pinPolicy) {
+        pinPolicy.setMinLength((short) 4);
+        pinPolicy.setMaxLength((short) 6);
+        pinPolicy.setPinHistoryCount((short) 5);
+        pinPolicy.setBlockSequential(true);
+        pinPolicy.setBlockRepeating(true);
+        pinPolicy.setMaxFailedAttempts((short) 5);
+        pinPolicy.setLockoutMinutes((short) 30);
+        pinPolicy.setHashAlgorithm("bcrypt");
+        pinPolicy.setHashCost((short) 10);
+    }
+
+    private boolean setMissingPinPolicyDefaults(PinPolicyEntity pinPolicy) {
+        boolean updated = false;
+
+        if (pinPolicy.getMinLength() == null) {
+            pinPolicy.setMinLength((short) 4);
+            updated = true;
+        }
+        if (pinPolicy.getMaxLength() == null) {
+            pinPolicy.setMaxLength((short) 6);
+            updated = true;
+        }
+        if (pinPolicy.getPinHistoryCount() == null) {
+            pinPolicy.setPinHistoryCount((short) 5);
+            updated = true;
+        }
+        if (pinPolicy.getBlockSequential() == null) {
+            pinPolicy.setBlockSequential(true);
+            updated = true;
+        }
+        if (pinPolicy.getBlockRepeating() == null) {
+            pinPolicy.setBlockRepeating(true);
+            updated = true;
+        }
+        if (pinPolicy.getMaxFailedAttempts() == null) {
+            pinPolicy.setMaxFailedAttempts((short) 5);
+            updated = true;
+        }
+        if (pinPolicy.getLockoutMinutes() == null) {
+            pinPolicy.setLockoutMinutes((short) 30);
+            updated = true;
+        }
+        if (pinPolicy.getHashAlgorithm() == null || pinPolicy.getHashAlgorithm().isBlank()) {
+            pinPolicy.setHashAlgorithm("bcrypt");
+            updated = true;
+        }
+        if (pinPolicy.getHashCost() == null) {
+            pinPolicy.setHashCost((short) 10);
+            updated = true;
+        }
+
+        return updated;
+    }
+
+    private void setSecurityQuestionPolicyDefaults(SecurityQuestionPolicyEntity sqPolicy) {
+        sqPolicy.setEnabled(false);
+        sqPolicy.setMinQuestions((short) 0);
+        sqPolicy.setMaxQuestions((short) 0);
+        sqPolicy.setMandatory(false);
+        sqPolicy.setAskOnForgotPassword(false);
+        sqPolicy.setAskOnSensitiveAction(false);
+        sqPolicy.setIsActive(true);
+        sqPolicy.setMaxVerifyAttempts((short) 3);
+    }
+
+    private boolean setMissingSecurityQuestionPolicyDefaults(SecurityQuestionPolicyEntity sqPolicy) {
+        boolean updated = false;
+
+        if (sqPolicy.getEnabled() == null) {
+            sqPolicy.setEnabled(false);
+            updated = true;
+        }
+        if (sqPolicy.getMinQuestions() == null) {
+            sqPolicy.setMinQuestions((short) 0);
+            updated = true;
+        }
+        if (sqPolicy.getMaxQuestions() == null) {
+            sqPolicy.setMaxQuestions((short) 0);
+            updated = true;
+        }
+        if (sqPolicy.getMandatory() == null) {
+            sqPolicy.setMandatory(false);
+            updated = true;
+        }
+        if (sqPolicy.getAskOnForgotPassword() == null) {
+            sqPolicy.setAskOnForgotPassword(false);
+            updated = true;
+        }
+        if (sqPolicy.getAskOnSensitiveAction() == null) {
+            sqPolicy.setAskOnSensitiveAction(false);
+            updated = true;
+        }
+        if (sqPolicy.getIsActive() == null) {
+            sqPolicy.setIsActive(true);
+            updated = true;
+        }
+        if (sqPolicy.getMaxVerifyAttempts() == null) {
+            sqPolicy.setMaxVerifyAttempts((short) 3);
+            updated = true;
+        }
+
+        return updated;
     }
 
     private PolicyEntity upsertPolicy(PolicyType policyType, Channel channel) {

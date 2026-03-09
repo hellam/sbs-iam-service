@@ -164,29 +164,10 @@ shiva:
       allowed-future-windows: ${SHIVA_SECURITY_TOTP_ALLOWED_FUTURE_WINDOWS:0}
       secret-bytes: ${SHIVA_SECURITY_TOTP_SECRET_BYTES:20}
 
-  corebanking:
-    enabled: true
-    provider: BRNET  # or MOCK for testing
-    timeout-seconds: 30
-    cache:
-      enabled: false
-      client-details-ttl-minutes: 30
-      account-details-ttl-minutes: 30
-      account-balance-ttl-minutes: 5
-
-    # BR.NET Configuration
-    brnet:
-      connection-string: ${BRNET_CONNECTION_STRING}
-      base-url: ${BRNET_BASE_URL}
-      action: http://www.craftsilicon.com/banking/core
-      token-cache-ttl-minutes: 0
-      token-refresh-threshold-minutes: 1
-      request-timeout-seconds: 30
-      enable-logging: true
   #Service Configuration
   services:
     account:
-      url: http://localhost:9002/api/v1/accounts
+      url: ${ACCOUNTS_SERVICE_URL:http://localhost:9002/api/v1/accounts}
   # Notification Client Configuration
   notification:
     client:
@@ -197,8 +178,6 @@ shiva:
         enabled: false
       enabled: true
 
-# Also enable DEBUG logging for the BRNetClient
 logging:
   level:
-    ke.shiva.corebanking.provider.brnet.BRNetClient: DEBUG
     ke.shiva.client.notification: DEBUG

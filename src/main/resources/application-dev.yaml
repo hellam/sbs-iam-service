@@ -34,13 +34,13 @@ seeder:
   employee:
     enabled: true  # Enable employee seeder to create admin user
   customer:
-    enabled: true  # Enable customer seeder to create internet banking user
+    enabled: false # Disabled: customers should be onboarded via onboarding flow
   policy:
     enabled: true
   security-question:
     enabled: true
   corporate:
-    enabled: true
+    enabled: false # Disabled: organizations and organization users should be onboarded
     default-password: "ChangeMe123!"
     reset-password-on-run: true
     organization:
