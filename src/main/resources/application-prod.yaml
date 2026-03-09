@@ -26,9 +26,9 @@ security:
   allowed-domains:
     map:
       BACKOFFICE:
-        - "backoffice.gibbank.so"
-        - "admin.gibbank.so"
+        - "${BACKOFFICE_PUBLIC_HOST}"
+        - "${BACKOFFICE_PUBLIC_HOST_ALIAS:${BACKOFFICE_PUBLIC_HOST}}"
       INTERNET_BANKING:
-        - "ib.gibbank.so"
+        - "${INTERNET_BANKING_PUBLIC_HOST}"
       MOBILE_BANKING:
-        - "mobile.gibbank.so"
+        - "${MOBILE_BANKING_PUBLIC_HOST:${INTERNET_BANKING_PUBLIC_HOST}}"
