@@ -117,6 +117,18 @@ public class BackofficeOnboardingService {
                 .toList();
     }
 
+    public BackofficeCustomerDetailsResponse fetchCustomerCoreDetails(String clientId) {
+        return ensureCustomerClientAllowed(clientId);
+    }
+
+    public BackofficeCustomerDetailsResponse fetchEmployeeCoreDetails(String clientId) {
+        return ensureEmployeeClientAllowed(clientId);
+    }
+
+    public BackofficeCustomerDetailsResponse fetchOrganizationCoreDetails(String clientId) {
+        return ensureOrganizationClientAllowed(clientId);
+    }
+
     @Transactional
     public BackofficeCustomerOnboardingResponse createCustomer(BackofficeOnboardingCommand request) {
         validateCustomer(request.getClientId());

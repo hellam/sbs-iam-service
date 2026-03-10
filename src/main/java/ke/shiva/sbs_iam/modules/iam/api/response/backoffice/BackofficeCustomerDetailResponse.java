@@ -29,6 +29,8 @@ public class BackofficeCustomerDetailResponse {
     private String mobile;
     private String email;
     private String status;
+    private Boolean accessLocked;
+    private Boolean mfaTotpEnabled;
     private Boolean verified;
     private String segment;
     private String language;

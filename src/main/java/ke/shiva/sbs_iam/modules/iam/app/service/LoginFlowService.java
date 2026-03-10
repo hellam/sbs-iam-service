@@ -111,6 +111,9 @@ public class LoginFlowService {
 
         List<OrganizationUserEntity> orgUsers = orgRepo.findAllByIamUser(iamUser);
         for (var ou : orgUsers) {
+            if (isOrganizationLocked(ou)) {
+                continue;
+            }
             list.add(new ProfileSummary("ORG_USER", encryptionUtil.encrypt(ou.getId().toString()), ou.getOrgDisplayName()));
         }
 
@@ -141,13 +144,20 @@ public class LoginFlowService {
                 yield customerProfile.getIamUser().getId().equals(iamUser.getId());
             case ORG_USER:
                 OrganizationUserEntity orgUser = orgRepo.findById(profileId).orElseThrow(BaseException::badRequest);
-                yield orgUser.getIamUser().getId().equals(iamUser.getId());
+                yield orgUser.getIamUser().getId().equals(iamUser.getId()) && !isOrganizationLocked(orgUser);
         };
     }
 
     public boolean hasProfile(IamUserEntity iamUser) {
         return customerRepo.findByIamUserAndIsVerifiedTrue(iamUser).isPresent() ||
-                !orgRepo.findAllByIamUser(iamUser).isEmpty();
+                orgRepo.findAllByIamUser(iamUser).stream().anyMatch(ou -> !isOrganizationLocked(ou));
+    }
+
+    private boolean isOrganizationLocked(OrganizationUserEntity organizationUser) {
+        return organizationUser != null
+                && organizationUser.getOrganizationParty() != null
+                && organizationUser.getOrganizationParty().getOrganization() != null
+                && Boolean.TRUE.equals(organizationUser.getOrganizationParty().getOrganization().getAccountLocked());
     }
 
     // -------- EVENT LOGGER --------

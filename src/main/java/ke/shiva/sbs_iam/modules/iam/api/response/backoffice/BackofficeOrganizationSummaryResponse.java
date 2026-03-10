@@ -24,6 +24,7 @@ public class BackofficeOrganizationSummaryResponse {
     private String city;
     private String country;
     private String status;
+    private Boolean accountLocked;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }

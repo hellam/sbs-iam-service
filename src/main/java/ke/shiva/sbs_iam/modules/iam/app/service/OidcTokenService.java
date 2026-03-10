@@ -569,8 +569,13 @@ public class OidcTokenService {
             log.warn("Selected organization profile id is missing.");
             throw BaseException.badRequest();
         }
-        return orgRepo.findById(orgProfileId)
+        OrganizationUserEntity orgUser = orgRepo.findById(orgProfileId)
                 .orElseThrow(() -> BaseException.badRequest("Organization user profile not found"));
+        if (isOrganizationLocked(orgUser)) {
+            log.warn("Organization profile is locked for profileId={}", orgProfileId);
+            throw BaseException.unauthorized("Selected organization profile is blocked.");
+        }
+        return orgUser;
     }
 
     private boolean resolveIsOrganisationFlag(SessionEntity session, OrganizationUserEntity orgUser) {
@@ -584,6 +589,13 @@ public class OidcTokenService {
             return false;
         }
         return !Boolean.TRUE.equals(orgUser.getOrganizationParty().getOrganization().getSmeMode());
+    }
+
+    private boolean isOrganizationLocked(OrganizationUserEntity orgUser) {
+        return orgUser != null
+                && orgUser.getOrganizationParty() != null
+                && orgUser.getOrganizationParty().getOrganization() != null
+                && Boolean.TRUE.equals(orgUser.getOrganizationParty().getOrganization().getAccountLocked());
     }
 
     private record IssuedTokens(String accessToken,

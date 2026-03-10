@@ -27,6 +27,8 @@ public class BackofficeEmployeeDetailResponse {
     private String mobile;
     private String email;
     private String status;
+    private Boolean accessLocked;
+    private Boolean mfaTotpEnabled;
     private String staffNo;
     private String jobTitle;
     private String department;

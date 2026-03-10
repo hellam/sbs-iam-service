@@ -30,6 +30,7 @@ public interface OrganizationUserRepository extends JpaRepository<OrganizationUs
                AND ou.orgRole.taskRole IN :taskRoles
                AND UPPER(ou.status) = 'ACTIVE'
                AND COALESCE(ou.orgRole.isActive, false) = true
+               AND COALESCE(ou.organizationParty.organization.accountLocked, false) = false
                AND ou.iamUser.status = :iamStatus
             """)
     List<Long> findActiveIamUserIdsByCustomerAndTaskRoles(@Param("customerId") String customerId,
@@ -40,9 +41,12 @@ public interface OrganizationUserRepository extends JpaRepository<OrganizationUs
             "iamUser",
             "iamUser.party",
             "iamUser.party.person",
+            "iamUser.customerProfile",
+            "iamUser.customerAuth",
             "iamUser.contacts",
             "orgRole",
-            "organizationParty"
+            "organizationParty",
+            "organizationParty.organization"
     })
     List<OrganizationUserEntity> findByOrganizationParty_CoreCustomerIdOrderByCreatedAtDesc(String coreCustomerId);
 }

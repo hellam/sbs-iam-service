@@ -24,6 +24,7 @@ public class BackofficeEmployeeSummaryResponse {
     private Long branchId;
     private String branchName;
     private String status;
+    private Boolean accessLocked;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }

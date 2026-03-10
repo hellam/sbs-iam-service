@@ -205,6 +205,68 @@ public class NotificationService {
     }
 
     /**
+     * Send admin-triggered password reset notice with generated temporary password.
+     */
+    public SendNotificationResponse sendAdminPasswordResetNotice(
+            String email,
+            String userName,
+            String reference,
+            String temporaryPassword
+    ) {
+        log.info("Sending admin password reset notice to: {}", email);
+        String safeReference = reference == null || reference.isBlank() ? "-" : reference;
+        String safePassword = temporaryPassword == null ? "" : temporaryPassword.trim();
+        String message = "Hello " + (userName == null || userName.isBlank() ? "Customer" : userName)
+                + ", your login password was reset by support. "
+                + "Temporary password: " + safePassword + ". "
+                + "Please log in and change it immediately. Ref: " + safeReference;
+        return notificationClient.sendDirectMessage(ChannelType.EMAIL, email, message);
+    }
+
+    /**
+     * Notify an existing user that they were linked to a company profile.
+     */
+    public SendNotificationResponse sendOrganizationProfileLinkedNotice(
+            String email,
+            String userName,
+            String organizationName,
+            String organizationClientId
+    ) {
+        log.info("Sending organization profile linked notice to: {}", email);
+        String safeName = userName == null || userName.isBlank() ? "Customer" : userName;
+        String safeOrganizationName = organizationName == null || organizationName.isBlank() ? "your company" : organizationName;
+        String safeOrganizationId = organizationClientId == null || organizationClientId.isBlank() ? "-" : organizationClientId;
+        String message = "Hello " + safeName
+                + ", you have been added to company profile " + safeOrganizationName + " (" + safeOrganizationId + "). "
+                + "Use your existing internet banking credentials to log in, then select this company profile to view and perform actions.";
+        return notificationClient.sendDirectMessage(ChannelType.EMAIL, email, message);
+    }
+
+    /**
+     * Notify a newly onboarded non-bank user with generated login credentials and profile-link information.
+     */
+    public SendNotificationResponse sendOrganizationProfileOnboardedNotice(
+            String email,
+            String userName,
+            String organizationName,
+            String organizationClientId,
+            String username,
+            String temporaryPassword
+    ) {
+        log.info("Sending organization profile onboarded notice to: {}", email);
+        String safeName = userName == null || userName.isBlank() ? "Customer" : userName;
+        String safeOrganizationName = organizationName == null || organizationName.isBlank() ? "your company" : organizationName;
+        String safeOrganizationId = organizationClientId == null || organizationClientId.isBlank() ? "-" : organizationClientId;
+        String safeUsername = username == null ? "" : username.trim();
+        String safePassword = temporaryPassword == null ? "" : temporaryPassword.trim();
+        String message = "Hello " + safeName
+                + ", you have been onboarded and added to company profile " + safeOrganizationName + " (" + safeOrganizationId + "). "
+                + "Username: " + safeUsername + ". Temporary password: " + safePassword + ". "
+                + "Log in, select this company profile, and change your password immediately.";
+        return notificationClient.sendDirectMessage(ChannelType.EMAIL, email, message);
+    }
+
+    /**
      * Send login alert notification
      *
      * @param channel   Notification channel

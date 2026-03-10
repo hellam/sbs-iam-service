@@ -25,6 +25,8 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/iam/02-person-organization/012-organization.xml
   - include:
+      file: db/changelog/changes/iam/02-person-organization/013-add-organization-account-locked.xml
+  - include:
       file: db/changelog/changes/iam/03-iam-core/020-iam-user.xml
   - include:
       file: db/changelog/changes/iam/10-session/110-sessions.xml

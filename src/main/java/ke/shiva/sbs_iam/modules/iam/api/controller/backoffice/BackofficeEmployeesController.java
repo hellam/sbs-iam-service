@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeAccessLockRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeIamUserStatusUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeAuditTrailResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeEmployeeDetailResponse;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -67,6 +69,51 @@ public class BackofficeEmployeesController {
         return ResponseBuilder.success(
                 "Employee status updated",
                 backofficeEmployeesService.updateEmployeeStatus(clientId, request.getStatus())
+        );
+    }
+
+    @Operation(summary = "Block/unblock employee access")
+    @PatchMapping("/{clientId}/access-lock")
+    public ResponseEntity<ApiResponse<BackofficeEmployeeDetailResponse>> updateEmployeeAccessLock(
+            @PathVariable String clientId,
+            @Valid @RequestBody BackofficeAccessLockRequest request
+    ) {
+        return ResponseBuilder.success(
+                request.getBlocked() ? "Employee access blocked" : "Employee access unblocked",
+                backofficeEmployeesService.updateEmployeeAccessLock(clientId, request.getBlocked())
+        );
+    }
+
+    @Operation(summary = "Reset employee password")
+    @PostMapping("/{clientId}/password/reset")
+    public ResponseEntity<ApiResponse<BackofficeEmployeeDetailResponse>> resetEmployeePassword(
+            @PathVariable String clientId
+    ) {
+        return ResponseBuilder.success(
+                "Employee password reset",
+                backofficeEmployeesService.resetEmployeePassword(clientId)
+        );
+    }
+
+    @Operation(summary = "Reset employee MFA")
+    @PostMapping("/{clientId}/mfa/reset")
+    public ResponseEntity<ApiResponse<BackofficeEmployeeDetailResponse>> resetEmployeeMfa(
+            @PathVariable String clientId
+    ) {
+        return ResponseBuilder.success(
+                "Employee MFA reset",
+                backofficeEmployeesService.resetEmployeeMfa(clientId)
+        );
+    }
+
+    @Operation(summary = "Sync employee KYC from core banking")
+    @PostMapping("/{clientId}/kyc/sync")
+    public ResponseEntity<ApiResponse<BackofficeEmployeeDetailResponse>> syncEmployeeKyc(
+            @PathVariable String clientId
+    ) {
+        return ResponseBuilder.success(
+                "Employee KYC synced",
+                backofficeEmployeesService.syncEmployeeKyc(clientId)
         );
     }
 }

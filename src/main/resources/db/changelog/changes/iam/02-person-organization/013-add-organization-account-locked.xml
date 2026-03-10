@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="pg-iam-013-add-organization-account-locked" author="codex">
+        <comment>
+            Adds account lock flag for organizations.
+            Used to block organization profile selection/login without mutating IAM user status.
+        </comment>
+
+        <addColumn tableName="organization" schemaName="iam_service">
+            <column name="account_locked" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <createIndex tableName="organization" indexName="idx_org_account_locked" schemaName="iam_service">
+            <column name="account_locked"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -13,4 +13,6 @@ public interface OrganizationRepository extends JpaRepository<OrganizationEntity
     boolean existsByRegistrationNo(String registrationNo);
 
     Optional<OrganizationEntity> findByLegalNameIgnoreCase(String legalName);
+
+    Optional<OrganizationEntity> findByParty_CoreCustomerId(String coreCustomerId);
 }

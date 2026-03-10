@@ -32,6 +32,13 @@ public class PasswordUpdateService {
      * Used for forgot password and admin password resets
      */
     public void updatePassword(IamUserEntity user, String plainPassword, Channel channel) {
+        updatePassword(user, plainPassword, channel, false);
+    }
+
+    /**
+     * Update user's password and optionally force first-login password reset.
+     */
+    public void updatePassword(IamUserEntity user, String plainPassword, Channel channel, boolean forceFirstLogin) {
         // Hash new password
         String hash = HashUtil.bcrypt(plainPassword);
 
@@ -47,9 +54,16 @@ public class PasswordUpdateService {
             case INTERNET_BANKING, MOBILE_BANKING -> {
                 CustomerAuthEntity auth = customerAuthRepo.findByIamUserId(user.getId())
                         .orElseThrow(() -> BaseException.channelNotAllowed("CustomerAuth missing"));
-                auth.setInternetPasswordHash(hash);
-                auth.setInternetPasswordExpiry(expiry);
-                auth.setInternetFirstTimeLogin(false);
+                if (channel == Channel.MOBILE_BANKING) {
+                    auth.setMobilePinHash(hash);
+                    auth.setMobilePinSetAt(OffsetDateTime.now());
+                    auth.setMobileFirstTimeLogin(forceFirstLogin);
+                } else {
+                    auth.setInternetPasswordHash(hash);
+                    auth.setInternetPasswordChangedAt(OffsetDateTime.now());
+                    auth.setInternetPasswordExpiry(expiry);
+                    auth.setInternetFirstTimeLogin(forceFirstLogin);
+                }
                 customerAuthRepo.save(auth);
             }
 
@@ -58,7 +72,7 @@ public class PasswordUpdateService {
                         .orElseThrow(() -> BaseException.channelNotAllowed("EmployeeAuth missing"));
                 auth.setStaffPasswordHash(hash);
                 auth.setStaffPasswordExpiry(expiry);
-                auth.setFirstTimeLogin(false);
+                auth.setFirstTimeLogin(forceFirstLogin);
                 employeeAuthRepo.save(auth);
             }
 
@@ -72,6 +86,7 @@ public class PasswordUpdateService {
         history.setCreatedAt(OffsetDateTime.now());
         historyRepo.save(history);
 
-        log.info("Password updated successfully for user: {} on channel: {}", user.getPublicId(), channel);
+        log.info("Password updated successfully for user: {} on channel: {}, forceFirstLogin={}",
+                user.getPublicId(), channel, forceFirstLogin);
     }
 }

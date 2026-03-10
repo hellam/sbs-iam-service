@@ -46,6 +46,11 @@ public class OrganizationEntity {
     @Column(name = "sme_mode")
     private Boolean smeMode;
 
+    @NotNull
+    @ColumnDefault("false")
+    @Column(name = "account_locked", nullable = false)
+    private Boolean accountLocked = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "country_code", referencedColumnName = "country_code")
     private CountryEntity countryCode;

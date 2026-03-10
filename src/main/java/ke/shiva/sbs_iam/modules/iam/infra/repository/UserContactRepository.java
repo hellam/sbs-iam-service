@@ -15,10 +15,25 @@ public interface UserContactRepository extends JpaRepository<UserContact, Long> 
 
     Optional<List<UserContact>> findByIamUserAndPrimaryIsTrue(IamUserEntity iamUser);
 
+    Optional<UserContact> findFirstByContactTypeAndContactValueIgnoreCaseAndPrimaryIsTrue(
+            ContactType contactType,
+            String contactValue
+    );
+
+    List<UserContact> findByContactTypeAndContactValueContainingIgnoreCaseAndPrimaryIsTrue(
+            ContactType contactType,
+            String contactValue
+    );
+
     boolean existsByContactTypeAndContactValueLike(ContactType contactType, String contactValue);
 
     boolean existsByContactTypeAndContactValue(ContactType contactType, String contactValue);
 
-    boolean existsByContactTypeAndContactValueContaining(ContactType contactType, String contactValue);
-}
+    boolean existsByContactTypeAndContactValueIgnoreCase(ContactType contactType, String contactValue);
 
+    boolean existsByContactTypeAndContactValueContaining(ContactType contactType, String contactValue);
+
+    boolean existsByContactTypeAndContactValueAndIamUser_IdNot(ContactType contactType, String contactValue, Long iamUserId);
+
+    boolean existsByContactTypeAndContactValueContainingAndIamUser_IdNot(ContactType contactType, String contactValue, Long iamUserId);
+}
