@@ -62,7 +62,6 @@ import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -498,74 +497,38 @@ public class BackofficeOrganizationsService {
 
     private List<IamUserEntity> findSearchCandidates(SearchCriteria criteria) {
         Map<Long, IamUserEntity> merged = new LinkedHashMap<>();
-        Set<Long> intersection = null;
 
         if (criteria.customerId() != null) {
-            intersection = intersectCandidateIds(
-                    intersection,
-                    loadUsersByCustomerId(criteria.customerId()),
-                    merged
-            );
+            addSearchCandidates(merged, loadUsersByCustomerId(criteria.customerId()));
         }
         if (criteria.phone() != null) {
-            intersection = intersectCandidateIds(
-                    intersection,
-                    loadUsersByPhone(criteria.phone()),
-                    merged
-            );
+            addSearchCandidates(merged, loadUsersByPhone(criteria.phone()));
         }
         if (criteria.idNumber() != null) {
-            intersection = intersectCandidateIds(
-                    intersection,
-                    loadUsersByNationalId(criteria.idNumber()),
-                    merged
-            );
+            addSearchCandidates(merged, loadUsersByNationalId(criteria.idNumber()));
         }
         if (criteria.email() != null) {
-            intersection = intersectCandidateIds(
-                    intersection,
-                    loadUsersByEmail(criteria.email()),
-                    merged
-            );
+            addSearchCandidates(merged, loadUsersByEmail(criteria.email()));
         }
         if (criteria.passport() != null) {
-            intersection = intersectCandidateIds(
-                    intersection,
-                    loadUsersByNationalId(criteria.passport()),
-                    merged
-            );
+            addSearchCandidates(merged, loadUsersByNationalId(criteria.passport()));
         }
 
-        if (intersection == null || intersection.isEmpty()) {
-            return List.of();
-        }
-
-        return intersection.stream()
-                .map(merged::get)
+        return merged.values().stream()
                 .filter(candidate -> candidate != null && candidate.getId() != null)
                 .toList();
     }
 
-    private Set<Long> intersectCandidateIds(
-            Set<Long> currentIntersection,
-            List<IamUserEntity> candidates,
-            Map<Long, IamUserEntity> merged
+    private void addSearchCandidates(
+            Map<Long, IamUserEntity> merged,
+            List<IamUserEntity> candidates
     ) {
-        Set<Long> ids = new LinkedHashSet<>();
         for (IamUserEntity candidate : candidates) {
             if (candidate == null || candidate.getId() == null) {
                 continue;
             }
-            ids.add(candidate.getId());
             merged.putIfAbsent(candidate.getId(), candidate);
         }
-
-        if (currentIntersection == null) {
-            return ids;
-        }
-
-        currentIntersection.retainAll(ids);
-        return currentIntersection;
     }
 
     private List<IamUserEntity> loadUsersByCustomerId(String customerId) {
