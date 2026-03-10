@@ -130,14 +130,14 @@ shiva:
 
     risk:
       impossible-travel:
-        enabled: true                     # Master switch for impossible-travel controls
+        enabled: ${IMPOSSIBLE_TRAVEL_DETECTION:true}                     # Master switch for impossible-travel controls
         lookback-hours: 24                # Compare against last successful login within this window
         min-distance-km: 500              # Minimum geo distance before speed rule applies
         speed-threshold-kmh: 900          # Above this calculated speed => suspicious
         country-jump-window-minutes: 45   # Different-country jump within this window => suspicious
       user-agent-drift:
-        enabled: true                     # Additional heuristic using existing login/device data
-        window-minutes: 30                # Only evaluate drift if previous login is recent
+        enabled: ${USER_AGENT_DRIFT_DETECTION:false}                # Additional heuristic using existing login/device data
+        window-minutes: 3                # Only evaluate drift if previous login is recent
 
     retention:
       enabled: true                       # Scheduled cleanup to cap DB growth

@@ -54,13 +54,13 @@ public class IdentifierService {
                             channel.name(),
                             "IDENTIFIER_NOT_FOUND"
                     );
-                    return BaseException.unauthorized("Invalid credentials");
+                    return BaseException.badRequest("Invalid credentials");
                 });
 
         IamUserEntity user = identifier.getIamUser();
 
         if (!loginFlowService.hasProfile(user) && channel == Channel.INTERNET_BANKING)
-            throw BaseException.unauthorized("You do not have a profile assigned. Please contact support.");
+            throw BaseException.badRequest("You do not have a profile assigned. Please contact support.");
 
         if (user.getStatus() != IamStatus.ACTIVE) {
             // Log failed identifier verification due to inactive user
@@ -69,7 +69,7 @@ public class IdentifierService {
                     channel.name(),
                     "USER_INACTIVE"
             );
-            throw BaseException.unauthorized("Invalid credentials");
+            throw BaseException.badRequest("Invalid credentials");
         }
 
         // Check if account is locked before proceeding
