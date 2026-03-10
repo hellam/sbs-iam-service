@@ -39,7 +39,7 @@ public class JwtConfig {
     @Value("${shiva.security.jwt.private-key}")
     private String jwtPrivateKeyBase64;
 
-    @Value("${shiva.security.jwt.expected-issuer:https://sbs.iam}")
+    @Value("${shiva.security.jwt.expected-issuer:sbs-iam}")
     private String iamExpectedIssuer;
 
     @Value("${shiva.security.jwt.expected-audience:gateway-service}")
