@@ -265,6 +265,9 @@ public class BackofficeOrganizationsService {
         }
         String phone = trimToNull(request.getPhone());
         String nationalIdentifier = normalizeIdentityValue(firstNonBlank(request.getIdNumber(), request.getPassport()));
+        if (!StringUtils.hasText(nationalIdentifier)) {
+            throw BaseException.badRequest("Provide either idNumber or passport.");
+        }
 
         validateNonBankUserUniqueness(email, phone, nationalIdentifier);
 
