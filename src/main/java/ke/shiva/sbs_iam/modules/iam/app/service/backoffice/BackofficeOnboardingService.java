@@ -316,6 +316,10 @@ public class BackofficeOnboardingService {
 
         IamUserEntity iamUser = iamUserRepository.findFirstByParty_CoreCustomerId(request.getClientId())
                 .orElse(null);
+        if (iamUser == null && nationalId != null) {
+            iamUser = iamUserRepository.findFirstByParty_Person_NationalIdIgnoreCase(nationalId)
+                    .orElse(null);
+        }
 
         if (iamUser == null) {
             validateEmployeeOnCreate(request, null, staffNo, nationalId, mobile, employeeEmail);
@@ -329,6 +333,12 @@ public class BackofficeOnboardingService {
             PartyEntity party = iamUser.getParty();
             if (party == null || party.getPartyType() != PartyType.PERSON) {
                 throw BaseException.badRequest("Client ID '" + request.getClientId() + "' is not an individual.");
+            }
+
+            String existingCoreCustomerId = trimToNull(party.getCoreCustomerId());
+            if (existingCoreCustomerId == null) {
+                party.setCoreCustomerId(request.getClientId());
+                partyRepository.save(party);
             }
 
             validateEmployeeOnCreate(request, iamUser, staffNo, nationalId, mobile, employeeEmail);
