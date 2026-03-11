@@ -29,6 +29,8 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.party.PartyType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
 import ke.shiva.sbs_iam.modules.iam.infra.external.NotificationService;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerAuthRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerProfileRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.EmployeeProfileRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.IamUserRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.LoginIdentifierRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.OrgRoleRepository;
@@ -80,6 +82,8 @@ public class BackofficeOrganizationsService {
     private final OrgRoleRepository orgRoleRepository;
     private final OrganizationUserRepository organizationUserRepository;
     private final CustomerAuthRepository customerAuthRepository;
+    private final CustomerProfileRepository customerProfileRepository;
+    private final EmployeeProfileRepository employeeProfileRepository;
     private final UserContactRepository userContactRepository;
     private final CountryRepository countryRepository;
     private final PasswordUpdateService passwordUpdateService;
@@ -532,9 +536,29 @@ public class BackofficeOrganizationsService {
     }
 
     private List<IamUserEntity> loadUsersByCustomerId(String customerId) {
-        return iamUserRepository.findFirstByParty_CoreCustomerId(customerId)
-                .map(List::of)
-                .orElse(List.of());
+        if (!StringUtils.hasText(customerId)) {
+            return List.of();
+        }
+
+        Map<Long, IamUserEntity> matches = new LinkedHashMap<>();
+        addSearchCandidate(matches, iamUserRepository.findFirstByParty_CoreCustomerIdIgnoreCase(customerId).orElse(null));
+        addSearchCandidate(matches, customerProfileRepository.findByCoreCustomerIdIgnoreCase(customerId)
+                .map(profile -> profile.getIamUser())
+                .orElse(null));
+        addSearchCandidate(matches, employeeProfileRepository.findFirstByIamUser_Party_CoreCustomerIdIgnoreCase(customerId)
+                .map(profile -> profile.getIamUser())
+                .orElse(null));
+
+        return matches.values().stream()
+                .filter(candidate -> candidate != null && candidate.getId() != null)
+                .toList();
+    }
+
+    private void addSearchCandidate(Map<Long, IamUserEntity> merged, IamUserEntity candidate) {
+        if (candidate == null || candidate.getId() == null) {
+            return;
+        }
+        merged.putIfAbsent(candidate.getId(), candidate);
     }
 
     private List<IamUserEntity> loadUsersByNationalId(String nationalId) {
@@ -563,6 +587,9 @@ public class BackofficeOrganizationsService {
 
     private boolean isInternetEligibleUser(IamUserEntity iamUser) {
         if (iamUser == null || iamUser.getId() == null || iamUser.getStatus() != IamStatus.ACTIVE) {
+            return false;
+        }
+        if (iamUser.getCustomerProfile() == null && iamUser.getEmployeeProfile() == null) {
             return false;
         }
         if (customerAuthRepository.findByIamUserId(iamUser.getId()).isEmpty()) {

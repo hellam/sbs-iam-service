@@ -16,4 +16,5 @@ public interface CustomerProfileRepository extends JpaRepository<CustomerProfile
     Optional<CustomerProfileEntity> findByIamUserAndIsVerifiedTrue(IamUserEntity iamUser);
 
     Optional<CustomerProfileEntity> findByCoreCustomerId(String coreCustomerId);
+    Optional<CustomerProfileEntity> findByCoreCustomerIdIgnoreCase(String coreCustomerId);
 }

@@ -9,6 +9,7 @@ import java.util.Optional;
 @Repository
 public interface IamUserRepository extends JpaRepository<IamUserEntity, Long> {
     Optional<IamUserEntity> findFirstByParty_CoreCustomerId(String coreCustomerId);
+    Optional<IamUserEntity> findFirstByParty_CoreCustomerIdIgnoreCase(String coreCustomerId);
 
     Optional<IamUserEntity> findFirstByParty_Person_NationalIdIgnoreCase(String nationalId);
 }

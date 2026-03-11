@@ -13,4 +13,5 @@ public interface EmployeeProfileRepository extends JpaRepository<EmployeeProfile
     boolean existsByStaffNo(String staffNo);
 
     Optional<EmployeeProfileEntity> findFirstByIamUser_Party_CoreCustomerId(String coreCustomerId);
+    Optional<EmployeeProfileEntity> findFirstByIamUser_Party_CoreCustomerIdIgnoreCase(String coreCustomerId);
 }
