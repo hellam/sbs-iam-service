@@ -38,6 +38,7 @@ public class ProfileService {
     private final OrganizationUserRepository organizationUserRepository;
     private final SessionRepository sessionRepository;
     private final SessionRevocationService sessionRevocationService;
+    private final LoginAlertService loginAlertService;
 
     public ProfileSelectionResponse listProfiles(UUID flowId){
 
@@ -89,6 +90,9 @@ public class ProfileService {
 
         // Issue token with profile claims
         oidcTokenService.issueTokens(session.getId());
+
+        // For internet banking, profile selection is the final login stage.
+        loginAlertService.sendNewLoginAlert(session, identifier);
 
         return buildUserProfileResponse(session, identifier);
     }

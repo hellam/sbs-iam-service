@@ -10,6 +10,7 @@ import ke.shiva.sbs_iam.modules.iam.api.response.UserProfileResponse;
 import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
 import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
 import ke.shiva.sbs_iam.modules.iam.app.service.IamUserService;
+import ke.shiva.sbs_iam.modules.iam.app.service.LoginAlertService;
 import ke.shiva.sbs_iam.modules.iam.app.service.LoginFlowService;
 import ke.shiva.sbs_iam.modules.iam.app.service.LoginHistoryService;
 import ke.shiva.sbs_iam.modules.iam.app.service.OidcTokenService;
@@ -38,6 +39,7 @@ public class FinalizeLoginController {
     private final OidcTokenService oidcTokenService;
     private final LoginHistoryService loginHistoryService;
     private final IamUserService iamUserService;
+    private final LoginAlertService loginAlertService;
 
     @Operation(summary = "9. Finalize Login")
     @PostMapping("/finalize")
@@ -72,7 +74,8 @@ public class FinalizeLoginController {
 
         oidcTokenService.issueTokens(session.getId());
 
-
+        // For non-internet-banking channels, finalize is the final login stage.
+        loginAlertService.sendNewLoginAlert(session, identifier);
 
         return ResponseBuilder.success("Welcome! You have successfully logged in.", UserProfileResponse.builder()
                 .identifier(identifier)

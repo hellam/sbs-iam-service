@@ -266,46 +266,86 @@ public class NotificationService {
         return notificationClient.sendDirectMessage(ChannelType.EMAIL, email, message);
     }
 
-    /**
-     * Send login alert notification
-     *
-     * @param channel   Notification channel
-     * @param recipient Phone number or email
-     * @param userName  User's name
-     * @param ipAddress Login IP address
-     * @param location  Login location
-     * @param device    Device information
-     * @return Notification response
-     */
-    public SendNotificationResponse sendLoginAlert(
-            ChannelType channel,
-            String recipient,
+    public SendNotificationResponse sendLoginAlertEmail(
+            String email,
             String userName,
-            String ipAddress,
+            String deviceType,
+            String browser,
             String location,
-            String device) {
-
-        log.info("Sending login alert via {} to: {}", channel, recipient);
+            String ipAddress,
+            String channel,
+            String loginTime
+    ) {
+        log.info("Sending login alert via EMAIL to: {}", email);
 
         SendNotificationRequest request = SendNotificationRequest.builder()
-                .channel(channel)
-                .recipient(recipient)
+                .channel(ChannelType.EMAIL)
+                .recipient(email)
                 .templateCode("login_alert")
+                .eventType("login_alert")
                 .language("en")
                 .parameters(Map.of(
-                        "param1", userName,
-                        "param2", ipAddress,
-                        "param3", location,
-                        "param4", device
+                        "userName", safe(userName, "Customer"),
+                        "deviceType", safe(deviceType, "Unknown"),
+                        "browser", safe(browser, "Unknown"),
+                        "location", safe(location, "Unknown"),
+                        "ipAddress", safe(ipAddress, "Unknown"),
+                        "channel", safe(channel, "Unknown"),
+                        "loginTime", safe(loginTime, "Unknown")
                 ))
                 .metadata(Map.of(
                         "source", "iam-service",
-                        "priority", "HIGH"
+                        "priority", "HIGH",
+                        "templateType", "login-alert",
+                        "customerName", safe(userName, "Customer")
                 ))
                 .build();
 
-        // Use async for alerts
-        return notificationClient.sendAsync(request);
+        return notificationClient.sendSync(request);
+    }
+
+    public SendNotificationResponse sendLoginAlertDirectEmail(
+            String email,
+            String userName,
+            String deviceType,
+            String browser,
+            String location,
+            String ipAddress,
+            String channel,
+            String loginTime
+    ) {
+        log.info("Sending direct login alert via EMAIL to: {}", email);
+
+        String message = "Hello " + safe(userName, "Customer") + ", a new login to your account was detected.\n"
+                + "Channel: " + safe(channel, "Unknown") + "\n"
+                + "Device Type: " + safe(deviceType, "Unknown") + "\n"
+                + "Browser: " + safe(browser, "Unknown") + "\n"
+                + "Location: " + safe(location, "Unknown") + "\n"
+                + "IP Address: " + safe(ipAddress, "Unknown") + "\n"
+                + "Login Time: " + safe(loginTime, "Unknown") + "\n\n"
+                + "If this wasn't you, please contact support immediately.";
+
+        SendNotificationRequest request = SendNotificationRequest.builder()
+                .channel(ChannelType.EMAIL)
+                .recipient(email)
+                .message(message)
+                .metadata(Map.of(
+                        "source", "iam-service",
+                        "priority", "HIGH",
+                        "subject", "New login detected on your account",
+                        "templateType", "login-alert",
+                        "customerName", safe(userName, "Customer")
+                ))
+                .build();
+
+        return notificationClient.sendSync(request);
+    }
+
+    private String safe(String value, String fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+        return value.trim();
     }
 
     /**
