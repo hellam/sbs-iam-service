@@ -301,7 +301,7 @@ public class NotificationService {
                 ))
                 .build();
 
-        return notificationClient.sendSync(request);
+        return notificationClient.sendAsync(request);
     }
 
     public SendNotificationResponse sendLoginAlertDirectEmail(
@@ -338,7 +338,7 @@ public class NotificationService {
                 ))
                 .build();
 
-        return notificationClient.sendSync(request);
+        return notificationClient.sendAsync(request);
     }
 
     private String safe(String value, String fallback) {
