@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.modules.iam.api.request.ProfileSelectRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.SessionPasswordChangeRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSelectionResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.SessionPasswordContextResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.UserProfileResponse;
 import ke.shiva.sbs_iam.modules.iam.app.security.FlowId;
 import ke.shiva.sbs_iam.modules.iam.app.security.RequiresStage;
@@ -63,5 +65,23 @@ public class ProfileController {
     public ResponseEntity<ApiResponse<Void>> logoutSession(@AuthenticationPrincipal Jwt jwt) {
         profileService.logoutSession(jwt);
         return ResponseBuilder.success("Logged out successfully");
+    }
+
+    @Operation(summary = "Get Session Password Change Context")
+    @GetMapping("/session/password/context")
+    public ResponseEntity<ApiResponse<SessionPasswordContextResponse>> getSessionPasswordContext(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ResponseBuilder.success(profileService.getSessionPasswordContext(jwt));
+    }
+
+    @Operation(summary = "Change Password for Active Session")
+    @PostMapping("/session/password/change")
+    public ResponseEntity<ApiResponse<Void>> changeSessionPassword(
+            @Valid @RequestBody SessionPasswordChangeRequest req,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        profileService.changeSessionPassword(req, jwt);
+        return ResponseBuilder.success("Password changed successfully. Please login again with your new password.");
     }
 }

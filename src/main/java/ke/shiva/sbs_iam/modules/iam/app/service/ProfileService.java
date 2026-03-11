@@ -1,8 +1,11 @@
 package ke.shiva.sbs_iam.modules.iam.app.service;
 
 import ke.shiva.sbs_iam.modules.iam.api.request.ProfileSelectRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.PasswordChangeRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.SessionPasswordChangeRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSummary;
 import ke.shiva.sbs_iam.modules.iam.api.response.ProfileSelectionResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.SessionPasswordContextResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.UserProfileResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity;
@@ -16,8 +19,10 @@ import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.security.jwt.JwtClaims;
 import ke.shiva.shivacorestarter.util.EncryptionUtil;
+import ke.shiva.shivacorestarter.util.FileUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,6 +44,10 @@ public class ProfileService {
     private final SessionRepository sessionRepository;
     private final SessionRevocationService sessionRevocationService;
     private final LoginAlertService loginAlertService;
+    private final PasswordManager passwordManager;
+
+    @Value("${shiva.security.spa.public-key}")
+    private String spaPublicKey;
 
     public ProfileSelectionResponse listProfiles(UUID flowId){
 
@@ -115,6 +124,38 @@ public class ProfileService {
     public void logoutSession(Jwt jwt) {
         SessionEntity session = resolveSession(jwt);
         sessionRevocationService.revokeSessionOnly(session, "USER_LOGOUT");
+    }
+
+    @Transactional(readOnly = true)
+    public SessionPasswordContextResponse getSessionPasswordContext(Jwt jwt) {
+        SessionEntity session = resolveActiveSession(jwt);
+        if (session.getChannel() != Channel.INTERNET_BANKING) {
+            throw BaseException.forbidden("Access denied");
+        }
+        return SessionPasswordContextResponse.builder()
+                .sessionId(session.getSessionId())
+                .publicKey(FileUtil.cleanPublicKey(spaPublicKey))
+                .build();
+    }
+
+    @Transactional
+    public void changeSessionPassword(SessionPasswordChangeRequest req, Jwt jwt) {
+        SessionEntity session = resolveActiveSession(jwt);
+        if (session.getChannel() != Channel.INTERNET_BANKING) {
+            throw BaseException.forbidden("Access denied");
+        }
+
+        PasswordChangeRequest internalRequest = new PasswordChangeRequest();
+        internalRequest.setOldPassword(req.getOldPassword());
+        internalRequest.setNewPassword(req.getNewPassword());
+        internalRequest.setNewPasswordConfirmation(req.getNewPasswordConfirmation());
+
+        passwordManager.changePasswordFromEncryptedRequest(session, internalRequest);
+        sessionRevocationService.revokeOtherActiveLoginSessionsForUser(
+                session.getIamUser(),
+                null,
+                "PASSWORD_CHANGED"
+        );
     }
 
     private static void reviewRequirements(LoginRequirements reqs) {

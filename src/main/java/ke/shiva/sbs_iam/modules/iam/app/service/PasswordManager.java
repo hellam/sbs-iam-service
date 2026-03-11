@@ -76,6 +76,19 @@ public class PasswordManager {
         historyRepo.save(history);
     }
 
+    public void changePasswordFromEncryptedRequest(SessionEntity session, PasswordChangeRequest request) {
+        String decryptedNewPassword = decryptPassword(request.getNewPassword(), session.getSessionId());
+        String decryptedNewPasswordConfirmation = decryptPassword(request.getNewPasswordConfirmation(), session.getSessionId());
+
+        if (!decryptedNewPassword.equals(decryptedNewPasswordConfirmation)) {
+            throw BaseException.badRequest("Password confirmation does not match");
+        }
+
+        request.setNewPassword(decryptedNewPassword);
+        request.setNewPasswordConfirmation(decryptedNewPasswordConfirmation);
+        changePassword(session, request);
+    }
+
     public String decryptPassword(String encryptedPassword, String _sessionId) {
         try {
             if (encryptedPassword == null || encryptedPassword.trim().isEmpty()) {
