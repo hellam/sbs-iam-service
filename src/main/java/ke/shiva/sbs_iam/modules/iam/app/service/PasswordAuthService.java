@@ -24,6 +24,7 @@ public class PasswordAuthService {
     private final SecurityEventService securityEventService; // records LOGIN_FAILURE / SUCCESS
     private final LoginHistoryService loginHistoryService;
     private final IamUserService iamUserService;
+    private final PolicyService policyService;
 
     @Transactional
     public PasswordStepResponse handle(PasswordLoginRequest req, UUID flowId) {
@@ -67,6 +68,7 @@ public class PasswordAuthService {
         resp.setProfileSelectionRequired(reqs.isProfileSelectionRequired());
         resp.setEmail(email);
         resp.setPhoneNumber(phone);
+        resp.setAllowedNotificationChannels(policyService.getAllowedNotificationChannels(session.getChannel()));
 
         return resp;
     }

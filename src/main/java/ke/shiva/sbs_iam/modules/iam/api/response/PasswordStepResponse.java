@@ -2,7 +2,7 @@ package ke.shiva.sbs_iam.modules.iam.api.response;
 
 import lombok.Data;
 
-import java.util.UUID;
+import java.util.List;
 
 @Data
 public class PasswordStepResponse {
@@ -14,4 +14,5 @@ public class PasswordStepResponse {
     private boolean profileSelectionRequired;
     private String phoneNumber; // for OTP
     private String email; // for OTP
+    private List<String> allowedNotificationChannels;
 }

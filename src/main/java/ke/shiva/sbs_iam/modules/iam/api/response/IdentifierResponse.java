@@ -3,6 +3,7 @@ package ke.shiva.sbs_iam.modules.iam.api.response;
 import lombok.Data;
 
 import java.util.UUID;
+import java.util.List;
 
 @Data
 public class IdentifierResponse {
@@ -20,4 +21,5 @@ public class IdentifierResponse {
 
     // IB-specific
     private boolean profileSelectionRequired;
+    private List<String> allowedNotificationChannels;
 }

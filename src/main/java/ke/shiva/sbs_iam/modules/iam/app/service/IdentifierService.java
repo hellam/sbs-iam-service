@@ -30,6 +30,7 @@ public class IdentifierService {
 
     private final LoginIdentifierRepository identifierRepo;
     private final PolicyEvaluationService policyService;
+    private final PolicyService channelPolicyService;
     private final LoginFlowService loginFlowService;
     private final LoginHistoryService loginHistoryService;
     private final CustomerAuthRepository customerAuthRepo;
@@ -95,6 +96,7 @@ public class IdentifierService {
         resp.setSecurityQuestionsRequired(requirements.isQuestionsRequired());
         resp.setPublicKey(FileUtil.cleanPublicKey(spaPublicKey));
         resp.setProfileSelectionRequired(requirements.isProfileSelectionRequired());
+        resp.setAllowedNotificationChannels(channelPolicyService.getAllowedNotificationChannels(channel));
 
         return resp;
     }
