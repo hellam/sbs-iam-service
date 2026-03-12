@@ -36,6 +36,7 @@ import ke.shiva.sbs_iam.modules.reference.infra.repository.BranchRepository;
 import ke.shiva.sbs_iam.modules.reference.infra.repository.CountryRepository;
 import ke.shiva.shivacorestarter.dto.PaginatedResponse;
 import ke.shiva.shivacorestarter.exception.BaseException;
+import ke.shiva.shivacorestarter.util.EncryptionUtil;
 import ke.shiva.shivacorestarter.util.PasswordGeneratorUtil;
 import ke.shiva.shivacorestarter.util.PaginationUtil;
 import lombok.RequiredArgsConstructor;
@@ -69,6 +70,7 @@ public class BackofficeEmployeesService {
     private final SessionRevocationService sessionRevocationService;
     private final NotificationService notificationService;
     private final BackofficeOnboardingService onboardingService;
+    private final EncryptionUtil encryptionUtil;
 
     @Transactional(readOnly = true)
     public PaginatedResponse<BackofficeEmployeeSummaryResponse> getEmployees(HttpServletRequest request) {
@@ -445,8 +447,8 @@ public class BackofficeEmployeesService {
                 : null;
 
         return BackofficeOrganizationUserResponse.builder()
-                .organizationUserId(entity.getId())
-                .iamUserId(iamUser != null ? iamUser.getId() : null)
+                .organizationUserRef(encryptPositiveLongId(entity.getId(), "organizationUserId"))
+                .iamUserRef(iamUser != null ? encryptPositiveLongId(iamUser.getId(), "iamUserId") : null)
                 .individualClientId(party != null ? party.getCoreCustomerId() : null)
                 .clientId(entity.getOrganizationParty() != null ? entity.getOrganizationParty().getCoreCustomerId() : null)
                 .fullName(person != null ? person.getFullName() : null)
@@ -466,6 +468,19 @@ public class BackofficeEmployeesService {
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
+    }
+
+    private String encryptPositiveLongId(Long value, String fieldName) {
+        if (value == null || value <= 0) {
+            return null;
+        }
+
+        try {
+            return encryptionUtil.encrypt(String.valueOf(value));
+        } catch (Exception exception) {
+            log.error("Unable to encrypt {} for backoffice response: {}", fieldName, exception.getMessage(), exception);
+            throw BaseException.badRequest("Unable to process " + fieldName + ".");
+        }
     }
 
     private boolean isEmployeeAccessLocked(IamUserEntity iamUser) {

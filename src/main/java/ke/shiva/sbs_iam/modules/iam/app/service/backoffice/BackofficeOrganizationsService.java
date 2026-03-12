@@ -54,6 +54,7 @@ import ke.shiva.sbs_iam.modules.reference.domain.entity.CountryEntity;
 import ke.shiva.sbs_iam.modules.reference.infra.repository.CountryRepository;
 import ke.shiva.shivacorestarter.dto.PaginatedResponse;
 import ke.shiva.shivacorestarter.exception.BaseException;
+import ke.shiva.shivacorestarter.util.EncryptionUtil;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import ke.shiva.shivacorestarter.util.PaginationUtil;
 import ke.shiva.shivacorestarter.util.PasswordGeneratorUtil;
@@ -104,6 +105,7 @@ public class BackofficeOrganizationsService {
     private final SessionRevocationService sessionRevocationService;
     private final NotificationService notificationService;
     private final BackofficeOnboardingService onboardingService;
+    private final EncryptionUtil encryptionUtil;
     @Autowired
     @Qualifier("accountRestClient")
     private RestClient accountRestClient;
@@ -345,10 +347,7 @@ public class BackofficeOrganizationsService {
         OrganizationEntity organization = getRequiredOrganization(clientId);
         PartyEntity organizationParty = requireOrganizationParty(organization);
 
-        Long iamUserId = request.getIamUserId();
-        if (iamUserId == null || iamUserId <= 0) {
-            throw BaseException.badRequest("iamUserId is required.");
-        }
+        Long iamUserId = decryptPositiveLongId(request.getIamUserRef(), "iamUserRef");
 
         IamUserEntity iamUser = iamUserRepository.findById(iamUserId)
                 .orElseThrow(() -> BaseException.notFound("IAM user not found."));
@@ -497,13 +496,17 @@ public class BackofficeOrganizationsService {
     }
 
     @Transactional(readOnly = true)
-    public BackofficeOrganizationUserResponse getOrganizationUser(String clientId, Long organizationUserId) {
-        return toOrganizationUserResponse(getRequiredOrganizationUser(clientId, organizationUserId));
+    public BackofficeOrganizationUserResponse getOrganizationUser(String clientId, String organizationUserRef) {
+        return toOrganizationUserResponse(getRequiredOrganizationUser(clientId, organizationUserRef));
     }
 
     @Transactional
-    public BackofficeOrganizationUserResponse updateOrganizationUserAccessLock(String clientId, Long organizationUserId, boolean blocked) {
-        OrganizationUserEntity organizationUser = getRequiredOrganizationUser(clientId, organizationUserId);
+    public BackofficeOrganizationUserResponse updateOrganizationUserAccessLock(
+            String clientId,
+            String organizationUserRef,
+            boolean blocked
+    ) {
+        OrganizationUserEntity organizationUser = getRequiredOrganizationUser(clientId, organizationUserRef);
         IamUserEntity iamUser = requireOrganizationUserIamUser(organizationUser);
         CustomerAuthEntity auth = requireCustomerAuth(iamUser);
 
@@ -524,8 +527,8 @@ public class BackofficeOrganizationsService {
     }
 
     @Transactional
-    public BackofficeOrganizationUserResponse resetOrganizationUserPassword(String clientId, Long organizationUserId) {
-        OrganizationUserEntity organizationUser = getRequiredOrganizationUser(clientId, organizationUserId);
+    public BackofficeOrganizationUserResponse resetOrganizationUserPassword(String clientId, String organizationUserRef) {
+        OrganizationUserEntity organizationUser = getRequiredOrganizationUser(clientId, organizationUserRef);
         IamUserEntity iamUser = requireOrganizationUserIamUser(organizationUser);
         requireCustomerAuth(iamUser);
 
@@ -538,8 +541,8 @@ public class BackofficeOrganizationsService {
     }
 
     @Transactional
-    public BackofficeOrganizationUserResponse resetOrganizationUserMfa(String clientId, Long organizationUserId) {
-        OrganizationUserEntity organizationUser = getRequiredOrganizationUser(clientId, organizationUserId);
+    public BackofficeOrganizationUserResponse resetOrganizationUserMfa(String clientId, String organizationUserRef) {
+        OrganizationUserEntity organizationUser = getRequiredOrganizationUser(clientId, organizationUserRef);
         IamUserEntity iamUser = requireOrganizationUserIamUser(organizationUser);
         CustomerAuthEntity auth = requireCustomerAuth(iamUser);
         if (!isMfaTotpConfigured(auth)) {
@@ -555,8 +558,8 @@ public class BackofficeOrganizationsService {
     }
 
     @Transactional
-    public BackofficeOrganizationUserResponse syncOrganizationUserKyc(String clientId, Long organizationUserId) {
-        OrganizationUserEntity organizationUser = getRequiredOrganizationUser(clientId, organizationUserId);
+    public BackofficeOrganizationUserResponse syncOrganizationUserKyc(String clientId, String organizationUserRef) {
+        OrganizationUserEntity organizationUser = getRequiredOrganizationUser(clientId, organizationUserRef);
         IamUserEntity iamUser = requireOrganizationUserIamUser(organizationUser);
         if (!isVerifiedIndividual(iamUser)) {
             throw BaseException.badRequest("User is unverified. Use basic KYC update.");
@@ -588,10 +591,10 @@ public class BackofficeOrganizationsService {
     @Transactional
     public BackofficeOrganizationUserResponse updateOrganizationUserBasicKyc(
             String clientId,
-            Long organizationUserId,
+            String organizationUserRef,
             BackofficeOrganizationUserBasicKycUpdateRequest request
     ) {
-        OrganizationUserEntity organizationUser = getRequiredOrganizationUser(clientId, organizationUserId);
+        OrganizationUserEntity organizationUser = getRequiredOrganizationUser(clientId, organizationUserRef);
         IamUserEntity iamUser = requireOrganizationUserIamUser(organizationUser);
         if (isVerifiedIndividual(iamUser)) {
             throw BaseException.badRequest("Verified users must be synced from core banking.");
@@ -618,10 +621,10 @@ public class BackofficeOrganizationsService {
     @Transactional
     public BackofficeOrganizationUserResponse updateOrganizationUserRole(
             String clientId,
-            Long organizationUserId,
+            String organizationUserRef,
             BackofficeOrganizationUserRoleUpdateRequest request
     ) {
-        OrganizationUserEntity organizationUser = getRequiredOrganizationUser(clientId, organizationUserId);
+        OrganizationUserEntity organizationUser = getRequiredOrganizationUser(clientId, organizationUserRef);
         PartyEntity organizationParty = organizationUser.getOrganizationParty();
         OrgRoleEntity orgRole = resolveOrganizationRole(organizationParty, request.getOrgRoleId());
 
@@ -762,7 +765,7 @@ public class BackofficeOrganizationsService {
                 .isPresent();
 
         return BackofficeOrganizationUserSearchItemResponse.builder()
-                .iamUserId(iamUser.getId())
+                .iamUserRef(encryptPositiveLongId(iamUser.getId(), "iamUserId"))
                 .individualClientId(party != null ? party.getCoreCustomerId() : null)
                 .fullName(person != null ? person.getFullName() : null)
                 .mobile(resolvePrimaryContact(iamUser, ContactType.PHONE))
@@ -1283,8 +1286,8 @@ public class BackofficeOrganizationsService {
                 : null;
 
         return BackofficeOrganizationUserResponse.builder()
-                .organizationUserId(entity.getId())
-                .iamUserId(iamUser != null ? iamUser.getId() : null)
+                .organizationUserRef(encryptPositiveLongId(entity.getId(), "organizationUserId"))
+                .iamUserRef(iamUser != null ? encryptPositiveLongId(iamUser.getId(), "iamUserId") : null)
                 .individualClientId(party != null ? party.getCoreCustomerId() : null)
                 .clientId(entity.getOrganizationParty() != null ? entity.getOrganizationParty().getCoreCustomerId() : null)
                 .fullName(person != null ? person.getFullName() : null)
@@ -1409,6 +1412,11 @@ public class BackofficeOrganizationsService {
                 .orElseThrow(() -> BaseException.notFound("Organization " + normalizedClientId + " not found."));
     }
 
+    private OrganizationUserEntity getRequiredOrganizationUser(String clientId, String organizationUserRef) {
+        Long organizationUserId = decryptPositiveLongId(organizationUserRef, "organizationUserRef");
+        return getRequiredOrganizationUser(clientId, organizationUserId);
+    }
+
     private OrganizationUserEntity getRequiredOrganizationUser(String clientId, Long organizationUserId) {
         String normalizedClientId = normalizeClientId(clientId);
         if (organizationUserId == null) {
@@ -1427,6 +1435,43 @@ public class BackofficeOrganizationsService {
         }
 
         return organizationUser;
+    }
+
+    private String encryptPositiveLongId(Long value, String fieldName) {
+        if (value == null || value <= 0) {
+            return null;
+        }
+
+        try {
+            return encryptionUtil.encrypt(String.valueOf(value));
+        } catch (Exception exception) {
+            log.error("Unable to encrypt {} for backoffice response: {}", fieldName, exception.getMessage(), exception);
+            throw BaseException.badRequest("Unable to process " + fieldName + ".");
+        }
+    }
+
+    private Long decryptPositiveLongId(String encryptedValue, String fieldName) {
+        String normalized = trimToNull(encryptedValue);
+        if (normalized == null) {
+            throw BaseException.badRequest(fieldName + " is required.");
+        }
+
+        String decrypted;
+        try {
+            decrypted = encryptionUtil.decrypt(normalized);
+        } catch (Exception exception) {
+            throw BaseException.badRequest("Invalid " + fieldName + ".");
+        }
+
+        try {
+            Long value = Long.valueOf(decrypted);
+            if (value <= 0) {
+                throw BaseException.badRequest("Invalid " + fieldName + ".");
+            }
+            return value;
+        } catch (NumberFormatException exception) {
+            throw BaseException.badRequest("Invalid " + fieldName + ".");
+        }
     }
 
     private IamUserEntity requireOrganizationUserIamUser(OrganizationUserEntity organizationUser) {

@@ -169,93 +169,93 @@ public class BackofficeOrganizationsController {
     }
 
     @Operation(summary = "Get organization user")
-    @GetMapping("/{clientId}/users/{organizationUserId}")
+    @GetMapping("/{clientId}/users/{organizationUserRef}")
     public ResponseEntity<ApiResponse<BackofficeOrganizationUserResponse>> getOrganizationUser(
             @PathVariable String clientId,
-            @PathVariable Long organizationUserId
+            @PathVariable String organizationUserRef
     ) {
         return ResponseBuilder.success(
                 "Organization user retrieved",
-                backofficeOrganizationsService.getOrganizationUser(clientId, organizationUserId)
+                backofficeOrganizationsService.getOrganizationUser(clientId, organizationUserRef)
         );
     }
 
     @Operation(summary = "Block/unblock organization user internet access")
-    @PatchMapping("/{clientId}/users/{organizationUserId}/access-lock")
+    @PatchMapping("/{clientId}/users/{organizationUserRef}/access-lock")
     public ResponseEntity<ApiResponse<BackofficeOrganizationUserResponse>> updateOrganizationUserAccessLock(
             @PathVariable String clientId,
-            @PathVariable Long organizationUserId,
+            @PathVariable String organizationUserRef,
             @Valid @RequestBody BackofficeAccessLockRequest request
     ) {
         return ResponseBuilder.success(
                 request.getBlocked() ? "Organization user access blocked" : "Organization user access unblocked",
                 backofficeOrganizationsService.updateOrganizationUserAccessLock(
                         clientId,
-                        organizationUserId,
+                        organizationUserRef,
                         request.getBlocked()
                 )
         );
     }
 
     @Operation(summary = "Reset organization user password")
-    @PostMapping("/{clientId}/users/{organizationUserId}/password/reset")
+    @PostMapping("/{clientId}/users/{organizationUserRef}/password/reset")
     public ResponseEntity<ApiResponse<BackofficeOrganizationUserResponse>> resetOrganizationUserPassword(
             @PathVariable String clientId,
-            @PathVariable Long organizationUserId
+            @PathVariable String organizationUserRef
     ) {
         return ResponseBuilder.success(
                 "Organization user password reset",
-                backofficeOrganizationsService.resetOrganizationUserPassword(clientId, organizationUserId)
+                backofficeOrganizationsService.resetOrganizationUserPassword(clientId, organizationUserRef)
         );
     }
 
     @Operation(summary = "Reset organization user MFA")
-    @PostMapping("/{clientId}/users/{organizationUserId}/mfa/reset")
+    @PostMapping("/{clientId}/users/{organizationUserRef}/mfa/reset")
     public ResponseEntity<ApiResponse<BackofficeOrganizationUserResponse>> resetOrganizationUserMfa(
             @PathVariable String clientId,
-            @PathVariable Long organizationUserId
+            @PathVariable String organizationUserRef
     ) {
         return ResponseBuilder.success(
                 "Organization user MFA reset",
-                backofficeOrganizationsService.resetOrganizationUserMfa(clientId, organizationUserId)
+                backofficeOrganizationsService.resetOrganizationUserMfa(clientId, organizationUserRef)
         );
     }
 
     @Operation(summary = "Sync organization user KYC from core banking")
-    @PostMapping("/{clientId}/users/{organizationUserId}/kyc/sync")
+    @PostMapping("/{clientId}/users/{organizationUserRef}/kyc/sync")
     public ResponseEntity<ApiResponse<BackofficeOrganizationUserResponse>> syncOrganizationUserKyc(
             @PathVariable String clientId,
-            @PathVariable Long organizationUserId
+            @PathVariable String organizationUserRef
     ) {
         return ResponseBuilder.success(
                 "Organization user KYC synced",
-                backofficeOrganizationsService.syncOrganizationUserKyc(clientId, organizationUserId)
+                backofficeOrganizationsService.syncOrganizationUserKyc(clientId, organizationUserRef)
         );
     }
 
     @Operation(summary = "Update organization user basic KYC for unverified users")
-    @PatchMapping("/{clientId}/users/{organizationUserId}/kyc/basic")
+    @PatchMapping("/{clientId}/users/{organizationUserRef}/kyc/basic")
     public ResponseEntity<ApiResponse<BackofficeOrganizationUserResponse>> updateOrganizationUserBasicKyc(
             @PathVariable String clientId,
-            @PathVariable Long organizationUserId,
+            @PathVariable String organizationUserRef,
             @Valid @RequestBody BackofficeOrganizationUserBasicKycUpdateRequest request
     ) {
         return ResponseBuilder.success(
                 "Organization user basic KYC updated",
-                backofficeOrganizationsService.updateOrganizationUserBasicKyc(clientId, organizationUserId, request)
+                backofficeOrganizationsService.updateOrganizationUserBasicKyc(clientId, organizationUserRef, request)
         );
     }
 
     @Operation(summary = "Update organization user role")
-    @PatchMapping("/{clientId}/users/{organizationUserId}/role")
+    @PatchMapping("/{clientId}/users/{organizationUserRef}/role")
     public ResponseEntity<ApiResponse<BackofficeOrganizationUserResponse>> updateOrganizationUserRole(
             @PathVariable String clientId,
-            @PathVariable Long organizationUserId,
+            @PathVariable String organizationUserRef,
             @Valid @RequestBody BackofficeOrganizationUserRoleUpdateRequest request
     ) {
         return ResponseBuilder.success(
                 "Organization user role updated",
-                backofficeOrganizationsService.updateOrganizationUserRole(clientId, organizationUserId, request)
+                backofficeOrganizationsService.updateOrganizationUserRole(clientId, organizationUserRef, request)
         );
     }
 }

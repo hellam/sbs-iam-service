@@ -13,9 +13,8 @@ import java.util.List;
 @Setter
 public class BackofficeOrganizationUserAddRequest {
 
-    @NotNull(message = "iamUserId is required")
-    @Positive(message = "iamUserId must be positive")
-    private Long iamUserId;
+    @NotBlank(message = "iamUserRef is required")
+    private String iamUserRef;
 
     @NotNull(message = "orgRoleId is required")
     @Positive(message = "orgRoleId must be positive")

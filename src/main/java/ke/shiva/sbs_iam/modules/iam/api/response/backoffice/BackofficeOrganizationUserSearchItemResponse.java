@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BackofficeOrganizationUserSearchItemResponse {
-    private Long iamUserId;
+    private String iamUserRef;
     private String individualClientId;
     private String fullName;
     private String mobile;

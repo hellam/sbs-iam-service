@@ -12,8 +12,8 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BackofficeOrganizationUserResponse {
-    private Long organizationUserId;
-    private Long iamUserId;
+    private String organizationUserRef;
+    private String iamUserRef;
     private String individualClientId;
     private String clientId;
     private String fullName;
