@@ -183,30 +183,12 @@ public class BackofficeOrganizationsService {
         PartyEntity organizationParty = requireOrganizationParty(organization);
 
         List<OrgRoleEntity> roles = sortOrganizationRoles(orgRoleRepository.findAllByOrganizationParty(organizationParty));
-        List<FeatureEntity> availableFeatures = sortFeatures(
-                featureRepository.findByEnabledTrueAndChannelOrderByCategoryAscNameAsc(Channel.INTERNET_BANKING)
-        );
-
-        Map<Long, List<FeatureEntity>> featuresByRoleId = new LinkedHashMap<>();
-        for (OrgRolePermissionEntity rolePermission : orgRolePermissionRepository.findByOrgRole_OrganizationParty(organizationParty)) {
-            if (rolePermission.getOrgRole() == null || rolePermission.getOrgRole().getId() == null) {
-                continue;
-            }
-            if (rolePermission.getFeature() == null) {
-                continue;
-            }
-
-            featuresByRoleId
-                    .computeIfAbsent(rolePermission.getOrgRole().getId(), ignored -> new java.util.ArrayList<>())
-                    .add(rolePermission.getFeature());
-        }
+        Map<Long, List<FeatureEntity>> featuresByRoleId = loadOrganizationRolePermissionsByRoleId(organizationParty);
+        List<BackofficeOrganizationPermissionResponse> availablePermissions =
+                loadAvailableOrganizationPermissions(Channel.INTERNET_BANKING);
 
         List<BackofficeOrganizationRoleDetailsResponse> roleResponses = roles.stream()
                 .map(role -> toOrganizationRoleDetailsResponse(role, sortFeatures(featuresByRoleId.get(role.getId()))))
-                .toList();
-
-        List<BackofficeOrganizationPermissionResponse> availablePermissions = availableFeatures.stream()
-                .map(this::toOrganizationPermissionResponse)
                 .toList();
 
         return BackofficeOrganizationRolesPermissionsResponse.builder()
@@ -876,6 +858,29 @@ public class BackofficeOrganizationsService {
             existingRole.setUpdatedAt(now);
         }
         orgRoleRepository.saveAll(updated);
+    }
+
+    private Map<Long, List<FeatureEntity>> loadOrganizationRolePermissionsByRoleId(PartyEntity organizationParty) {
+        Map<Long, List<FeatureEntity>> featuresByRoleId = new LinkedHashMap<>();
+        for (OrgRolePermissionEntity rolePermission : orgRolePermissionRepository.findByOrgRole_OrganizationParty(organizationParty)) {
+            if (rolePermission.getOrgRole() == null || rolePermission.getOrgRole().getId() == null) {
+                continue;
+            }
+            if (rolePermission.getFeature() == null) {
+                continue;
+            }
+
+            featuresByRoleId
+                    .computeIfAbsent(rolePermission.getOrgRole().getId(), ignored -> new java.util.ArrayList<>())
+                    .add(rolePermission.getFeature());
+        }
+        return featuresByRoleId;
+    }
+
+    private List<BackofficeOrganizationPermissionResponse> loadAvailableOrganizationPermissions(Channel channel) {
+        return sortFeatures(featureRepository.findByEnabledTrueAndChannelOrderByCategoryAscNameAsc(channel)).stream()
+                .map(this::toOrganizationPermissionResponse)
+                .toList();
     }
 
     private void replaceRolePermissions(OrgRoleEntity role, List<FeatureEntity> selectedFeatures) {
