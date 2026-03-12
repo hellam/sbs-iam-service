@@ -3,11 +3,17 @@ package ke.shiva.sbs_iam.modules.iam.app.service.backoffice;
 import jakarta.servlet.http.HttpServletRequest;
 import ke.shiva.client.account.dto.response.BackofficeCustomerDetailsResponse;
 import ke.shiva.client.iam.enums.TaskRole;
+import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationRoleCreateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserAddRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserBasicKycUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserOnboardNonBankRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserRoleUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserSearchRequest;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationPermissionResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationRoleDetailsResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationSummaryResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationRoleResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationRolesPermissionsResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserOnboardResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserSearchItemResponse;
@@ -23,6 +29,9 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PartyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PersonEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.OrgRoleEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.OrgRolePermissionEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.OrgRolePermissionIdEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.system.FeatureEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.ContactType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.party.PartyType;
@@ -31,9 +40,11 @@ import ke.shiva.sbs_iam.modules.iam.infra.external.NotificationService;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerAuthRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerProfileRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.EmployeeProfileRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.FeatureRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.IamUserRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.LoginIdentifierRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.OrgRoleRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.OrgRolePermissionRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.OrganizationRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.OrganizationUserRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.PartyRepository;
@@ -66,6 +77,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -80,6 +92,8 @@ public class BackofficeOrganizationsService {
     private final IamUserRepository iamUserRepository;
     private final LoginIdentifierRepository loginIdentifierRepository;
     private final OrgRoleRepository orgRoleRepository;
+    private final OrgRolePermissionRepository orgRolePermissionRepository;
+    private final FeatureRepository featureRepository;
     private final OrganizationUserRepository organizationUserRepository;
     private final CustomerAuthRepository customerAuthRepository;
     private final CustomerProfileRepository customerProfileRepository;
@@ -150,6 +164,123 @@ public class BackofficeOrganizationsService {
                 .stream()
                 .map(this::toOrganizationUserResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<BackofficeOrganizationRoleResponse> getOrganizationRoles(String clientId) {
+        OrganizationEntity organization = getRequiredOrganization(clientId);
+        PartyEntity organizationParty = requireOrganizationParty(organization);
+        return sortOrganizationRoles(orgRoleRepository.findAllByOrganizationParty(organizationParty)).stream()
+                .map(this::toOrganizationRoleResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public BackofficeOrganizationRolesPermissionsResponse getOrganizationRolesPermissions(String clientId) {
+        OrganizationEntity organization = getRequiredOrganization(clientId);
+        PartyEntity organizationParty = requireOrganizationParty(organization);
+
+        List<OrgRoleEntity> roles = sortOrganizationRoles(orgRoleRepository.findAllByOrganizationParty(organizationParty));
+        List<FeatureEntity> availableFeatures = sortFeatures(
+                featureRepository.findByEnabledTrueAndChannelOrderByCategoryAscNameAsc(Channel.INTERNET_BANKING)
+        );
+
+        Map<Long, List<FeatureEntity>> featuresByRoleId = new LinkedHashMap<>();
+        for (OrgRolePermissionEntity rolePermission : orgRolePermissionRepository.findByOrgRole_OrganizationParty(organizationParty)) {
+            if (rolePermission.getOrgRole() == null || rolePermission.getOrgRole().getId() == null) {
+                continue;
+            }
+            if (rolePermission.getFeature() == null) {
+                continue;
+            }
+
+            featuresByRoleId
+                    .computeIfAbsent(rolePermission.getOrgRole().getId(), ignored -> new java.util.ArrayList<>())
+                    .add(rolePermission.getFeature());
+        }
+
+        List<BackofficeOrganizationRoleDetailsResponse> roleResponses = roles.stream()
+                .map(role -> toOrganizationRoleDetailsResponse(role, sortFeatures(featuresByRoleId.get(role.getId()))))
+                .toList();
+
+        List<BackofficeOrganizationPermissionResponse> availablePermissions = availableFeatures.stream()
+                .map(this::toOrganizationPermissionResponse)
+                .toList();
+
+        return BackofficeOrganizationRolesPermissionsResponse.builder()
+                .roles(roleResponses)
+                .availablePermissions(availablePermissions)
+                .build();
+    }
+
+    @Transactional
+    public BackofficeOrganizationRoleDetailsResponse createOrganizationRole(
+            String clientId,
+            BackofficeOrganizationRoleCreateRequest request
+    ) {
+        OrganizationEntity organization = getRequiredOrganization(clientId);
+        PartyEntity organizationParty = requireOrganizationParty(organization);
+
+        String roleName = trimToNull(request.getName());
+        if (!StringUtils.hasText(roleName)) {
+            throw BaseException.badRequest("Role name is required.");
+        }
+
+        ensureRoleNameUnique(organizationParty, roleName, null);
+        List<FeatureEntity> selectedFeatures = resolveSelectedOrganizationRolePermissions(request.getFeatureIds());
+
+        boolean isDefault = Boolean.TRUE.equals(request.getIsDefault());
+        if (isDefault) {
+            clearDefaultOrganizationRole(organizationParty, null);
+        }
+
+        OrgRoleEntity role = new OrgRoleEntity();
+        role.setOrganizationParty(organizationParty);
+        role.setName(roleName);
+        role.setDescription(trimToNull(request.getDescription()));
+        role.setTaskRole(request.getTaskRole());
+        role.setIsDefault(isDefault);
+        role.setIsActive(true);
+        role.setCreatedAt(OffsetDateTime.now());
+        role.setUpdatedAt(OffsetDateTime.now());
+        role = orgRoleRepository.save(role);
+
+        replaceRolePermissions(role, selectedFeatures);
+        return toOrganizationRoleDetailsResponse(role, sortFeatures(selectedFeatures));
+    }
+
+    @Transactional
+    public BackofficeOrganizationRoleDetailsResponse updateOrganizationRole(
+            String clientId,
+            Long roleId,
+            BackofficeOrganizationRoleCreateRequest request
+    ) {
+        OrganizationEntity organization = getRequiredOrganization(clientId);
+        PartyEntity organizationParty = requireOrganizationParty(organization);
+        OrgRoleEntity role = resolveOrganizationRoleForUpdate(organizationParty, roleId);
+
+        String roleName = trimToNull(request.getName());
+        if (!StringUtils.hasText(roleName)) {
+            throw BaseException.badRequest("Role name is required.");
+        }
+
+        ensureRoleNameUnique(organizationParty, roleName, role.getId());
+        List<FeatureEntity> selectedFeatures = resolveSelectedOrganizationRolePermissions(request.getFeatureIds());
+
+        boolean isDefault = Boolean.TRUE.equals(request.getIsDefault());
+        if (isDefault) {
+            clearDefaultOrganizationRole(organizationParty, role.getId());
+        }
+
+        role.setName(roleName);
+        role.setDescription(trimToNull(request.getDescription()));
+        role.setTaskRole(request.getTaskRole());
+        role.setIsDefault(isDefault);
+        role.setUpdatedAt(OffsetDateTime.now());
+        role = orgRoleRepository.save(role);
+
+        replaceRolePermissions(role, selectedFeatures);
+        return toOrganizationRoleDetailsResponse(role, sortFeatures(selectedFeatures));
     }
 
     @Transactional(readOnly = true)
@@ -232,7 +363,7 @@ public class BackofficeOrganizationsService {
             throw BaseException.badRequest("User is already linked to this company.");
         }
 
-        OrgRoleEntity orgRole = resolveDefaultOrganizationRole(organizationParty);
+        OrgRoleEntity orgRole = resolveOrganizationRole(organizationParty, request.getOrgRoleId());
         OrganizationUserEntity organizationUser = createOrganizationUserLink(iamUser, organizationParty, orgRole);
         organizationUserRepository.save(organizationUser);
 
@@ -297,7 +428,7 @@ public class BackofficeOrganizationsService {
         String rawPassword = PasswordGeneratorUtil.generateRandomPassword(16);
         createCustomerAuth(iamUser, rawPassword);
 
-        OrgRoleEntity orgRole = resolveDefaultOrganizationRole(organizationParty);
+        OrgRoleEntity orgRole = resolveOrganizationRole(organizationParty, request.getOrgRoleId());
         OrganizationUserEntity organizationUser = createOrganizationUserLink(iamUser, organizationParty, orgRole);
         organizationUserRepository.save(organizationUser);
 
@@ -479,6 +610,24 @@ public class BackofficeOrganizationsService {
         person.setUpdatedAt(OffsetDateTime.now());
 
         upsertPrimaryContact(iamUser, ContactType.EMAIL, trimToNull(request.getEmail()));
+        upsertPrimaryContact(iamUser, ContactType.PHONE, trimToNull(request.getPhone()));
+
+        return toOrganizationUserResponse(organizationUser);
+    }
+
+    @Transactional
+    public BackofficeOrganizationUserResponse updateOrganizationUserRole(
+            String clientId,
+            Long organizationUserId,
+            BackofficeOrganizationUserRoleUpdateRequest request
+    ) {
+        OrganizationUserEntity organizationUser = getRequiredOrganizationUser(clientId, organizationUserId);
+        PartyEntity organizationParty = organizationUser.getOrganizationParty();
+        OrgRoleEntity orgRole = resolveOrganizationRole(organizationParty, request.getOrgRoleId());
+
+        organizationUser.setOrgRole(orgRole);
+        organizationUser.setUpdatedAt(OffsetDateTime.now());
+        organizationUserRepository.save(organizationUser);
 
         return toOrganizationUserResponse(organizationUser);
     }
@@ -633,26 +782,119 @@ public class BackofficeOrganizationsService {
                 .orElseThrow(() -> BaseException.notFound("Organization party not found."));
     }
 
-    private OrgRoleEntity resolveDefaultOrganizationRole(PartyEntity organizationParty) {
-        return orgRoleRepository.findAllByOrganizationParty(organizationParty).stream()
-                .filter(role -> Boolean.TRUE.equals(role.getIsActive()))
-                .sorted((first, second) -> {
-                    boolean firstDefault = Boolean.TRUE.equals(first.getIsDefault());
-                    boolean secondDefault = Boolean.TRUE.equals(second.getIsDefault());
-                    if (firstDefault != secondDefault) {
-                        return firstDefault ? -1 : 1;
+    private OrgRoleEntity resolveOrganizationRole(PartyEntity organizationParty, Long orgRoleId) {
+        if (orgRoleId == null || orgRoleId <= 0) {
+            throw BaseException.badRequest("orgRoleId is required.");
+        }
+
+        OrgRoleEntity role = orgRoleRepository.findById(orgRoleId)
+                .orElseThrow(() -> BaseException.notFound("Organization role not found."));
+
+        Long organizationPartyId = organizationParty != null ? organizationParty.getId() : null;
+        Long roleOrganizationPartyId = role.getOrganizationParty() != null ? role.getOrganizationParty().getId() : null;
+        if (!Objects.equals(organizationPartyId, roleOrganizationPartyId)) {
+            throw BaseException.badRequest("Selected role does not belong to this company.");
+        }
+
+        if (!Boolean.TRUE.equals(role.getIsActive())) {
+            throw BaseException.badRequest("Selected role is inactive.");
+        }
+        return role;
+    }
+
+    private OrgRoleEntity resolveOrganizationRoleForUpdate(PartyEntity organizationParty, Long roleId) {
+        if (roleId == null || roleId <= 0) {
+            throw BaseException.badRequest("roleId is required.");
+        }
+
+        OrgRoleEntity role = orgRoleRepository.findById(roleId)
+                .orElseThrow(() -> BaseException.notFound("Organization role not found."));
+
+        Long organizationPartyId = organizationParty != null ? organizationParty.getId() : null;
+        Long roleOrganizationPartyId = role.getOrganizationParty() != null ? role.getOrganizationParty().getId() : null;
+        if (!Objects.equals(organizationPartyId, roleOrganizationPartyId)) {
+            throw BaseException.badRequest("Selected role does not belong to this company.");
+        }
+
+        return role;
+    }
+
+    private void ensureRoleNameUnique(PartyEntity organizationParty, String roleName, Long currentRoleId) {
+        orgRoleRepository.findByOrganizationPartyAndNameIgnoreCase(organizationParty, roleName)
+                .ifPresent(existingRole -> {
+                    Long existingRoleId = existingRole.getId();
+                    if (currentRoleId == null || !Objects.equals(existingRoleId, currentRoleId)) {
+                        throw BaseException.badRequest("Role name '" + roleName + "' already exists for this company.");
                     }
-                    boolean firstInputter = first.getTaskRole() == TaskRole.MAKER;
-                    boolean secondInputter = second.getTaskRole() == TaskRole.MAKER;
-                    if (firstInputter != secondInputter) {
-                        return firstInputter ? -1 : 1;
-                    }
-                    String firstName = String.valueOf(first.getName()).toUpperCase();
-                    String secondName = String.valueOf(second.getName()).toUpperCase();
-                    return firstName.compareTo(secondName);
+                });
+    }
+
+    private List<FeatureEntity> resolveSelectedOrganizationRolePermissions(List<Long> featureIdsInput) {
+        List<Long> featureIds = featureIdsInput == null
+                ? List.of()
+                : featureIdsInput.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        if (featureIds.isEmpty()) {
+            throw BaseException.badRequest("Select at least one permission.");
+        }
+
+        List<FeatureEntity> selectedFeatures = featureRepository.findAllById(featureIds);
+        if (selectedFeatures.size() != featureIds.size()) {
+            throw BaseException.badRequest("One or more selected permissions were not found.");
+        }
+
+        for (FeatureEntity feature : selectedFeatures) {
+            if (feature.getChannel() != Channel.INTERNET_BANKING || !Boolean.TRUE.equals(feature.getEnabled())) {
+                throw BaseException.badRequest("Permission '" + feature.getCode() + "' is not available for organization roles.");
+            }
+        }
+
+        return selectedFeatures;
+    }
+
+    private void clearDefaultOrganizationRole(PartyEntity organizationParty, Long excludedRoleId) {
+        List<OrgRoleEntity> existingRoles = orgRoleRepository.findAllByOrganizationParty(organizationParty);
+        List<OrgRoleEntity> updated = existingRoles.stream()
+                .filter(existingRole -> existingRole != null && existingRole.getId() != null)
+                .filter(existingRole -> !Objects.equals(existingRole.getId(), excludedRoleId))
+                .filter(existingRole -> Boolean.TRUE.equals(existingRole.getIsDefault()))
+                .toList();
+
+        if (updated.isEmpty()) {
+            return;
+        }
+
+        OffsetDateTime now = OffsetDateTime.now();
+        for (OrgRoleEntity existingRole : updated) {
+            existingRole.setIsDefault(false);
+            existingRole.setUpdatedAt(now);
+        }
+        orgRoleRepository.saveAll(updated);
+    }
+
+    private void replaceRolePermissions(OrgRoleEntity role, List<FeatureEntity> selectedFeatures) {
+        List<OrgRolePermissionEntity> existingPermissions = orgRolePermissionRepository.findByOrgRole(role);
+        if (!existingPermissions.isEmpty()) {
+            orgRolePermissionRepository.deleteAll(existingPermissions);
+        }
+
+        List<OrgRolePermissionEntity> newPermissions = selectedFeatures.stream()
+                .map(feature -> {
+                    OrgRolePermissionIdEntity id = new OrgRolePermissionIdEntity();
+                    id.setOrgRoleId(role.getId());
+                    id.setFeatureId(feature.getId());
+
+                    OrgRolePermissionEntity rolePermission = new OrgRolePermissionEntity();
+                    rolePermission.setId(id);
+                    rolePermission.setOrgRole(role);
+                    rolePermission.setFeature(feature);
+                    return rolePermission;
                 })
-                .findFirst()
-                .orElseThrow(() -> BaseException.badRequest("No active organization role is configured for this company."));
+                .toList();
+        orgRolePermissionRepository.saveAll(newPermissions);
     }
 
     private OrganizationUserEntity createOrganizationUserLink(
@@ -1053,6 +1295,7 @@ public class BackofficeOrganizationsService {
                         && iamUser.getCustomerAuth() != null
                         && Boolean.TRUE.equals(iamUser.getCustomerAuth().getInternetLocked()))
                 .mfaTotpEnabled(isMfaTotpEnabled(iamUser))
+                .orgRoleId(entity.getOrgRole() != null ? entity.getOrgRole().getId() : null)
                 .roleName(roleName)
                 .taskRole(taskRole)
                 .primary(entity.getIsPrimary())
@@ -1060,6 +1303,104 @@ public class BackofficeOrganizationsService {
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
+    }
+
+    private BackofficeOrganizationRoleResponse toOrganizationRoleResponse(OrgRoleEntity entity) {
+        return BackofficeOrganizationRoleResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .taskRole(entity.getTaskRole() != null ? entity.getTaskRole().name() : null)
+                .isDefault(Boolean.TRUE.equals(entity.getIsDefault()))
+                .isActive(Boolean.TRUE.equals(entity.getIsActive()))
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    private BackofficeOrganizationRoleDetailsResponse toOrganizationRoleDetailsResponse(
+            OrgRoleEntity entity,
+            List<FeatureEntity> permissions
+    ) {
+        List<BackofficeOrganizationPermissionResponse> permissionResponses = sortFeatures(permissions).stream()
+                .map(this::toOrganizationPermissionResponse)
+                .toList();
+
+        return BackofficeOrganizationRoleDetailsResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .taskRole(entity.getTaskRole() != null ? entity.getTaskRole().name() : null)
+                .isDefault(Boolean.TRUE.equals(entity.getIsDefault()))
+                .isActive(Boolean.TRUE.equals(entity.getIsActive()))
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .permissions(permissionResponses)
+                .build();
+    }
+
+    private BackofficeOrganizationPermissionResponse toOrganizationPermissionResponse(FeatureEntity feature) {
+        return BackofficeOrganizationPermissionResponse.builder()
+                .id(feature.getId())
+                .code(feature.getCode())
+                .name(feature.getName())
+                .description(feature.getDescription())
+                .category(feature.getCategory())
+                .isTransaction(Boolean.TRUE.equals(feature.getIsTransaction()))
+                .enabled(Boolean.TRUE.equals(feature.getEnabled()))
+                .build();
+    }
+
+    private List<OrgRoleEntity> sortOrganizationRoles(List<OrgRoleEntity> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return List.of();
+        }
+        return roles.stream()
+                .sorted((first, second) -> {
+                    boolean firstDefault = Boolean.TRUE.equals(first.getIsDefault());
+                    boolean secondDefault = Boolean.TRUE.equals(second.getIsDefault());
+                    if (firstDefault != secondDefault) {
+                        return firstDefault ? -1 : 1;
+                    }
+
+                    boolean firstMaker = first.getTaskRole() == TaskRole.MAKER;
+                    boolean secondMaker = second.getTaskRole() == TaskRole.MAKER;
+                    if (firstMaker != secondMaker) {
+                        return firstMaker ? -1 : 1;
+                    }
+
+                    String firstName = String.valueOf(first.getName()).toUpperCase();
+                    String secondName = String.valueOf(second.getName()).toUpperCase();
+                    return firstName.compareTo(secondName);
+                })
+                .toList();
+    }
+
+    private List<FeatureEntity> sortFeatures(List<FeatureEntity> features) {
+        if (features == null || features.isEmpty()) {
+            return List.of();
+        }
+        return features.stream()
+                .filter(Objects::nonNull)
+                .sorted((first, second) -> {
+                    String firstCategory = String.valueOf(first.getCategory()).toUpperCase();
+                    String secondCategory = String.valueOf(second.getCategory()).toUpperCase();
+                    int categoryCompare = firstCategory.compareTo(secondCategory);
+                    if (categoryCompare != 0) {
+                        return categoryCompare;
+                    }
+
+                    String firstName = String.valueOf(first.getName()).toUpperCase();
+                    String secondName = String.valueOf(second.getName()).toUpperCase();
+                    int nameCompare = firstName.compareTo(secondName);
+                    if (nameCompare != 0) {
+                        return nameCompare;
+                    }
+
+                    return String.valueOf(first.getCode()).toUpperCase()
+                            .compareTo(String.valueOf(second.getCode()).toUpperCase());
+                })
+                .toList();
     }
 
     private OrganizationEntity getRequiredOrganization(String clientId) {

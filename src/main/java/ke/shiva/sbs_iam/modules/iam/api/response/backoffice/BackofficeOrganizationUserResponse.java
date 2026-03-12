@@ -22,6 +22,7 @@ public class BackofficeOrganizationUserResponse {
     private Boolean verified;
     private Boolean internetLocked;
     private Boolean mfaTotpEnabled;
+    private Long orgRoleId;
     private String roleName;
     private String taskRole;
     private Boolean primary;

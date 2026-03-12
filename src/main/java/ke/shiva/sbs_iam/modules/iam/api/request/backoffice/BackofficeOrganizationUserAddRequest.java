@@ -17,6 +17,10 @@ public class BackofficeOrganizationUserAddRequest {
     @Positive(message = "iamUserId must be positive")
     private Long iamUserId;
 
+    @NotNull(message = "orgRoleId is required")
+    @Positive(message = "orgRoleId must be positive")
+    private Long orgRoleId;
+
     @NotEmpty(message = "clientAccountIds is required")
     private List<@NotBlank(message = "clientAccountId cannot be blank") String> clientAccountIds;
 }

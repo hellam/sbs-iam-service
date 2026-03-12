@@ -5,6 +5,7 @@ import ke.shiva.client.account.dto.request.BackofficeAccountSeedItem;
 import ke.shiva.client.account.dto.request.BackofficeAccountSeedRequest;
 import ke.shiva.client.account.dto.response.BackofficeCustomerDetailsResponse;
 import ke.shiva.client.account.dto.response.GeneralClientAccountsResponse;
+import ke.shiva.client.iam.enums.TaskRole;
 import ke.shiva.sbs_iam.modules.iam.app.service.backoffice.dto.BackofficeOnboardingCommand;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerAccountResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerLookupResponse;
@@ -20,6 +21,10 @@ import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.*;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.EmployeeProfileRoleEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.EmployeeProfileRoleIdEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.EmployeeRoleEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.OrgRoleEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.OrgRolePermissionEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.rbac.OrgRolePermissionIdEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.system.FeatureEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.ContactType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginProfiles;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.employee.EmploymentStatus;
@@ -67,6 +72,9 @@ public class BackofficeOnboardingService {
     private final EmployeeRoleRepository employeeRoleRepository;
     private final EmployeeProfileRoleRepository employeeProfileRoleRepository;
     private final OrganizationRepository organizationRepository;
+    private final OrgRoleRepository orgRoleRepository;
+    private final OrgRolePermissionRepository orgRolePermissionRepository;
+    private final FeatureRepository featureRepository;
     private final CountryRepository countryRepository;
     private final BranchRepository branchRepository;
     private final PasswordPolicyService passwordPolicyService;
@@ -451,12 +459,147 @@ public class BackofficeOnboardingService {
         organization.setCreatedAt(OffsetDateTime.now());
         organization.setUpdatedAt(OffsetDateTime.now());
         organizationRepository.save(organization);
+        seedDefaultOrganizationRolesAndPermissions(party);
 
         return BackofficeOrganizationOnboardingResponse.builder()
                 .partyId(party.getId())
                 .publicId(party.getPublicId())
                 .legalName(organization.getLegalName())
                 .build();
+    }
+
+    private void seedDefaultOrganizationRolesAndPermissions(PartyEntity organizationParty) {
+        OrgRoleEntity makerRole = upsertOrganizationRole(
+                organizationParty,
+                TaskRole.MAKER,
+                "Maker",
+                "Initiates and submits corporate transactions.",
+                true
+        );
+        OrgRoleEntity checkerRole = upsertOrganizationRole(
+                organizationParty,
+                TaskRole.CHECKER,
+                "Checker",
+                "Reviews and verifies submitted corporate transactions.",
+                false
+        );
+        OrgRoleEntity approverRole = upsertOrganizationRole(
+                organizationParty,
+                TaskRole.APPROVER,
+                "Approver",
+                "Performs final transaction approval.",
+                false
+        );
+
+        FeatureEntity internalTransfer = upsertFeature(
+                "INTERNAL_TRANSFER",
+                "Internal Transfer",
+                "Initiate internal account transfers.",
+                "Transfers",
+                true
+        );
+        FeatureEntity rtgsTransfer = upsertFeature(
+                "RTGS_TRANSFER",
+                "RTGS Transfer",
+                "Initiate RTGS transfers.",
+                "Transfers",
+                true
+        );
+        FeatureEntity swiftTransfer = upsertFeature(
+                "SWIFT_TRANSFER",
+                "SWIFT Transfer",
+                "Initiate SWIFT transfers.",
+                "Transfers",
+                true
+        );
+        FeatureEntity approvalQueue = upsertFeature(
+                "APPROVAL_QUEUE",
+                "Approval Queue",
+                "View and action pending approvals.",
+                "Approvals",
+                false
+        );
+
+        upsertRolePermission(makerRole, internalTransfer);
+        upsertRolePermission(makerRole, rtgsTransfer);
+        upsertRolePermission(makerRole, swiftTransfer);
+
+        upsertRolePermission(checkerRole, internalTransfer);
+        upsertRolePermission(checkerRole, rtgsTransfer);
+        upsertRolePermission(checkerRole, swiftTransfer);
+        upsertRolePermission(checkerRole, approvalQueue);
+
+        upsertRolePermission(approverRole, internalTransfer);
+        upsertRolePermission(approverRole, rtgsTransfer);
+        upsertRolePermission(approverRole, swiftTransfer);
+        upsertRolePermission(approverRole, approvalQueue);
+    }
+
+    private OrgRoleEntity upsertOrganizationRole(
+            PartyEntity organizationParty,
+            TaskRole taskRole,
+            String name,
+            String description,
+            boolean isDefault
+    ) {
+        OrgRoleEntity role = orgRoleRepository.findByOrganizationPartyAndTaskRole(organizationParty, taskRole)
+                .orElseGet(() -> orgRoleRepository
+                        .findByOrganizationPartyAndNameIgnoreCase(organizationParty, name)
+                        .orElseGet(OrgRoleEntity::new));
+
+        if (role.getId() == null) {
+            role.setOrganizationParty(organizationParty);
+            role.setTaskRole(taskRole);
+            role.setCreatedAt(OffsetDateTime.now());
+        }
+
+        role.setName(name);
+        role.setDescription(description);
+        // TODO: Make per-organization default-role selection configurable from backoffice policy settings.
+        role.setIsDefault(isDefault);
+        role.setIsActive(true);
+        role.setUpdatedAt(OffsetDateTime.now());
+        return orgRoleRepository.save(role);
+    }
+
+    private FeatureEntity upsertFeature(
+            String code,
+            String name,
+            String description,
+            String category,
+            boolean isTransaction
+    ) {
+        FeatureEntity feature = featureRepository.findByCode(code)
+                .orElseGet(FeatureEntity::new);
+
+        if (feature.getId() == null) {
+            feature.setCode(code);
+            feature.setCreatedAt(OffsetDateTime.now());
+        }
+
+        feature.setChannel(Channel.INTERNET_BANKING);
+        feature.setName(name);
+        feature.setDescription(description);
+        feature.setCategory(category);
+        feature.setEnabled(true);
+        feature.setIsTransaction(isTransaction);
+        return featureRepository.save(feature);
+    }
+
+    private void upsertRolePermission(OrgRoleEntity role, FeatureEntity feature) {
+        OrgRolePermissionIdEntity id = new OrgRolePermissionIdEntity();
+        id.setOrgRoleId(role.getId());
+        id.setFeatureId(feature.getId());
+
+        if (orgRolePermissionRepository.existsById(id)) {
+            return;
+        }
+
+        OrgRolePermissionEntity rolePermission = new OrgRolePermissionEntity();
+        rolePermission.setId(id);
+        rolePermission.setOrgRole(role);
+        rolePermission.setFeature(feature);
+        orgRolePermissionRepository.save(rolePermission);
     }
 
     private void assignEmployeeRoles(EmployeeProfileEntity employeeProfile, List<Long> roleIds) {

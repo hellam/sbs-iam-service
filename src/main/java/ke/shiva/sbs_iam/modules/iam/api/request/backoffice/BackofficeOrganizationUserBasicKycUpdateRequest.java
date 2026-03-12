@@ -15,4 +15,7 @@ public class BackofficeOrganizationUserBasicKycUpdateRequest {
     @NotBlank(message = "email is required")
     @Email(message = "email must be valid")
     private String email;
+
+    @NotBlank(message = "phone is required")
+    private String phone;
 }

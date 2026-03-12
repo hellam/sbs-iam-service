@@ -5,14 +5,19 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeAccessLockRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationRoleCreateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserAddRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserBasicKycUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserOnboardNonBankRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserRoleUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserSearchRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserOnboardResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserSearchResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationSummaryResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationRoleResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationRoleDetailsResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationRolesPermissionsResponse;
 import ke.shiva.sbs_iam.modules.iam.app.service.backoffice.BackofficeOrganizationsService;
 import ke.shiva.shivacorestarter.dto.ApiResponse;
 import ke.shiva.shivacorestarter.dto.PaginatedResponse;
@@ -22,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -76,6 +82,53 @@ public class BackofficeOrganizationsController {
         return ResponseBuilder.success(
                 "Organization users retrieved",
                 backofficeOrganizationsService.getOrganizationUsers(clientId)
+        );
+    }
+
+    @Operation(summary = "List organization roles", description = "Returns organization roles for user assignment")
+    @GetMapping("/{clientId}/roles")
+    public ResponseEntity<ApiResponse<List<BackofficeOrganizationRoleResponse>>> getOrganizationRoles(
+            @PathVariable String clientId
+    ) {
+        return ResponseBuilder.success(
+                "Organization roles retrieved",
+                backofficeOrganizationsService.getOrganizationRoles(clientId)
+        );
+    }
+
+    @Operation(summary = "List organization roles with permissions")
+    @GetMapping("/{clientId}/roles-permissions")
+    public ResponseEntity<ApiResponse<BackofficeOrganizationRolesPermissionsResponse>> getOrganizationRolesPermissions(
+            @PathVariable String clientId
+    ) {
+        return ResponseBuilder.success(
+                "Organization roles and permissions retrieved",
+                backofficeOrganizationsService.getOrganizationRolesPermissions(clientId)
+        );
+    }
+
+    @Operation(summary = "Create organization role and link permissions")
+    @PostMapping("/{clientId}/roles")
+    public ResponseEntity<ApiResponse<BackofficeOrganizationRoleDetailsResponse>> createOrganizationRole(
+            @PathVariable String clientId,
+            @Valid @RequestBody BackofficeOrganizationRoleCreateRequest request
+    ) {
+        return ResponseBuilder.success(
+                "Organization role created",
+                backofficeOrganizationsService.createOrganizationRole(clientId, request)
+        );
+    }
+
+    @Operation(summary = "Update organization role and linked permissions")
+    @PutMapping("/{clientId}/roles/{roleId}")
+    public ResponseEntity<ApiResponse<BackofficeOrganizationRoleDetailsResponse>> updateOrganizationRole(
+            @PathVariable String clientId,
+            @PathVariable Long roleId,
+            @Valid @RequestBody BackofficeOrganizationRoleCreateRequest request
+    ) {
+        return ResponseBuilder.success(
+                "Organization role updated",
+                backofficeOrganizationsService.updateOrganizationRole(clientId, roleId, request)
         );
     }
 
@@ -190,6 +243,19 @@ public class BackofficeOrganizationsController {
         return ResponseBuilder.success(
                 "Organization user basic KYC updated",
                 backofficeOrganizationsService.updateOrganizationUserBasicKyc(clientId, organizationUserId, request)
+        );
+    }
+
+    @Operation(summary = "Update organization user role")
+    @PatchMapping("/{clientId}/users/{organizationUserId}/role")
+    public ResponseEntity<ApiResponse<BackofficeOrganizationUserResponse>> updateOrganizationUserRole(
+            @PathVariable String clientId,
+            @PathVariable Long organizationUserId,
+            @Valid @RequestBody BackofficeOrganizationUserRoleUpdateRequest request
+    ) {
+        return ResponseBuilder.success(
+                "Organization user role updated",
+                backofficeOrganizationsService.updateOrganizationUserRole(clientId, organizationUserId, request)
         );
     }
 }
