@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -59,6 +60,11 @@ public class BackofficeSupportContentService {
         Long id = decodeId(encryptedId);
         SupportContentEntity entity = supportContentRepository.findById(id)
                 .orElseThrow(() -> BaseException.notFound("Support content not found."));
+        OffsetDateTime now = OffsetDateTime.now();
+        if (entity.getCreatedAt() == null) {
+            entity.setCreatedAt(now);
+        }
+        entity.setUpdatedAt(now);
         entity.setIsActive(active);
         entity.setUpdatedBy(DEFAULT_ACTOR);
         SupportContentEntity saved = supportContentRepository.save(entity);
@@ -70,6 +76,7 @@ public class BackofficeSupportContentService {
             BackofficeSupportContentUpsertRequest request,
             String actor
     ) {
+        OffsetDateTime now = OffsetDateTime.now();
         SupportContentCategory category = resolveCategory(request.getCategory());
         String title = normalizeRequired(request.getTitle(), "Title is required.");
         String content = normalizeRequired(request.getContent(), "Content is required.");
@@ -106,6 +113,10 @@ public class BackofficeSupportContentService {
         entity.setContactValue(contactValue);
         entity.setSortOrder(sortOrder);
         entity.setIsActive(request.getIsActive() == null ? Boolean.TRUE : request.getIsActive());
+        if (entity.getCreatedAt() == null) {
+            entity.setCreatedAt(now);
+        }
+        entity.setUpdatedAt(now);
         if (!StringUtils.hasText(entity.getCreatedBy())) {
             entity.setCreatedBy(actor);
         }
