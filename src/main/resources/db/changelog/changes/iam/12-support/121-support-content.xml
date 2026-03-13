@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="pg-iam-121-create-support-contents-table" author="codex">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="iam_service" tableName="support_contents"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="support_contents" schemaName="iam_service">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_support_contents"/>
+            </column>
+            <column name="category" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="subtitle" type="VARCHAR(200)"/>
+            <column name="content" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="contact_channel" type="VARCHAR(30)"/>
+            <column name="contact_value" type="VARCHAR(200)"/>
+            <column name="sort_order" type="INTEGER" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(100)"/>
+            <column name="updated_by" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="pg-iam-122-create-support-contents-indexes" author="codex">
+        <createIndex indexName="idx_support_contents_category_active_sort"
+                     schemaName="iam_service"
+                     tableName="support_contents">
+            <column name="category"/>
+            <column name="is_active"/>
+            <column name="sort_order"/>
+        </createIndex>
+
+        <createIndex indexName="idx_support_contents_updated_at"
+                     schemaName="iam_service"
+                     tableName="support_contents">
+            <column name="updated_at"/>
+        </createIndex>
+
+        <createIndex indexName="idx_support_contents_contact_channel"
+                     schemaName="iam_service"
+                     tableName="support_contents">
+            <column name="contact_channel"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
