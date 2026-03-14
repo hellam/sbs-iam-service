@@ -35,6 +35,8 @@ spring:
           max-idle: 20
           min-idle: 5
           max-wait: -1ms
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
   jpa:
     hibernate:
@@ -177,6 +179,12 @@ shiva:
       kafka:
         enabled: false
       enabled: true
+
+analytics:
+  events:
+    enabled: ${ANALYTICS_EVENTS_ENABLED:true}
+    topic: ${ANALYTICS_EVENTS_TOPIC:analytics.dashboard.snapshot.v1}
+    snapshot-cron: ${ANALYTICS_EVENTS_SNAPSHOT_CRON:0 */1 * * * *}
 
 logging:
   level:
