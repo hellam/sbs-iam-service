@@ -10,6 +10,7 @@ import ke.shiva.sbs_iam.modules.iam.app.service.CommonMfaService;
 import ke.shiva.sbs_iam.modules.iam.app.service.LoginFlowService;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
+import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.dto.ApiResponse;
 import ke.shiva.shivacorestarter.util.ResponseBuilder;
 import lombok.RequiredArgsConstructor;
@@ -45,4 +46,15 @@ public class InternalMfaController {
          commonMfaService.verify(session, req.getCode(), req.getAction());
          return ResponseBuilder.success("MFA verified successfully");
      }
+
+    @Operation(summary = "3. Verify MFA - OTP Only")
+    @PostMapping("/verify-otp")
+    public ResponseEntity<ApiResponse<Void>> verifyMfaOtpOnly(@Valid @RequestBody MfaVerifyRequest req, @FlowId UUID flowId) {
+        SessionEntity session = loginFlowService.requireStage(flowId, LoginStage.ACTIVE);
+        boolean valid = commonMfaService.verifyOtp(session.getSessionId(), req.getCode());
+        if (!valid) {
+            throw BaseException.badRequest("Invalid code");
+        }
+        return ResponseBuilder.success("MFA verified successfully");
+    }
 }
