@@ -8,7 +8,11 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.NotificationChannel;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +28,13 @@ import java.util.Map;
 public class NotificationService {
 
     private final NotificationClientV1 notificationClient;
+    private final Environment environment;
+
+    @Value("${shiva.notifications.dev-email-recipient:}")
+    private String devEmailRecipient;
+
+    @Value("${shiva.notifications.internet-banking-login-url:https://banking.shiva.ke}")
+    private String internetBankingLoginUrl;
 
     public SendNotificationResponse sendOtp(NotificationChannel channel,
                                             String recipient, String otp, Integer otpExpirySeconds){
@@ -112,11 +123,12 @@ public class NotificationService {
      * @return Notification response
      */
     public SendNotificationResponse sendOtpViaEmail(String email, String otp, String expiryMinutes) {
-        log.info("Sending OTP via Email to: {}", email);
+        String recipient = resolveEmailRecipient(email);
+        log.info("Sending OTP via Email to: {}", recipient);
 
         SendNotificationRequest request = SendNotificationRequest.builder()
                 .channel(ChannelType.EMAIL)
-                .recipient(email)
+                .recipient(recipient)
                 .templateCode("otp_verification")
                 .language("en")
                 .parameters(Map.of(
@@ -137,28 +149,48 @@ public class NotificationService {
      *
      * @param channel         The notification channel (SMS, EMAIL, or WHATSAPP)
      * @param recipient       Phone number or email
-     * @param userName        User's name
+     * @param name            User's display name
      * @param additionalInfo  Additional information map
      * @return Notification response
      */
     public SendNotificationResponse sendWelcomeMessage(
             ChannelType channel,
             String recipient,
-            String userName,
+            String name,
             Map<String, Object> additionalInfo) {
+        String resolvedRecipient = resolveRecipient(channel, recipient);
 
-        log.info("Sending welcome message via {} to: {}", channel, recipient);
+        log.info("Sending welcome message via {} to: {}", channel, resolvedRecipient);
 
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("param1", userName);
         if (additionalInfo != null) {
             parameters.putAll(additionalInfo);
         }
 
+        String resolvedName = safe(name, "Customer");
+        String resolvedUserName = firstNonBlank(
+                readText(parameters, "userName"),
+                readText(parameters, "username"),
+                resolvedName
+        );
+        String resolvedPassword = firstNonBlank(
+                readText(parameters, "password"),
+                "Use your existing password"
+        );
+        String resolvedLoginUrl = firstNonBlank(
+                readText(parameters, "loginUrl"),
+                internetBankingLoginUrl
+        );
+
+        parameters.put("name", resolvedName);
+        parameters.put("userName", resolvedUserName);
+        parameters.put("password", resolvedPassword);
+        parameters.put("loginUrl", resolvedLoginUrl);
+
         SendNotificationRequest request = SendNotificationRequest.builder()
                 .channel(channel)
-                .recipient(recipient)
-                .templateCode("welcome_message")
+                .recipient(resolvedRecipient)
+                .templateCode("welcome_internet_banking")
                 .language("en")
                 .parameters(parameters)
                 .metadata(Map.of(
@@ -183,12 +215,13 @@ public class NotificationService {
             String email,
             String userName,
             String resetToken) {
+        String recipient = resolveEmailRecipient(email);
 
-        log.info("Sending password reset link to: {}", email);
+        log.info("Sending password reset link to: {}", recipient);
 
         SendNotificationRequest request = SendNotificationRequest.builder()
                 .channel(ChannelType.EMAIL)
-                .recipient(email)
+                .recipient(recipient)
                 .templateCode("password_reset")
                 .language("en")
                 .parameters(Map.of(
@@ -213,14 +246,15 @@ public class NotificationService {
             String reference,
             String temporaryPassword
     ) {
-        log.info("Sending admin password reset notice to: {}", email);
+        String recipient = resolveEmailRecipient(email);
+        log.info("Sending admin password reset notice to: {}", recipient);
         String safeReference = reference == null || reference.isBlank() ? "-" : reference;
         String safePassword = temporaryPassword == null ? "" : temporaryPassword.trim();
         String message = "Hello " + (userName == null || userName.isBlank() ? "Customer" : userName)
                 + ", your login password was reset by support. "
                 + "Temporary password: " + safePassword + ". "
                 + "Please log in and change it immediately. Ref: " + safeReference;
-        return notificationClient.sendDirectMessage(ChannelType.EMAIL, email, message);
+        return notificationClient.sendDirectMessage(ChannelType.EMAIL, recipient, message);
     }
 
     /**
@@ -232,14 +266,15 @@ public class NotificationService {
             String organizationName,
             String organizationClientId
     ) {
-        log.info("Sending organization profile linked notice to: {}", email);
+        String recipient = resolveEmailRecipient(email);
+        log.info("Sending organization profile linked notice to: {}", recipient);
         String safeName = userName == null || userName.isBlank() ? "Customer" : userName;
         String safeOrganizationName = organizationName == null || organizationName.isBlank() ? "your company" : organizationName;
         String safeOrganizationId = organizationClientId == null || organizationClientId.isBlank() ? "-" : organizationClientId;
         String message = "Hello " + safeName
                 + ", you have been added to company profile " + safeOrganizationName + " (" + safeOrganizationId + "). "
                 + "Use your existing internet banking credentials to log in, then select this company profile to view and perform actions.";
-        return notificationClient.sendDirectMessage(ChannelType.EMAIL, email, message);
+        return notificationClient.sendDirectMessage(ChannelType.EMAIL, recipient, message);
     }
 
     /**
@@ -253,7 +288,8 @@ public class NotificationService {
             String username,
             String temporaryPassword
     ) {
-        log.info("Sending organization profile onboarded notice to: {}", email);
+        String recipient = resolveEmailRecipient(email);
+        log.info("Sending organization profile onboarded notice to: {}", recipient);
         String safeName = userName == null || userName.isBlank() ? "Customer" : userName;
         String safeOrganizationName = organizationName == null || organizationName.isBlank() ? "your company" : organizationName;
         String safeOrganizationId = organizationClientId == null || organizationClientId.isBlank() ? "-" : organizationClientId;
@@ -263,7 +299,7 @@ public class NotificationService {
                 + ", you have been onboarded and added to company profile " + safeOrganizationName + " (" + safeOrganizationId + "). "
                 + "Username: " + safeUsername + ". Temporary password: " + safePassword + ". "
                 + "Log in, select this company profile, and change your password immediately.";
-        return notificationClient.sendDirectMessage(ChannelType.EMAIL, email, message);
+        return notificationClient.sendDirectMessage(ChannelType.EMAIL, recipient, message);
     }
 
     public SendNotificationResponse sendLoginAlertEmail(
@@ -276,11 +312,12 @@ public class NotificationService {
             String channel,
             String loginTime
     ) {
-        log.info("Sending login alert via EMAIL to: {}", email);
+        String recipient = resolveEmailRecipient(email);
+        log.info("Sending login alert via EMAIL to: {}", recipient);
 
         SendNotificationRequest request = SendNotificationRequest.builder()
                 .channel(ChannelType.EMAIL)
-                .recipient(email)
+                .recipient(recipient)
                 .templateCode("login_alert")
                 .eventType("login_alert")
                 .language("en")
@@ -314,7 +351,8 @@ public class NotificationService {
             String channel,
             String loginTime
     ) {
-        log.info("Sending direct login alert via EMAIL to: {}", email);
+        String recipient = resolveEmailRecipient(email);
+        log.info("Sending direct login alert via EMAIL to: {}", recipient);
 
         String message = "Hello " + safe(userName, "Customer") + ", a new login to your account was detected.\n"
                 + "Channel: " + safe(channel, "Unknown") + "\n"
@@ -327,7 +365,7 @@ public class NotificationService {
 
         SendNotificationRequest request = SendNotificationRequest.builder()
                 .channel(ChannelType.EMAIL)
-                .recipient(email)
+                .recipient(recipient)
                 .message(message)
                 .metadata(Map.of(
                         "source", "iam-service",
@@ -341,11 +379,62 @@ public class NotificationService {
         return notificationClient.sendAsync(request);
     }
 
+    public String resolveDeliveryRecipient(ChannelType channel, String recipient) {
+        return resolveRecipient(channel, recipient);
+    }
+
+    private String resolveRecipient(ChannelType channel, String recipient) {
+        if (channel == ChannelType.EMAIL) {
+            return resolveEmailRecipient(recipient);
+        }
+        return recipient;
+    }
+
+    private String resolveEmailRecipient(String recipient) {
+        String resolved = recipient == null ? null : recipient.trim();
+        if (isDevProfile() && StringUtils.hasText(devEmailRecipient)) {
+            String override = devEmailRecipient.trim();
+            if (StringUtils.hasText(resolved) && !override.equalsIgnoreCase(resolved)) {
+                log.debug("DEV email override applied. Original recipient: {}", resolved);
+            }
+            return override;
+        }
+        return resolved;
+    }
+
+    private boolean isDevProfile() {
+        return environment.acceptsProfiles(Profiles.of("dev"));
+    }
+
     private String safe(String value, String fallback) {
         if (value == null || value.isBlank()) {
             return fallback;
         }
         return value.trim();
+    }
+
+    private String readText(Map<String, Object> parameters, String key) {
+        if (parameters == null || key == null || key.isBlank()) {
+            return null;
+        }
+        Object raw = parameters.get(key);
+        if (raw == null) {
+            return null;
+        }
+        String value = String.valueOf(raw).trim();
+        return value.isEmpty() ? null : value;
+    }
+
+    private String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value.trim();
+            }
+        }
+        return null;
     }
 
     /**
@@ -360,12 +449,13 @@ public class NotificationService {
             String email,
             String userName,
             String verificationLink) {
+        String recipient = resolveEmailRecipient(email);
 
-        log.info("Sending account verification link to: {}", email);
+        log.info("Sending account verification link to: {}", recipient);
 
         SendNotificationRequest request = SendNotificationRequest.builder()
                 .channel(ChannelType.EMAIL)
-                .recipient(email)
+                .recipient(recipient)
                 .templateCode("account_verification")
                 .language("en")
                 .parameters(Map.of(

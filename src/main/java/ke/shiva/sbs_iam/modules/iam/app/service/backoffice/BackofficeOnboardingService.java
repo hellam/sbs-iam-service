@@ -6,6 +6,7 @@ import ke.shiva.client.account.dto.request.BackofficeAccountSeedRequest;
 import ke.shiva.client.account.dto.response.BackofficeCustomerDetailsResponse;
 import ke.shiva.client.account.dto.response.GeneralClientAccountsResponse;
 import ke.shiva.client.iam.enums.TaskRole;
+import ke.shiva.client.notification.v1.enums.ChannelType;
 import ke.shiva.sbs_iam.modules.iam.app.service.backoffice.dto.BackofficeOnboardingCommand;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerAccountResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerLookupResponse;
@@ -32,6 +33,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.party.PartyType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
 import ke.shiva.sbs_iam.modules.iam.app.service.PasswordPolicyService;
+import ke.shiva.sbs_iam.modules.iam.infra.external.NotificationService;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.BranchEntity;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.CountryEntity;
@@ -79,6 +81,7 @@ public class BackofficeOnboardingService {
     private final BranchRepository branchRepository;
     private final PasswordPolicyService passwordPolicyService;
     private final AccountBackofficeClient accountBackofficeClient;
+    private final NotificationService notificationService;
 
     public BackofficeCustomerLookupResponse lookupCustomer(String clientId) {
         validateCustomer(clientId);
@@ -287,11 +290,23 @@ public class BackofficeOnboardingService {
 
         seedSelectedAccountsIfPresent(request.getClientId(), request.getAccounts(), "backoffice");
 
-        return BackofficeCustomerOnboardingResponse.builder()
+        BackofficeCustomerOnboardingResponse response = BackofficeCustomerOnboardingResponse.builder()
                 .iamUserId(iamUser.getId())
                 .username(username)
                 .generatedPassword(rawPassword)
                 .build();
+
+        sendCustomerOnboardingConfirmation(
+                coreDetails,
+                firstName,
+                middleName,
+                lastName,
+                request.getClientId(),
+                username,
+                rawPassword
+        );
+
+        return response;
     }
 
     @Transactional
@@ -1104,6 +1119,56 @@ public class BackofficeOnboardingService {
                 .build();
 
         accountBackofficeClient.seedClientAccounts(seedRequest);
+    }
+
+    private void sendCustomerOnboardingConfirmation(
+            BackofficeCustomerDetailsResponse coreDetails,
+            String firstName,
+            String middleName,
+            String lastName,
+            String clientId,
+            String username,
+            String generatedPassword
+    ) {
+        String recipient = trimToNull(coreDetails.getEmail());
+        if (isBlank(recipient)) {
+            log.warn("Skipping customer onboarding confirmation for client {}: email not available", clientId);
+            return;
+        }
+        String customerName = firstNonBlank(
+                trimToNull(coreDetails.getFullName()),
+                buildFullName(firstName, middleName, lastName),
+                "Customer"
+        );
+
+        Map<String, Object> additionalInfo = new java.util.LinkedHashMap<>();
+        additionalInfo.put("clientId", clientId);
+        additionalInfo.put("onboardingType", "CUSTOMER");
+        additionalInfo.put("name", customerName);
+        if (!isBlank(username)) {
+            additionalInfo.put("userName", username);
+            additionalInfo.put("username", username);
+        }
+        if (!isBlank(generatedPassword)) {
+            additionalInfo.put("password", generatedPassword);
+        }
+
+        try {
+            String effectiveRecipient = notificationService.resolveDeliveryRecipient(ChannelType.EMAIL, recipient);
+            notificationService.sendWelcomeMessage(
+                    ChannelType.EMAIL,
+                    recipient,
+                    customerName,
+                    additionalInfo
+            );
+            log.info("Customer onboarding confirmation queued to {}", effectiveRecipient);
+        } catch (Exception exception) {
+            log.warn(
+                    "Customer onboarding confirmation failed for client {}: {}",
+                    clientId,
+                    exception.getMessage()
+            );
+        }
     }
 
     private String resolveCountryInput(BackofficeCustomerDetailsResponse response) {
