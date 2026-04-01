@@ -30,10 +30,10 @@ public class NotificationService {
     private final NotificationClientV1 notificationClient;
     private final Environment environment;
 
-    @Value("${shiva.notifications.dev-email-recipient:}")
+    @Value("${shiva.notification.dev-email-recipient:${shiva.notifications.dev-email-recipient:}}")
     private String devEmailRecipient;
 
-    @Value("${shiva.notifications.internet-banking-login-url:https://banking.shiva.ke}")
+    @Value("${shiva.notification.internet-banking-login-url:${shiva.notifications.internet-banking-login-url:https://banking.shiva.ke}}")
     private String internetBankingLoginUrl;
 
     public SendNotificationResponse sendOtp(NotificationChannel channel,

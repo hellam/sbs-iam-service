@@ -80,5 +80,5 @@ security:
 shiva:
   api-doc:
     servers: http://localhost:${server.port}${spring.mvc.servlet.path},${GW_ADDRESS}${spring.mvc.servlet.path}
-  notifications:
+  notification:
     dev-email-recipient: ${IAM_DEV_NOTIFICATION_EMAIL:ibrahimamwayi72@gmail.com}
