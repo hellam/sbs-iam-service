@@ -18,6 +18,7 @@ import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizati
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserSearchItemResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserSearchResponse;
+import ke.shiva.sbs_iam.modules.iam.app.service.GeneratedPasswordService;
 import ke.shiva.sbs_iam.modules.iam.app.service.PasswordUpdateService;
 import ke.shiva.sbs_iam.modules.iam.app.service.SessionRevocationService;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
@@ -57,7 +58,6 @@ import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.EncryptionUtil;
 import ke.shiva.shivacorestarter.util.HashUtil;
 import ke.shiva.shivacorestarter.util.PaginationUtil;
-import ke.shiva.shivacorestarter.util.PasswordGeneratorUtil;
 import ke.shiva.shivacorestarter.util.UsernameGeneratorUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -104,6 +104,7 @@ public class BackofficeOrganizationsService {
     private final PasswordUpdateService passwordUpdateService;
     private final SessionRevocationService sessionRevocationService;
     private final NotificationService notificationService;
+    private final GeneratedPasswordService generatedPasswordService;
     private final BackofficeOnboardingService onboardingService;
     private final EncryptionUtil encryptionUtil;
     @Autowired
@@ -406,7 +407,7 @@ public class BackofficeOrganizationsService {
         String username = generateUniqueInternetUsername();
         createInternetLoginIdentifier(iamUser, username);
 
-        String rawPassword = PasswordGeneratorUtil.generateRandomPassword(16);
+        String rawPassword = generatedPasswordService.generateTemporaryPassword(Channel.INTERNET_BANKING, 16);
         createCustomerAuth(iamUser, rawPassword);
 
         OrgRoleEntity orgRole = resolveOrganizationRole(organizationParty, request.getOrgRoleId());
@@ -514,7 +515,7 @@ public class BackofficeOrganizationsService {
         IamUserEntity iamUser = requireOrganizationUserIamUser(organizationUser);
         requireCustomerAuth(iamUser);
 
-        String randomPassword = PasswordGeneratorUtil.generateRandomPassword(16);
+        String randomPassword = generatedPasswordService.generateTemporaryPassword(Channel.INTERNET_BANKING, 16);
         passwordUpdateService.updatePassword(iamUser, randomPassword, Channel.INTERNET_BANKING, true);
         sessionRevocationService.revokeAllActiveSessionsForUser(iamUser, "BACKOFFICE_ORGANIZATION_USER_PASSWORD_RESET");
         sendPasswordResetNotification(iamUser, organizationUser, randomPassword);

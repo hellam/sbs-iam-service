@@ -22,7 +22,6 @@ import ke.shiva.sbs_iam.modules.reference.domain.entity.CountryEntity;
 import ke.shiva.sbs_iam.modules.reference.infra.repository.CountryRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
-import ke.shiva.shivacorestarter.util.PasswordGeneratorUtil;
 import ke.shiva.shivacorestarter.util.UsernameGeneratorUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +47,7 @@ public class CustomerRegistrationService {
     private final CustomerAuthRepository customerAuthRepository;
     private final CountryRepository countryRepository;
     private final PasswordPolicyService passwordPolicyService;
+    private final GeneratedPasswordService generatedPasswordService;
 
     @Transactional
     public CustomerRegistrationResponse registerCustomer(CustomerRegistrationDetailsRequest request) {
@@ -173,7 +173,7 @@ public class CustomerRegistrationService {
          * ------------------------------------------------- */
         PasswordPolicyEntity policy = passwordPolicyService.resolvePolicy(Channel.INTERNET_BANKING);
         int passwordLength = (policy != null && policy.getMinLength() != null) ? policy.getMinLength() : 8;
-        String rawPassword = PasswordGeneratorUtil.generateNumericPassword(passwordLength);
+        String rawPassword = generatedPasswordService.generateTemporaryPassword(Channel.INTERNET_BANKING, passwordLength);
 
         CustomerAuthEntity auth = new CustomerAuthEntity();
         auth.setIamUser(iamUser);

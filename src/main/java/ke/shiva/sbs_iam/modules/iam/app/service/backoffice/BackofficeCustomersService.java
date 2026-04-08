@@ -5,6 +5,7 @@ import ke.shiva.client.account.dto.response.BackofficeCustomerDetailsResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeAuditTrailResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerDetailResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerSummaryResponse;
+import ke.shiva.sbs_iam.modules.iam.app.service.GeneratedPasswordService;
 import ke.shiva.sbs_iam.modules.iam.app.service.PasswordUpdateService;
 import ke.shiva.sbs_iam.modules.iam.app.service.SessionRevocationService;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
@@ -28,7 +29,6 @@ import ke.shiva.sbs_iam.modules.reference.domain.entity.CountryEntity;
 import ke.shiva.sbs_iam.modules.reference.infra.repository.CountryRepository;
 import ke.shiva.shivacorestarter.dto.PaginatedResponse;
 import ke.shiva.shivacorestarter.exception.BaseException;
-import ke.shiva.shivacorestarter.util.PasswordGeneratorUtil;
 import ke.shiva.shivacorestarter.util.PaginationUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +53,7 @@ public class BackofficeCustomersService {
     private final PasswordUpdateService passwordUpdateService;
     private final SessionRevocationService sessionRevocationService;
     private final NotificationService notificationService;
+    private final GeneratedPasswordService generatedPasswordService;
     private final CountryRepository countryRepository;
     private final BackofficeOnboardingService onboardingService;
 
@@ -163,7 +164,7 @@ public class BackofficeCustomersService {
             throw BaseException.notFound("IAM user not found for customer.");
         }
 
-        String randomPassword = PasswordGeneratorUtil.generateRandomPassword(16);
+        String randomPassword = generatedPasswordService.generateTemporaryPassword(Channel.INTERNET_BANKING, 16);
         passwordUpdateService.updatePassword(iamUser, randomPassword, Channel.INTERNET_BANKING, true);
         sessionRevocationService.revokeAllActiveSessionsForUser(iamUser, "BACKOFFICE_CUSTOMER_PASSWORD_RESET");
         sendPasswordResetNotification(iamUser, profile.getCoreCustomerId(), randomPassword);

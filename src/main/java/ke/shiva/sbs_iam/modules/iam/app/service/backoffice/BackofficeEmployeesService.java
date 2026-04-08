@@ -6,6 +6,7 @@ import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeAuditTrail
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeEmployeeDetailResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeEmployeeSummaryResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserResponse;
+import ke.shiva.sbs_iam.modules.iam.app.service.GeneratedPasswordService;
 import ke.shiva.sbs_iam.modules.iam.app.service.PasswordUpdateService;
 import ke.shiva.sbs_iam.modules.iam.app.service.SessionRevocationService;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
@@ -37,7 +38,6 @@ import ke.shiva.sbs_iam.modules.reference.infra.repository.CountryRepository;
 import ke.shiva.shivacorestarter.dto.PaginatedResponse;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.EncryptionUtil;
-import ke.shiva.shivacorestarter.util.PasswordGeneratorUtil;
 import ke.shiva.shivacorestarter.util.PaginationUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +69,7 @@ public class BackofficeEmployeesService {
     private final PasswordUpdateService passwordUpdateService;
     private final SessionRevocationService sessionRevocationService;
     private final NotificationService notificationService;
+    private final GeneratedPasswordService generatedPasswordService;
     private final BackofficeOnboardingService onboardingService;
     private final EncryptionUtil encryptionUtil;
 
@@ -210,7 +211,7 @@ public class BackofficeEmployeesService {
             throw BaseException.notFound("IAM user not found for employee.");
         }
 
-        String randomPassword = PasswordGeneratorUtil.generateRandomPassword(16);
+        String randomPassword = generatedPasswordService.generateTemporaryPassword(Channel.BACKOFFICE, 16);
         passwordUpdateService.updatePassword(iamUser, randomPassword, Channel.BACKOFFICE, true);
         sessionRevocationService.revokeAllActiveSessionsForUser(iamUser, "BACKOFFICE_EMPLOYEE_PASSWORD_RESET");
         sendPasswordResetNotification(iamUser, profile.getStaffNo(), randomPassword);

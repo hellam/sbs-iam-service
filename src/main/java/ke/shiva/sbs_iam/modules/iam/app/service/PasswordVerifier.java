@@ -31,6 +31,11 @@ public class PasswordVerifier {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean verify(SessionEntity session, String encryptedPassword) {
+        return verifyWithDetails(session, encryptedPassword).authenticated();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public PasswordVerificationResult verifyWithDetails(SessionEntity session, String encryptedPassword) {
         Channel channel = session.getChannel();
         IamUserEntity user = session.getIamUser();
 
@@ -44,7 +49,7 @@ public class PasswordVerifier {
         };
     }
 
-    private boolean verifyCustomer(IamUserEntity user, String rawPassword, Channel channel) {
+    private PasswordVerificationResult verifyCustomer(IamUserEntity user, String rawPassword, Channel channel) {
         CustomerAuthEntity auth = customerAuthRepo.findByIamUser(user);
         if (auth == null) {
             throw BaseException.iamUserCredentialsNotFound("Customer credentials not found");
@@ -66,19 +71,20 @@ public class PasswordVerifier {
             } else {
                 accountLockoutService.resetCustomerMobileLockout(user);
             }
-            return true;
+            return PasswordVerificationResult.success();
         } else {
             // Record failed attempt (will lock if threshold reached)
+            AccountLockoutService.LockoutAttemptResult attemptResult;
             if (channel == Channel.INTERNET_BANKING) {
-                accountLockoutService.recordCustomerInternetFailedAttempt(user, channel);
+                attemptResult = accountLockoutService.recordCustomerInternetFailedAttempt(user, channel);
             } else {
-                accountLockoutService.recordCustomerMobileFailedAttempt(user, channel);
+                attemptResult = accountLockoutService.recordCustomerMobileFailedAttempt(user, channel);
             }
-            return false;
+            return PasswordVerificationResult.failure(toFailureDetails(attemptResult));
         }
     }
 
-    private boolean verifyEmployee(IamUserEntity user, String rawPassword, Channel channel) {
+    private PasswordVerificationResult verifyEmployee(IamUserEntity user, String rawPassword, Channel channel) {
         EmployeeAuthEntity auth = employeeAuthRepo.findByIamUser(user);
         if (auth == null) {
             throw BaseException.iamUserCredentialsNotFound("Employee credentials not found");
@@ -92,11 +98,43 @@ public class PasswordVerifier {
         if (matches) {
             // Reset lockout on successful authentication
             accountLockoutService.resetEmployeeLockout(user);
-            return true;
+            return PasswordVerificationResult.success();
         } else {
             // Record failed attempt (will lock if threshold reached)
-            accountLockoutService.recordEmployeeFailedAttempt(user, channel);
-            return false;
+            AccountLockoutService.LockoutAttemptResult attemptResult = accountLockoutService.recordEmployeeFailedAttempt(user, channel);
+            return PasswordVerificationResult.failure(toFailureDetails(attemptResult));
         }
+    }
+
+    private PasswordFailureDetails toFailureDetails(AccountLockoutService.LockoutAttemptResult result) {
+        return new PasswordFailureDetails(
+                result.failedAttempts(),
+                result.maxFailedAttempts(),
+                result.remainingAttempts(),
+                result.locked(),
+                result.lockoutUntil() == null ? null : result.lockoutUntil().toString()
+        );
+    }
+
+    public record PasswordVerificationResult(
+            boolean authenticated,
+            PasswordFailureDetails failureDetails
+    ) {
+        static PasswordVerificationResult success() {
+            return new PasswordVerificationResult(true, null);
+        }
+
+        static PasswordVerificationResult failure(PasswordFailureDetails failureDetails) {
+            return new PasswordVerificationResult(false, failureDetails);
+        }
+    }
+
+    public record PasswordFailureDetails(
+            short failedAttempts,
+            short maxFailedAttempts,
+            short remainingAttempts,
+            boolean accountLocked,
+            String lockoutUntil
+    ) {
     }
 }

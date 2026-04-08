@@ -90,6 +90,11 @@ management:
 
 # Rate Limiting Configuration
 shiva:
+  auth:
+    generated-password:
+      mode: ${SHIVA_GENERATED_PASSWORD_MODE:NUMERIC}
+      length: ${SHIVA_GENERATED_PASSWORD_LENGTH:8}
+
   rate-limit:
     enabled: true
     storage: REDIS

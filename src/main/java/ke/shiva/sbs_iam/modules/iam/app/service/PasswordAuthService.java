@@ -3,18 +3,28 @@ package ke.shiva.sbs_iam.modules.iam.app.service;
 
 import ke.shiva.sbs_iam.modules.iam.api.request.PasswordLoginRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.PasswordStepResponse;
+import ke.shiva.sbs_iam.modules.iam.app.exception.PasswordVerificationException;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.SessionEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.UserContact;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.LoginStage;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.ContactType;
+import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.model.LoginRequirements;
-import ke.shiva.shivacorestarter.exception.BaseException;
+import ke.shiva.sbs_iam.modules.iam.infra.external.NotificationService;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.UserContactRepository;
 import ke.shiva.shivacorestarter.util.MaskingUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PasswordAuthService {
@@ -25,6 +35,8 @@ public class PasswordAuthService {
     private final LoginHistoryService loginHistoryService;
     private final IamUserService iamUserService;
     private final PolicyService policyService;
+    private final UserContactRepository userContactRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public PasswordStepResponse handle(PasswordLoginRequest req, UUID flowId) {
@@ -37,12 +49,16 @@ public class PasswordAuthService {
         String identifier = loginFlowService.extractIdentifier(session);
 
         // 2. Verify password against correct credentials table
-        boolean ok = passwordVerifier.verify(session, req.getPassword());
+        PasswordVerifier.PasswordVerificationResult verification = passwordVerifier.verifyWithDetails(session, req.getPassword());
 
-        if (!ok) {
+        if (!verification.authenticated()) {
             securityEventService.onLoginFailure(user, "PASSWORD_INVALID", session);
             loginHistoryService.logPasswordFailure(user, identifier, session, "PASSWORD_INVALID");
-            throw BaseException.badRequest("Invalid credentials");
+            PasswordVerifier.PasswordFailureDetails failureDetails = verification.failureDetails();
+            sendInternetFailedLoginAlerts(session, user, identifier, failureDetails);
+            String message = buildInvalidPasswordMessage(failureDetails);
+            Map<String, Object> data = buildFailedAttemptData(failureDetails);
+            throw PasswordVerificationException.invalidCredentials(message, data);
         }
 
         securityEventService.onLoginSuccess(user, "PASSWORD_SUCCESS", session);
@@ -71,5 +87,97 @@ public class PasswordAuthService {
         resp.setAllowedNotificationChannels(policyService.getAllowedNotificationChannels(session.getChannel()));
 
         return resp;
+    }
+
+    private String buildInvalidPasswordMessage(PasswordVerifier.PasswordFailureDetails failureDetails) {
+        if (failureDetails == null) {
+            return "Invalid credentials";
+        }
+
+        if (failureDetails.accountLocked()) {
+            return "Invalid credentials. Your account has been temporarily locked after too many failed attempts. Please try again later or contact support.";
+        }
+
+        int remainingAttempts = Math.max(0, failureDetails.remainingAttempts());
+        return "Invalid credentials. You have " + remainingAttempts + " password attempt"
+                + (remainingAttempts == 1 ? "" : "s")
+                + " remaining.";
+    }
+
+    private Map<String, Object> buildFailedAttemptData(PasswordVerifier.PasswordFailureDetails failureDetails) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("errorType", "PASSWORD_INVALID");
+
+        if (failureDetails != null) {
+            data.put("failedAttempts", failureDetails.failedAttempts());
+            data.put("maxFailedAttempts", failureDetails.maxFailedAttempts());
+            data.put("remainingAttempts", failureDetails.remainingAttempts());
+            data.put("accountLocked", failureDetails.accountLocked());
+            if (failureDetails.lockoutUntil() != null && !failureDetails.lockoutUntil().isBlank()) {
+                data.put("lockoutUntil", failureDetails.lockoutUntil());
+            }
+        }
+
+        return data;
+    }
+
+    private void sendInternetFailedLoginAlerts(
+            SessionEntity session,
+            IamUserEntity user,
+            String identifier,
+            PasswordVerifier.PasswordFailureDetails failureDetails
+    ) {
+        if (session == null || user == null || session.getChannel() != Channel.INTERNET_BANKING) {
+            return;
+        }
+
+        String email = userContactRepository
+                .findByIamUserAndContactTypeAndPrimaryIsTrue(user, ContactType.EMAIL)
+                .map(UserContact::getContactValue)
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .orElse(null);
+
+        if (email == null) {
+            log.debug("Skipping failed-login email alert for userId={} because primary email is missing", user.getId());
+            return;
+        }
+
+        String userName = identifier == null || identifier.isBlank() ? "Customer" : identifier.trim();
+        String ipAddress = session.getIpAddress() == null || session.getIpAddress().isBlank()
+                ? "Unknown"
+                : session.getIpAddress().trim();
+        String attemptedAt = OffsetDateTime.now().toString();
+
+        int failedAttempts = failureDetails == null ? 0 : Math.max(0, failureDetails.failedAttempts());
+        int maxFailedAttempts = failureDetails == null ? 0 : Math.max(0, failureDetails.maxFailedAttempts());
+        int remainingAttempts = failureDetails == null ? 0 : Math.max(0, failureDetails.remainingAttempts());
+        String lockoutUntil = failureDetails == null ? null : failureDetails.lockoutUntil();
+
+        try {
+            notificationService.sendInternetFailedLoginEmailWithFallback(
+                    email,
+                    userName,
+                    failedAttempts,
+                    maxFailedAttempts,
+                    remainingAttempts,
+                    ipAddress,
+                    attemptedAt
+            );
+
+            if (failureDetails != null && failureDetails.accountLocked()) {
+                notificationService.sendInternetAccountLockedEmailWithFallback(
+                        email,
+                        userName,
+                        failedAttempts,
+                        maxFailedAttempts,
+                        lockoutUntil,
+                        ipAddress,
+                        attemptedAt
+                );
+            }
+        } catch (Exception ex) {
+            log.warn("Failed to send failed-login notification for userId={} (non-blocking): {}", user.getId(), ex.getMessage());
+        }
     }
 }

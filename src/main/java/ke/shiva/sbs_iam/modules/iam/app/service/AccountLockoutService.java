@@ -86,7 +86,7 @@ public class AccountLockoutService {
      * @param channel the channel
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void recordCustomerInternetFailedAttempt(IamUserEntity user, Channel channel) {
+    public LockoutAttemptResult recordCustomerInternetFailedAttempt(IamUserEntity user, Channel channel) {
         CustomerAuthEntity auth = customerAuthRepo.findByIamUser(user);
         if (auth == null) {
             throw BaseException.iamUserCredentialsNotFound("Customer credentials not found");
@@ -97,19 +97,27 @@ public class AccountLockoutService {
             throw BaseException.unableToProcessRequest("No password policy configured for channel: " + channel);
         }
 
-        short failedAttempts = (short) (auth.getInternetFailedAttempts() + 1);
+        short currentAttempts = auth.getInternetFailedAttempts() == null ? 0 : auth.getInternetFailedAttempts();
+        short maxFailedAttempts = resolveMaxFailedAttempts(policy);
+        short failedAttempts = (short) (currentAttempts + 1);
         auth.setInternetFailedAttempts(failedAttempts);
 
-        if (failedAttempts >= policy.getMaxFailedAttempts()) {
+        OffsetDateTime lockoutUntil = null;
+        boolean locked = false;
+        if (failedAttempts >= maxFailedAttempts) {
             auth.setInternetLocked(true);
+            locked = true;
             if (policy.getLockoutMinutes() != null && policy.getLockoutMinutes() > 0) {
-                auth.setInternetLockoutUntil(OffsetDateTime.now().plusMinutes(policy.getLockoutMinutes()));
+                lockoutUntil = OffsetDateTime.now().plusMinutes(policy.getLockoutMinutes());
+                auth.setInternetLockoutUntil(lockoutUntil);
             } else {
                 auth.setInternetLockoutUntil(null); // Permanent lock
             }
         }
 
         customerAuthRepo.save(auth);
+        short remainingAttempts = (short) Math.max(0, maxFailedAttempts - failedAttempts);
+        return new LockoutAttemptResult(failedAttempts, maxFailedAttempts, remainingAttempts, locked, lockoutUntil);
     }
 
     /**
@@ -119,7 +127,7 @@ public class AccountLockoutService {
      * @param channel the channel
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void recordCustomerMobileFailedAttempt(IamUserEntity user, Channel channel) {
+    public LockoutAttemptResult recordCustomerMobileFailedAttempt(IamUserEntity user, Channel channel) {
         CustomerAuthEntity auth = customerAuthRepo.findByIamUser(user);
         if (auth == null) {
             throw BaseException.iamUserCredentialsNotFound("Customer credentials not found");
@@ -130,19 +138,27 @@ public class AccountLockoutService {
             throw BaseException.unableToProcessRequest("No password policy configured for channel: " + channel);
         }
 
-        short failedAttempts = (short) (auth.getMobileFailedAttempts() + 1);
+        short currentAttempts = auth.getMobileFailedAttempts() == null ? 0 : auth.getMobileFailedAttempts();
+        short maxFailedAttempts = resolveMaxFailedAttempts(policy);
+        short failedAttempts = (short) (currentAttempts + 1);
         auth.setMobileFailedAttempts(failedAttempts);
 
-        if (failedAttempts >= policy.getMaxFailedAttempts()) {
+        OffsetDateTime lockoutUntil = null;
+        boolean locked = false;
+        if (failedAttempts >= maxFailedAttempts) {
             auth.setMobileLocked(true);
+            locked = true;
             if (policy.getLockoutMinutes() != null && policy.getLockoutMinutes() > 0) {
-                auth.setMobileLockoutUntil(OffsetDateTime.now().plusMinutes(policy.getLockoutMinutes()));
+                lockoutUntil = OffsetDateTime.now().plusMinutes(policy.getLockoutMinutes());
+                auth.setMobileLockoutUntil(lockoutUntil);
             } else {
                 auth.setMobileLockoutUntil(null); // Permanent lock
             }
         }
 
         customerAuthRepo.save(auth);
+        short remainingAttempts = (short) Math.max(0, maxFailedAttempts - failedAttempts);
+        return new LockoutAttemptResult(failedAttempts, maxFailedAttempts, remainingAttempts, locked, lockoutUntil);
     }
 
     /**
@@ -152,7 +168,7 @@ public class AccountLockoutService {
      * @param channel the channel
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void recordEmployeeFailedAttempt(IamUserEntity user, Channel channel) {
+    public LockoutAttemptResult recordEmployeeFailedAttempt(IamUserEntity user, Channel channel) {
         EmployeeAuthEntity auth = employeeAuthRepo.findByIamUser(user);
         if (auth == null) {
             throw BaseException.iamUserCredentialsNotFound("Employee credentials not found");
@@ -163,19 +179,27 @@ public class AccountLockoutService {
             throw BaseException.unableToProcessRequest("No password policy configured for channel: " + channel);
         }
 
-        short failedAttempts = (short) (auth.getStaffFailedAttempts() + 1);
+        short currentAttempts = auth.getStaffFailedAttempts() == null ? 0 : auth.getStaffFailedAttempts();
+        short maxFailedAttempts = resolveMaxFailedAttempts(policy);
+        short failedAttempts = (short) (currentAttempts + 1);
         auth.setStaffFailedAttempts(failedAttempts);
 
-        if (failedAttempts >= policy.getMaxFailedAttempts()) {
+        OffsetDateTime lockoutUntil = null;
+        boolean locked = false;
+        if (failedAttempts >= maxFailedAttempts) {
             auth.setStaffLocked(true);
+            locked = true;
             if (policy.getLockoutMinutes() != null && policy.getLockoutMinutes() > 0) {
-                auth.setStaffLockoutUntil(OffsetDateTime.now().plusMinutes(policy.getLockoutMinutes()));
+                lockoutUntil = OffsetDateTime.now().plusMinutes(policy.getLockoutMinutes());
+                auth.setStaffLockoutUntil(lockoutUntil);
             } else {
                 auth.setStaffLockoutUntil(null); // Permanent lock
             }
         }
 
         employeeAuthRepo.save(auth);
+        short remainingAttempts = (short) Math.max(0, maxFailedAttempts - failedAttempts);
+        return new LockoutAttemptResult(failedAttempts, maxFailedAttempts, remainingAttempts, locked, lockoutUntil);
     }
 
     /**
@@ -263,6 +287,13 @@ public class AccountLockoutService {
         employeeAuthRepo.save(auth);
     }
 
+    private short resolveMaxFailedAttempts(PasswordPolicyEntity policy) {
+        if (policy.getMaxFailedAttempts() == null || policy.getMaxFailedAttempts() <= 0) {
+            return 5;
+        }
+        return policy.getMaxFailedAttempts();
+    }
+
     /**
      * Generic method to handle OTP verification lockout based on channel.
      * Can be used by OtpService to lock accounts after too many failed OTP attempts.
@@ -315,5 +346,14 @@ public class AccountLockoutService {
                 }
             }
         }
+    }
+
+    public record LockoutAttemptResult(
+            short failedAttempts,
+            short maxFailedAttempts,
+            short remainingAttempts,
+            boolean locked,
+            OffsetDateTime lockoutUntil
+    ) {
     }
 }

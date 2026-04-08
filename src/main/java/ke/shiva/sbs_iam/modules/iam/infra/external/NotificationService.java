@@ -4,6 +4,7 @@ import ke.shiva.client.notification.v1.NotificationClientV1;
 import ke.shiva.client.notification.v1.enums.ChannelType;
 import ke.shiva.client.notification.v1.dto.SendNotificationRequest;
 import ke.shiva.client.notification.v1.dto.SendNotificationResponse;
+import ke.shiva.client.notification.v1.exception.TemplateNotConfiguredException;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.NotificationChannel;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -141,7 +143,7 @@ public class NotificationService {
                 ))
                 .build();
 
-        return notificationClient.sendSync(request);
+        return notificationClient.sendAsync(request);
     }
 
     /**
@@ -234,7 +236,7 @@ public class NotificationService {
                 ))
                 .build();
 
-        return notificationClient.sendSync(request);
+        return notificationClient.sendAsync(request);
     }
 
     /**
@@ -379,6 +381,224 @@ public class NotificationService {
         return notificationClient.sendAsync(request);
     }
 
+    public void sendInternetFailedLoginEmailWithFallback(
+            String email,
+            String userName,
+            int failedAttempts,
+            int maxFailedAttempts,
+            int remainingAttempts,
+            String ipAddress,
+            String attemptedAt
+    ) {
+        try {
+            sendInternetFailedLoginEmail(
+                    email,
+                    userName,
+                    failedAttempts,
+                    maxFailedAttempts,
+                    remainingAttempts,
+                    ipAddress,
+                    attemptedAt
+            );
+        } catch (Exception templateError) {
+            if (!shouldFallbackToDirectTemplate(templateError)) {
+                throw templateError;
+            }
+            log.warn("Template internet_failed_login is unavailable, using direct email fallback: {}", templateError.getMessage());
+            sendInternetFailedLoginDirectEmail(
+                    email,
+                    userName,
+                    failedAttempts,
+                    maxFailedAttempts,
+                    remainingAttempts,
+                    ipAddress,
+                    attemptedAt
+            );
+        }
+    }
+
+    public void sendInternetAccountLockedEmailWithFallback(
+            String email,
+            String userName,
+            int failedAttempts,
+            int maxFailedAttempts,
+            String lockoutUntil,
+            String ipAddress,
+            String attemptedAt
+    ) {
+        try {
+            sendInternetAccountLockedEmail(
+                    email,
+                    userName,
+                    failedAttempts,
+                    maxFailedAttempts,
+                    lockoutUntil,
+                    ipAddress,
+                    attemptedAt
+            );
+        } catch (Exception templateError) {
+            if (!shouldFallbackToDirectTemplate(templateError)) {
+                throw templateError;
+            }
+            log.warn("Template internet_account_locked is unavailable, using direct email fallback: {}", templateError.getMessage());
+            sendInternetAccountLockedDirectEmail(
+                    email,
+                    userName,
+                    failedAttempts,
+                    maxFailedAttempts,
+                    lockoutUntil,
+                    ipAddress,
+                    attemptedAt
+            );
+        }
+    }
+
+    public SendNotificationResponse sendInternetFailedLoginEmail(
+            String email,
+            String userName,
+            int failedAttempts,
+            int maxFailedAttempts,
+            int remainingAttempts,
+            String ipAddress,
+            String attemptedAt
+    ) {
+        String recipient = resolveEmailRecipient(email);
+        log.info("Sending internet failed-login alert via EMAIL to: {}", recipient);
+
+        SendNotificationRequest request = SendNotificationRequest.builder()
+                .channel(ChannelType.EMAIL)
+                .recipient(recipient)
+                .templateCode("internet_failed_login")
+                .eventType("internet_failed_login")
+                .language("en")
+                .parameters(Map.of(
+                        "userName", safe(userName, "Customer"),
+                        "failedAttempts", String.valueOf(Math.max(0, failedAttempts)),
+                        "maxFailedAttempts", String.valueOf(Math.max(0, maxFailedAttempts)),
+                        "remainingAttempts", String.valueOf(Math.max(0, remainingAttempts)),
+                        "ipAddress", safe(ipAddress, "Unknown"),
+                        "channel", "INTERNET_BANKING",
+                        "attemptedAt", safe(attemptedAt, "Unknown")
+                ))
+                .metadata(Map.of(
+                        "source", "iam-service",
+                        "priority", "HIGH",
+                        "templateType", "notification",
+                        "customerName", safe(userName, "Customer")
+                ))
+                .build();
+
+        return notificationClient.sendAsync(request);
+    }
+
+    public SendNotificationResponse sendInternetFailedLoginDirectEmail(
+            String email,
+            String userName,
+            int failedAttempts,
+            int maxFailedAttempts,
+            int remainingAttempts,
+            String ipAddress,
+            String attemptedAt
+    ) {
+        String recipient = resolveEmailRecipient(email);
+        log.info("Sending direct internet failed-login alert via EMAIL to: {}", recipient);
+
+        String message = "Hello " + safe(userName, "Customer") + ", we detected a failed internet banking login attempt.\n"
+                + "Failed attempts: " + Math.max(0, failedAttempts) + "/" + Math.max(0, maxFailedAttempts) + "\n"
+                + "Remaining attempts: " + Math.max(0, remainingAttempts) + "\n"
+                + "IP Address: " + safe(ipAddress, "Unknown") + "\n"
+                + "Attempt Time: " + safe(attemptedAt, "Unknown") + "\n\n"
+                + "If this was not you, please contact support immediately.";
+
+        SendNotificationRequest request = SendNotificationRequest.builder()
+                .channel(ChannelType.EMAIL)
+                .recipient(recipient)
+                .message(message)
+                .metadata(Map.of(
+                        "source", "iam-service",
+                        "priority", "HIGH",
+                        "subject", "Failed internet banking login attempt",
+                        "templateType", "notification",
+                        "customerName", safe(userName, "Customer")
+                ))
+                .build();
+
+        return notificationClient.sendAsync(request);
+    }
+
+    public SendNotificationResponse sendInternetAccountLockedEmail(
+            String email,
+            String userName,
+            int failedAttempts,
+            int maxFailedAttempts,
+            String lockoutUntil,
+            String ipAddress,
+            String attemptedAt
+    ) {
+        String recipient = resolveEmailRecipient(email);
+        log.info("Sending internet account-locked alert via EMAIL to: {}", recipient);
+
+        SendNotificationRequest request = SendNotificationRequest.builder()
+                .channel(ChannelType.EMAIL)
+                .recipient(recipient)
+                .templateCode("internet_account_locked")
+                .eventType("internet_account_locked")
+                .language("en")
+                .parameters(Map.of(
+                        "userName", safe(userName, "Customer"),
+                        "failedAttempts", String.valueOf(Math.max(0, failedAttempts)),
+                        "maxFailedAttempts", String.valueOf(Math.max(0, maxFailedAttempts)),
+                        "lockoutUntil", safe(lockoutUntil, "Until support unlocks your account"),
+                        "ipAddress", safe(ipAddress, "Unknown"),
+                        "channel", "INTERNET_BANKING",
+                        "attemptedAt", safe(attemptedAt, "Unknown")
+                ))
+                .metadata(Map.of(
+                        "source", "iam-service",
+                        "priority", "HIGH",
+                        "templateType", "notification",
+                        "customerName", safe(userName, "Customer")
+                ))
+                .build();
+
+        return notificationClient.sendAsync(request);
+    }
+
+    public SendNotificationResponse sendInternetAccountLockedDirectEmail(
+            String email,
+            String userName,
+            int failedAttempts,
+            int maxFailedAttempts,
+            String lockoutUntil,
+            String ipAddress,
+            String attemptedAt
+    ) {
+        String recipient = resolveEmailRecipient(email);
+        log.info("Sending direct internet account-locked alert via EMAIL to: {}", recipient);
+
+        String message = "Hello " + safe(userName, "Customer") + ", your internet banking account has been locked after repeated failed login attempts.\n"
+                + "Failed attempts: " + Math.max(0, failedAttempts) + "/" + Math.max(0, maxFailedAttempts) + "\n"
+                + "Locked until: " + safe(lockoutUntil, "Until support unlocks your account") + "\n"
+                + "IP Address: " + safe(ipAddress, "Unknown") + "\n"
+                + "Attempt Time: " + safe(attemptedAt, "Unknown") + "\n\n"
+                + "If this was not you, contact support immediately.";
+
+        SendNotificationRequest request = SendNotificationRequest.builder()
+                .channel(ChannelType.EMAIL)
+                .recipient(recipient)
+                .message(message)
+                .metadata(Map.of(
+                        "source", "iam-service",
+                        "priority", "HIGH",
+                        "subject", "Internet banking account locked",
+                        "templateType", "notification",
+                        "customerName", safe(userName, "Customer")
+                ))
+                .build();
+
+        return notificationClient.sendAsync(request);
+    }
+
     public String resolveDeliveryRecipient(ChannelType channel, String recipient) {
         return resolveRecipient(channel, recipient);
     }
@@ -411,6 +631,18 @@ public class NotificationService {
             return fallback;
         }
         return value.trim();
+    }
+
+    private boolean shouldFallbackToDirectTemplate(Exception exception) {
+        if (exception instanceof TemplateNotConfiguredException) {
+            return true;
+        }
+        String message = exception.getMessage();
+        if (message == null || message.isBlank()) {
+            return false;
+        }
+        String normalized = message.toLowerCase(Locale.ROOT);
+        return normalized.contains("template") || normalized.contains("no template found");
     }
 
     private String readText(Map<String, Object> parameters, String key) {

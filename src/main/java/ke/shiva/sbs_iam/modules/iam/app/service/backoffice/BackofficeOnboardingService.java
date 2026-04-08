@@ -32,7 +32,7 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.employee.EmploymentStatus;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.party.PartyType;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
-import ke.shiva.sbs_iam.modules.iam.app.service.PasswordPolicyService;
+import ke.shiva.sbs_iam.modules.iam.app.service.GeneratedPasswordService;
 import ke.shiva.sbs_iam.modules.iam.infra.external.NotificationService;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.*;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.BranchEntity;
@@ -41,7 +41,6 @@ import ke.shiva.sbs_iam.modules.reference.infra.repository.BranchRepository;
 import ke.shiva.sbs_iam.modules.reference.infra.repository.CountryRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.HashUtil;
-import ke.shiva.shivacorestarter.util.PasswordGeneratorUtil;
 import ke.shiva.shivacorestarter.util.UsernameGeneratorUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -79,7 +78,7 @@ public class BackofficeOnboardingService {
     private final FeatureRepository featureRepository;
     private final CountryRepository countryRepository;
     private final BranchRepository branchRepository;
-    private final PasswordPolicyService passwordPolicyService;
+    private final GeneratedPasswordService generatedPasswordService;
     private final AccountBackofficeClient accountBackofficeClient;
     private final NotificationService notificationService;
 
@@ -746,34 +745,7 @@ public class BackofficeOnboardingService {
     }
 
     private String generatePassword(Channel channel) {
-        int length = 8;
-        var policy = passwordPolicyService.resolvePolicy(channel);
-        if (policy != null && policy.getMinLength() != null && policy.getMinLength() > 0) {
-            length = policy.getMinLength();
-        }
-
-        String password;
-        if (channel == Channel.INTERNET_BANKING) {
-            password = PasswordGeneratorUtil.generateNumericPassword(length);
-        } else {
-            int attempts = 0;
-            while (true) {
-                password = PasswordGeneratorUtil.generateRandomPassword(length);
-                if (policy == null) {
-                    break;
-                }
-                try {
-                    passwordPolicyService.validateStructure(password, policy);
-                    break;
-                } catch (Exception ex) {
-                    attempts++;
-                    if (attempts > 10) {
-                        break;
-                    }
-                }
-            }
-        }
-        return password;
+        return generatedPasswordService.generateTemporaryPassword(channel, null);
     }
 
     private CountryEntity resolveCountry(String country) {
