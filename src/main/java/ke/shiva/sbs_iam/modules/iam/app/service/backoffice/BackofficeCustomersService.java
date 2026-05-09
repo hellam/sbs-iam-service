@@ -9,8 +9,8 @@ import ke.shiva.sbs_iam.modules.iam.app.service.GeneratedPasswordService;
 import ke.shiva.sbs_iam.modules.iam.app.service.PasswordUpdateService;
 import ke.shiva.sbs_iam.modules.iam.app.service.SessionRevocationService;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.IamAuditLogEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.LoginIdentifierEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.UserContact;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.CustomerProfileEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.PartyEntity;
@@ -22,8 +22,8 @@ import ke.shiva.sbs_iam.modules.iam.domain.enums.user.IamStatus;
 import ke.shiva.sbs_iam.modules.iam.infra.external.NotificationService;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerAuthRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerProfileRepository;
-import ke.shiva.sbs_iam.modules.iam.infra.repository.IamAuditLogRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.IamUserRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.LoginIdentifierRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.UserContactRepository;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.CountryEntity;
 import ke.shiva.sbs_iam.modules.reference.infra.repository.CountryRepository;
@@ -38,7 +38,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.OffsetDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -49,7 +51,8 @@ public class BackofficeCustomersService {
     private final CustomerAuthRepository customerAuthRepository;
     private final UserContactRepository userContactRepository;
     private final IamUserRepository iamUserRepository;
-    private final IamAuditLogRepository iamAuditLogRepository;
+    private final BackofficeAuditTrailService auditTrailService;
+    private final LoginIdentifierRepository loginIdentifierRepository;
     private final PasswordUpdateService passwordUpdateService;
     private final SessionRevocationService sessionRevocationService;
     private final NotificationService notificationService;
@@ -98,16 +101,17 @@ public class BackofficeCustomersService {
     }
 
     @Transactional(readOnly = true)
-    public List<BackofficeAuditTrailResponse> getCustomerAuditTrail(String clientId) {
+    public PaginatedResponse<BackofficeAuditTrailResponse> getCustomerAuditTrail(
+            String clientId,
+            HttpServletRequest request
+    ) {
         CustomerProfileEntity profile = getRequiredCustomerProfile(clientId);
         IamUserEntity iamUser = profile.getIamUser();
         if (iamUser == null || iamUser.getId() == null) {
-            return List.of();
+            return auditTrailService.getUserAuditTrail(null, null, request);
         }
 
-        return iamAuditLogRepository.findTop100ByIamUser_IdOrderByCreatedAtDesc(iamUser.getId()).stream()
-                .map(this::toAuditTrailResponse)
-                .toList();
+        return auditTrailService.getUserAuditTrail(iamUser, profile.getCoreCustomerId(), request);
     }
 
     @Transactional
@@ -125,6 +129,15 @@ public class BackofficeCustomersService {
         iamUser.setStatus(status);
         iamUser.setUpdatedAt(OffsetDateTime.now());
         iamUserRepository.save(iamUser);
+        auditTrailService.recordUserAudit(
+                iamUser,
+                "CUSTOMER",
+                "BACKOFFICE_CUSTOMER_STATUS_UPDATED",
+                "BACKOFFICE",
+                "CUSTOMER_PROFILE",
+                profile.getId(),
+                auditMetadata(profile.getCoreCustomerId(), "status", status.name())
+        );
 
         return toDetailResponse(profile);
     }
@@ -152,6 +165,15 @@ public class BackofficeCustomersService {
         if (blocked) {
             sessionRevocationService.revokeAllActiveSessionsForUser(iamUser, "BACKOFFICE_CUSTOMER_BLOCKED");
         }
+        auditTrailService.recordUserAudit(
+                iamUser,
+                "CUSTOMER",
+                blocked ? "BACKOFFICE_CUSTOMER_ACCESS_BLOCKED" : "BACKOFFICE_CUSTOMER_ACCESS_UNBLOCKED",
+                "BACKOFFICE",
+                "CUSTOMER_PROFILE",
+                profile.getId(),
+                auditMetadata(profile.getCoreCustomerId(), "blocked", blocked)
+        );
 
         return toDetailResponse(profile);
     }
@@ -168,6 +190,15 @@ public class BackofficeCustomersService {
         passwordUpdateService.updatePassword(iamUser, randomPassword, Channel.INTERNET_BANKING, true);
         sessionRevocationService.revokeAllActiveSessionsForUser(iamUser, "BACKOFFICE_CUSTOMER_PASSWORD_RESET");
         sendPasswordResetNotification(iamUser, profile.getCoreCustomerId(), randomPassword);
+        auditTrailService.recordUserAudit(
+                iamUser,
+                "CUSTOMER",
+                "BACKOFFICE_CUSTOMER_PASSWORD_RESET",
+                "BACKOFFICE",
+                "CUSTOMER_PROFILE",
+                profile.getId(),
+                auditMetadata(profile.getCoreCustomerId())
+        );
 
         return toDetailResponse(profile);
     }
@@ -189,6 +220,15 @@ public class BackofficeCustomersService {
         auth.setMfaSecret(null);
         auth.setMfaLastVerifiedAt(null);
         customerAuthRepository.save(auth);
+        auditTrailService.recordUserAudit(
+                iamUser,
+                "CUSTOMER",
+                "BACKOFFICE_CUSTOMER_MFA_RESET",
+                "BACKOFFICE",
+                "CUSTOMER_PROFILE",
+                profile.getId(),
+                auditMetadata(profile.getCoreCustomerId())
+        );
 
         return toDetailResponse(profile);
     }
@@ -216,6 +256,15 @@ public class BackofficeCustomersService {
 
         upsertPrimaryContact(iamUser, ContactType.EMAIL, trimToNull(coreDetails.getEmail()));
         upsertPrimaryContact(iamUser, ContactType.PHONE, trimToNull(coreDetails.getMobile()));
+        auditTrailService.recordUserAudit(
+                iamUser,
+                "CUSTOMER",
+                "BACKOFFICE_CUSTOMER_KYC_SYNCED",
+                "BACKOFFICE",
+                "CUSTOMER_PROFILE",
+                profile.getId(),
+                auditMetadata(profile.getCoreCustomerId())
+        );
 
         return toDetailResponse(profile);
     }
@@ -231,6 +280,7 @@ public class BackofficeCustomersService {
         return BackofficeCustomerSummaryResponse.builder()
                 .iamUserId(iamUser != null ? iamUser.getPublicId() : null)
                 .clientId(profile.getCoreCustomerId())
+                .username(resolveUsername(iamUser, Channel.INTERNET_BANKING))
                 .fullName(person != null ? person.getFullName() : null)
                 .mobile(mobile)
                 .email(email)
@@ -249,6 +299,7 @@ public class BackofficeCustomersService {
         return BackofficeCustomerDetailResponse.builder()
                 .iamUserId(iamUser != null ? iamUser.getPublicId() : null)
                 .clientId(profile.getCoreCustomerId())
+                .username(resolveUsername(iamUser, Channel.INTERNET_BANKING))
                 .fullName(person != null ? person.getFullName() : null)
                 .firstName(person != null ? person.getFirstName() : null)
                 .lastName(person != null ? person.getLastName() : null)
@@ -274,21 +325,6 @@ public class BackofficeCustomersService {
                 .lastLoginAt(iamUser != null ? iamUser.getLastLoginAt() : null)
                 .createdAt(profile.getCreatedAt())
                 .updatedAt(profile.getUpdatedAt())
-                .build();
-    }
-
-    private BackofficeAuditTrailResponse toAuditTrailResponse(IamAuditLogEntity entry) {
-        return BackofficeAuditTrailResponse.builder()
-                .id(entry.getId())
-                .eventType(entry.getEventType())
-                .userCategory(entry.getUserCategory())
-                .channel(entry.getChannel())
-                .ipAddress(entry.getIpAddress())
-                .deviceId(entry.getDeviceId())
-                .entityType(entry.getEntityType())
-                .entityId(entry.getEntityId())
-                .createdAt(entry.getCreatedAt())
-                .metadata(entry.getMetadata())
                 .build();
     }
 
@@ -354,6 +390,16 @@ public class BackofficeCustomersService {
         }
         return userContactRepository.findByIamUserAndContactTypeAndPrimaryIsTrue(iamUser, type)
                 .map(UserContact::getContactValue)
+                .orElse(null);
+    }
+
+    private String resolveUsername(IamUserEntity iamUser, Channel channel) {
+        if (iamUser == null || channel == null) {
+            return null;
+        }
+        return loginIdentifierRepository
+                .findByIamUserAndChannelAndIdentifierType(iamUser, channel, "username")
+                .map(LoginIdentifierEntity::getIdentifier)
                 .orElse(null);
     }
 
@@ -491,6 +537,24 @@ public class BackofficeCustomersService {
             builder.append(lastName.trim());
         }
         return builder.toString();
+    }
+
+    private Map<String, Object> auditMetadata(String clientId, Object... keyValues) {
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        String normalizedClientId = trimToNull(clientId);
+        if (normalizedClientId != null) {
+            metadata.put("client_id", normalizedClientId);
+        }
+        if (keyValues != null) {
+            for (int i = 0; i + 1 < keyValues.length; i += 2) {
+                Object key = keyValues[i];
+                Object value = keyValues[i + 1];
+                if (key instanceof String keyText && StringUtils.hasText(keyText) && value != null) {
+                    metadata.put(keyText, value);
+                }
+            }
+        }
+        return metadata;
     }
 
     private String trimToNull(String value) {

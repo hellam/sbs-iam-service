@@ -386,15 +386,17 @@ public class BackofficeOnboardingService {
                 .findByIamUserAndChannelAndIdentifierType(iamUser, Channel.BACKOFFICE, "username")
                 .orElse(null);
 
-        String username;
+        String username = resolveEmployeeUsername(request.getClientId());
         if (loginIdentifier == null) {
-            username = request.getUsername();
-            if (username == null || username.isBlank()) {
-                username = generateUniqueUsername(Channel.BACKOFFICE);
-            }
+            ensureBackofficeUsernameAvailable(username, iamUser);
             createLoginIdentifier(iamUser, username, Channel.BACKOFFICE);
+        } else if (!username.equals(loginIdentifier.getIdentifier())) {
+            ensureBackofficeUsernameAvailable(username, iamUser);
+            loginIdentifier.setIdentifier(username);
+            loginIdentifier.setUpdatedAt(OffsetDateTime.now());
+            loginIdentifierRepository.save(loginIdentifier);
         } else {
-            username = loginIdentifier.getIdentifier();
+            ensureBackofficeUsernameAvailable(username, iamUser);
         }
 
         EmployeeProfileEntity employeeProfile = new EmployeeProfileEntity();
@@ -850,16 +852,36 @@ public class BackofficeOnboardingService {
             validateEmailUnique(email);
         }
 
-        boolean hasBackofficeLogin = existingUser != null && loginIdentifierRepository
-                .findByIamUserAndChannelAndIdentifierType(existingUser, Channel.BACKOFFICE, "username")
-                .isPresent();
+        ensureBackofficeUsernameAvailable(resolveEmployeeUsername(request.getClientId()), existingUser);
+    }
 
-        if (!hasBackofficeLogin && request.getUsername() != null && !request.getUsername().isBlank()) {
-            if (loginIdentifierRepository.existsByChannelAndIdentifierTypeAndIdentifier(
-                    Channel.BACKOFFICE, "username", request.getUsername())) {
-                throw BaseException.badRequest("Username '" + request.getUsername() + "' is already registered.");
-            }
+    private String resolveEmployeeUsername(String clientId) {
+        String username = trimToNull(clientId);
+        if (username == null) {
+            throw BaseException.badRequest("Client ID is required for employee username.");
         }
+        return username;
+    }
+
+    private void ensureBackofficeUsernameAvailable(String username, IamUserEntity owner) {
+        if (username == null || username.isBlank()) {
+            throw BaseException.badRequest("Employee username is required.");
+        }
+
+        LoginIdentifierEntity existing = loginIdentifierRepository
+                .findByIdentifierAndChannel(username, Channel.BACKOFFICE)
+                .orElse(null);
+        if (existing == null) {
+            return;
+        }
+
+        Long existingUserId = existing.getIamUser() != null ? existing.getIamUser().getId() : null;
+        Long ownerUserId = owner != null ? owner.getId() : null;
+        if (ownerUserId != null && ownerUserId.equals(existingUserId)) {
+            return;
+        }
+
+        throw BaseException.badRequest("Username '" + username + "' is already registered.");
     }
 
     private void rejectAccountsForRoute(List<String> accounts, String context) {

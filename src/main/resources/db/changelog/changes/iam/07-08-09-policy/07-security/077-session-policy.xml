@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+          http://www.liquibase.org/xml/ns/dbchangelog
+          http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="pg-policy-077-session-policy" author="codex">
+        <createTable tableName="session_policy" schemaName="iam_service">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_session_policy"/>
+            </column>
+
+            <column name="policy_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="channel" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="inactivity_timeout_seconds" type="INTEGER" defaultValueNumeric="180">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="warning_countdown_seconds" type="INTEGER" defaultValueNumeric="60">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="created_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" type="TIMESTAMPTZ" defaultValueDate="CURRENT_TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseTableName="session_policy"
+                baseColumnNames="policy_id"
+                referencedTableName="policies"
+                referencedColumnNames="id"
+                constraintName="fk_session_policy_policy"/>
+
+        <createIndex tableName="session_policy" schemaName="iam_service" indexName="idx_session_policy_policy">
+            <column name="policy_id"/>
+        </createIndex>
+
+        <createIndex tableName="session_policy" schemaName="iam_service" indexName="idx_session_policy_channel">
+            <column name="channel"/>
+        </createIndex>
+
+        <addUniqueConstraint
+                tableName="session_policy"
+                schemaName="iam_service"
+                columnNames="policy_id, channel"
+                constraintName="uc_session_policy_policy_channel"/>
+
+        <addUniqueConstraint
+                tableName="session_policy"
+                schemaName="iam_service"
+                columnNames="channel"
+                constraintName="uc_session_policy_channel"/>
+
+        <sql>
+            INSERT INTO iam_service.policies (public_id, channels, policy_type, name, description)
+            SELECT gen_random_uuid(),
+                   jsonb_build_array(channel_name),
+                   'SESSION_POLICY',
+                   'Session Policy',
+                   'Session timeout configuration'
+            FROM (VALUES ('INTERNET_BANKING'), ('MOBILE_BANKING'), ('BACKOFFICE')) AS channels(channel_name)
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM iam_service.policies p
+                WHERE p.policy_type = 'SESSION_POLICY'
+                  AND jsonb_exists(p.channels, channels.channel_name)
+            );
+
+            INSERT INTO iam_service.session_policy (
+                policy_id,
+                channel,
+                inactivity_timeout_seconds,
+                warning_countdown_seconds
+            )
+            SELECT p.id,
+                   channels.channel_name,
+                   180,
+                   60
+            FROM (VALUES ('INTERNET_BANKING'), ('MOBILE_BANKING'), ('BACKOFFICE')) AS channels(channel_name)
+            JOIN iam_service.policies p
+              ON p.policy_type = 'SESSION_POLICY'
+             AND jsonb_exists(p.channels, channels.channel_name)
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM iam_service.session_policy sp
+                WHERE sp.channel = channels.channel_name
+            );
+        </sql>
+    </changeSet>
+</databaseChangeLog>

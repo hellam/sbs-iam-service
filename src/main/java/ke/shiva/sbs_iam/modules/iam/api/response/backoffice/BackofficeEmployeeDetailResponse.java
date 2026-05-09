@@ -15,6 +15,7 @@ import java.time.OffsetDateTime;
 public class BackofficeEmployeeDetailResponse {
     private Long iamUserId;
     private String clientId;
+    private String username;
     private String fullName;
     private String firstName;
     private String lastName;

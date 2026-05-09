@@ -14,13 +14,18 @@ import java.util.Map;
 @AllArgsConstructor
 public class BackofficeAuditTrailResponse {
     private Long id;
+    private String source;
     private String eventType;
+    private String eventLabel;
     private String userCategory;
     private String channel;
+    private String channelLabel;
     private String ipAddress;
     private String deviceId;
     private String entityType;
+    private String entityLabel;
     private Long entityId;
+    private String details;
     private OffsetDateTime createdAt;
     private Map<String, Object> metadata;
 }

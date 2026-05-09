@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,6 +14,10 @@ import java.util.Optional;
 public interface LoginHistoryRepository extends JpaRepository<LoginHistoryEntity, Long> {
 
     List<LoginHistoryEntity> findByIamUserOrderByCreatedAtDesc(IamUserEntity iamUser);
+
+    List<LoginHistoryEntity> findTop100ByIamUser_IdOrderByCreatedAtDesc(Long iamUserId);
+
+    List<LoginHistoryEntity> findTop100ByIamUser_IdInOrderByCreatedAtDesc(Collection<Long> iamUserIds);
 
     List<LoginHistoryEntity> findByIamUserAndSuccessTrueOrderByCreatedAtDesc(IamUserEntity iamUser);
 

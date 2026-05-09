@@ -57,4 +57,7 @@ public class PolicyEntity extends BaseEntity {
     @OneToOne(mappedBy = "policy")
     private SecurityQuestionPolicyEntity securityQuestionPolicy;
 
+    @OneToOne(mappedBy = "policy")
+    private SessionPolicyEntity sessionPolicy;
+
 }

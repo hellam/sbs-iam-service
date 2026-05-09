@@ -17,6 +17,7 @@ import java.util.UUID;
 public class BackofficeCustomerDetailResponse {
     private UUID iamUserId;
     private String clientId;
+    private String username;
     private String fullName;
     private String firstName;
     private String lastName;

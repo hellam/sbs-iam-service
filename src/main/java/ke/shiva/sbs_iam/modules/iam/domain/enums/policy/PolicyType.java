@@ -10,7 +10,8 @@ public enum PolicyType {
     PASSWORD_POLICY("Password Policy"),
     FEATURE_POLICY("Feature Policy"),
     SEC_QN_POLICY("Security Question Policy"),
-    MFA_POLICY("MFA Policy");
+    MFA_POLICY("MFA Policy"),
+    SESSION_POLICY("Session Policy");
 
     private final String value;
 }

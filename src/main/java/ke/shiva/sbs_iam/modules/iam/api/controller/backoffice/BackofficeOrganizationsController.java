@@ -11,6 +11,7 @@ import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizatio
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserOnboardNonBankRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserRoleUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserSearchRequest;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeAuditTrailResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserOnboardResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserSearchResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationSummaryResponse;
@@ -49,6 +50,18 @@ public class BackofficeOrganizationsController {
             HttpServletRequest request
     ) {
         return ResponseBuilder.success("Organizations retrieved", backofficeOrganizationsService.getOrganizations(request));
+    }
+
+    @Operation(summary = "Get organization audit trail", description = "Returns audit events for a company profile")
+    @GetMapping("/{clientId}/audit-trail")
+    public ResponseEntity<ApiResponse<PaginatedResponse<BackofficeAuditTrailResponse>>> getOrganizationAuditTrail(
+            @PathVariable String clientId,
+            HttpServletRequest request
+    ) {
+        return ResponseBuilder.success(
+                "Organization audit trail retrieved",
+                backofficeOrganizationsService.getOrganizationAuditTrail(clientId, request)
+        );
     }
 
     @Operation(summary = "Block/unblock organization")

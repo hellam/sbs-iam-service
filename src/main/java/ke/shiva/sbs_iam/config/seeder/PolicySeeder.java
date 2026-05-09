@@ -40,6 +40,7 @@ public class PolicySeeder implements CommandLineRunner {
     private final PasswordPolicyRepository passwordPolicyRepository;
     private final MfaPolicyRepository mfaPolicyRepository;
     private final SecurityQuestionPolicyRepository securityQuestionPolicyRepository;
+    private final SessionPolicyRepository sessionPolicyRepository;
     private final FeatureRepository featureRepository;
     private final FeaturePolicyRepository featurePolicyRepository;
 
@@ -68,6 +69,7 @@ public class PolicySeeder implements CommandLineRunner {
             for (Channel channel : new Channel[]{Channel.MOBILE_BANKING, Channel.INTERNET_BANKING, Channel.BACKOFFICE}) {
                 createMfaPolicy(channel);
                 createSecurityQuestionPolicy(channel);
+                createSessionPolicy(channel);
             }
 
             // Create features and global feature policy
@@ -203,6 +205,53 @@ public class PolicySeeder implements CommandLineRunner {
         } else {
             log.info("SecurityQuestionPolicyEntity for channel {} already exists", channel);
         }
+    }
+
+    private void createSessionPolicy(Channel channel) {
+        log.info("Creating Session policy for channel: {}", channel);
+
+        PolicyEntity policy = upsertPolicy(PolicyType.SESSION_POLICY, channel);
+
+        Optional<SessionPolicyEntity> existingSessionPolicy =
+                sessionPolicyRepository.findByPolicyIdAndChannel(policy.getId(), channel);
+
+        if (existingSessionPolicy.isEmpty()) {
+            log.info("Creating SessionPolicyEntity for channel: {}", channel);
+            SessionPolicyEntity sessionPolicy = new SessionPolicyEntity();
+            sessionPolicy.setPolicy(policy);
+            sessionPolicy.setChannel(channel);
+            setSessionPolicyDefaults(sessionPolicy);
+            sessionPolicyRepository.save(sessionPolicy);
+            return;
+        }
+
+        SessionPolicyEntity sessionPolicy = existingSessionPolicy.get();
+        if (setMissingSessionPolicyDefaults(sessionPolicy)) {
+            log.info("Backfilling missing Session policy defaults for channel: {}", channel);
+            sessionPolicyRepository.save(sessionPolicy);
+        } else {
+            log.info("SessionPolicyEntity for channel {} already exists", channel);
+        }
+    }
+
+    private void setSessionPolicyDefaults(SessionPolicyEntity sessionPolicy) {
+        sessionPolicy.setInactivityTimeoutSeconds(180);
+        sessionPolicy.setWarningCountdownSeconds(60);
+    }
+
+    private boolean setMissingSessionPolicyDefaults(SessionPolicyEntity sessionPolicy) {
+        boolean updated = false;
+
+        if (sessionPolicy.getInactivityTimeoutSeconds() == null) {
+            sessionPolicy.setInactivityTimeoutSeconds(180);
+            updated = true;
+        }
+        if (sessionPolicy.getWarningCountdownSeconds() == null) {
+            sessionPolicy.setWarningCountdownSeconds(60);
+            updated = true;
+        }
+
+        return updated;
     }
 
     private void setPinPolicyDefaults(PinPolicyEntity pinPolicy) {

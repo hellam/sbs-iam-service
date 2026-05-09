@@ -3,6 +3,8 @@ package ke.shiva.sbs_iam.modules.iam.app.service.backoffice;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeMfaPolicyUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficePasswordPolicyUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeSecurityQuestionPolicyUpdateRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeSessionPolicyUpdateRequest;
+import ke.shiva.sbs_iam.modules.iam.api.response.SessionPolicyResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeMfaPolicyDetailsResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficePasswordPolicyResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeSecurityQuestionPolicyDetailsResponse;
@@ -10,11 +12,13 @@ import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeSecuritySe
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.MfaPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.PasswordPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.SecurityQuestionPolicyEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.policy.SessionPolicyEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.NotificationChannel;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.MfaPolicyRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.PasswordPolicyRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.SecurityQuestionPolicyRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.SessionPolicyRepository;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,27 +27,39 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class BackofficeSecuritySettingsService {
 
+    private static final Set<Integer> ALLOWED_INACTIVITY_TIMEOUT_SECONDS = Set.of(30, 60, 90, 120, 150, 180, 210, 240);
+    private static final Set<Integer> ALLOWED_WARNING_COUNTDOWN_SECONDS = Set.of(10, 30, 60, 90, 120);
+
     private final PasswordPolicyRepository passwordPolicyRepository;
     private final MfaPolicyRepository mfaPolicyRepository;
     private final SecurityQuestionPolicyRepository securityQuestionPolicyRepository;
+    private final SessionPolicyRepository sessionPolicyRepository;
 
     @Transactional(readOnly = true)
     public BackofficeSecuritySettingsResponse getSettings(Channel channel) {
         PasswordPolicyEntity passwordPolicy = requirePasswordPolicy(channel);
         MfaPolicyEntity mfaPolicy = requireMfaPolicy(channel);
         SecurityQuestionPolicyEntity securityQuestionPolicy = requireSecurityQuestionPolicy(channel);
+        SessionPolicyEntity sessionPolicy = requireSessionPolicy(channel);
 
         return BackofficeSecuritySettingsResponse.builder()
                 .channel(channel)
                 .passwordPolicy(toPasswordPolicyResponse(passwordPolicy))
                 .mfaPolicy(toMfaPolicyResponse(mfaPolicy))
                 .securityQuestionPolicy(toSecurityQuestionPolicyResponse(securityQuestionPolicy))
+                .sessionPolicy(toSessionPolicyResponse(sessionPolicy))
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public SessionPolicyResponse getSessionPolicy(Channel channel) {
+        return toSessionPolicyResponse(requireSessionPolicy(channel));
     }
 
     @Transactional
@@ -189,6 +205,21 @@ public class BackofficeSecuritySettingsService {
         return toSecurityQuestionPolicyResponse(securityQuestionPolicyRepository.save(policy));
     }
 
+    @Transactional
+    public SessionPolicyResponse updateSessionPolicy(Channel channel, BackofficeSessionPolicyUpdateRequest request) {
+        SessionPolicyEntity policy = requireSessionPolicy(channel);
+
+        if (request.getInactivityTimeoutSeconds() != null) {
+            policy.setInactivityTimeoutSeconds(request.getInactivityTimeoutSeconds());
+        }
+        if (request.getWarningCountdownSeconds() != null) {
+            policy.setWarningCountdownSeconds(request.getWarningCountdownSeconds());
+        }
+
+        validateSessionPolicy(policy);
+        return toSessionPolicyResponse(sessionPolicyRepository.save(policy));
+    }
+
     private PasswordPolicyEntity requirePasswordPolicy(Channel channel) {
         return passwordPolicyRepository.findFirstByChannel(channel)
                 .orElseThrow(() -> BaseException.notFound("Password policy not found for channel: " + channel));
@@ -206,6 +237,14 @@ public class BackofficeSecuritySettingsService {
         SecurityQuestionPolicyEntity policy = securityQuestionPolicyRepository.findByChannel(channel);
         if (policy == null) {
             throw BaseException.notFound("Security question policy not found for channel: " + channel);
+        }
+        return policy;
+    }
+
+    private SessionPolicyEntity requireSessionPolicy(Channel channel) {
+        SessionPolicyEntity policy = sessionPolicyRepository.findByChannel(channel);
+        if (policy == null) {
+            throw BaseException.notFound("Session policy not found for channel: " + channel);
         }
         return policy;
     }
@@ -270,6 +309,20 @@ public class BackofficeSecuritySettingsService {
         }
     }
 
+    private void validateSessionPolicy(SessionPolicyEntity policy) {
+        if (policy.getInactivityTimeoutSeconds() == null
+                || !ALLOWED_INACTIVITY_TIMEOUT_SECONDS.contains(policy.getInactivityTimeoutSeconds())) {
+            throw BaseException.badRequest("inactivityTimeoutSeconds must be one of 30, 60, 90, 120, 150, 180, 210, or 240 seconds.");
+        }
+        if (policy.getWarningCountdownSeconds() == null
+                || !ALLOWED_WARNING_COUNTDOWN_SECONDS.contains(policy.getWarningCountdownSeconds())) {
+            throw BaseException.badRequest("warningCountdownSeconds must be one of 10, 30, 60, 90, or 120 seconds.");
+        }
+        if (policy.getWarningCountdownSeconds() >= policy.getInactivityTimeoutSeconds()) {
+            throw BaseException.badRequest("warningCountdownSeconds must be less than inactivityTimeoutSeconds.");
+        }
+    }
+
     private BackofficePasswordPolicyResponse toPasswordPolicyResponse(PasswordPolicyEntity policy) {
         return BackofficePasswordPolicyResponse.builder()
                 .channel(policy.getChannel())
@@ -322,6 +375,14 @@ public class BackofficeSecuritySettingsService {
                 .askOnSensitiveAction(policy.getAskOnSensitiveAction())
                 .isActive(policy.getIsActive())
                 .maxVerifyAttempts(policy.getMaxVerifyAttempts())
+                .build();
+    }
+
+    private SessionPolicyResponse toSessionPolicyResponse(SessionPolicyEntity policy) {
+        return SessionPolicyResponse.builder()
+                .channel(policy.getChannel())
+                .inactivityTimeoutSeconds(policy.getInactivityTimeoutSeconds())
+                .warningCountdownSeconds(policy.getWarningCountdownSeconds())
                 .build();
     }
 }

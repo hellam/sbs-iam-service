@@ -1,5 +1,6 @@
 package ke.shiva.sbs_iam.modules.iam.api.response.backoffice;
 
+import ke.shiva.sbs_iam.modules.iam.api.response.SessionPolicyResponse;
 import ke.shiva.sbs_iam.modules.iam.domain.enums.identity.Channel;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,4 +12,5 @@ public class BackofficeSecuritySettingsResponse {
     private BackofficePasswordPolicyResponse passwordPolicy;
     private BackofficeMfaPolicyDetailsResponse mfaPolicy;
     private BackofficeSecurityQuestionPolicyDetailsResponse securityQuestionPolicy;
+    private SessionPolicyResponse sessionPolicy;
 }

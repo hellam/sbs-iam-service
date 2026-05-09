@@ -11,8 +11,8 @@ import ke.shiva.sbs_iam.modules.iam.app.service.PasswordUpdateService;
 import ke.shiva.sbs_iam.modules.iam.app.service.SessionRevocationService;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.CustomerAuthEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.auth.EmployeeAuthEntity;
-import ke.shiva.sbs_iam.modules.iam.domain.entity.audit.IamAuditLogEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.IamUserEntity;
+import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.LoginIdentifierEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.identity.UserContact;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.EmployeeProfileEntity;
 import ke.shiva.sbs_iam.modules.iam.domain.entity.profile.OrganizationUserEntity;
@@ -27,8 +27,8 @@ import ke.shiva.sbs_iam.modules.iam.infra.external.NotificationService;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.CustomerAuthRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.EmployeeProfileRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.EmployeeAuthRepository;
-import ke.shiva.sbs_iam.modules.iam.infra.repository.IamAuditLogRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.IamUserRepository;
+import ke.shiva.sbs_iam.modules.iam.infra.repository.LoginIdentifierRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.OrganizationUserRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.UserContactRepository;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.CountryEntity;
@@ -47,6 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.OffsetDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,8 +65,9 @@ public class BackofficeEmployeesService {
     private final UserContactRepository userContactRepository;
     private final BranchRepository branchRepository;
     private final CountryRepository countryRepository;
+    private final LoginIdentifierRepository loginIdentifierRepository;
     private final IamUserRepository iamUserRepository;
-    private final IamAuditLogRepository iamAuditLogRepository;
+    private final BackofficeAuditTrailService auditTrailService;
     private final PasswordUpdateService passwordUpdateService;
     private final SessionRevocationService sessionRevocationService;
     private final NotificationService notificationService;
@@ -145,16 +147,17 @@ public class BackofficeEmployeesService {
     }
 
     @Transactional(readOnly = true)
-    public List<BackofficeAuditTrailResponse> getEmployeeAuditTrail(String clientId) {
+    public PaginatedResponse<BackofficeAuditTrailResponse> getEmployeeAuditTrail(
+            String clientId,
+            HttpServletRequest request
+    ) {
         EmployeeProfileEntity profile = getRequiredEmployeeProfile(clientId);
         IamUserEntity iamUser = profile.getIamUser();
         if (iamUser == null || iamUser.getId() == null) {
-            return List.of();
+            return auditTrailService.getUserAuditTrail(null, null, request);
         }
 
-        return iamAuditLogRepository.findTop100ByIamUser_IdOrderByCreatedAtDesc(iamUser.getId()).stream()
-                .map(this::toAuditTrailResponse)
-                .toList();
+        return auditTrailService.getUserAuditTrail(iamUser, null, request);
     }
 
     @Transactional
@@ -172,6 +175,15 @@ public class BackofficeEmployeesService {
         iamUser.setStatus(status);
         iamUser.setUpdatedAt(OffsetDateTime.now());
         iamUserRepository.save(iamUser);
+        auditTrailService.recordUserAudit(
+                iamUser,
+                "EMPLOYEE",
+                "BACKOFFICE_EMPLOYEE_STATUS_UPDATED",
+                "BACKOFFICE",
+                "EMPLOYEE_PROFILE",
+                profile.getId(),
+                auditMetadata(profile, "status", status.name())
+        );
 
         return toDetailResponse(profile);
     }
@@ -199,6 +211,15 @@ public class BackofficeEmployeesService {
         if (blocked) {
             sessionRevocationService.revokeAllActiveSessionsForUser(iamUser, "BACKOFFICE_EMPLOYEE_BLOCKED");
         }
+        auditTrailService.recordUserAudit(
+                iamUser,
+                "EMPLOYEE",
+                blocked ? "BACKOFFICE_EMPLOYEE_ACCESS_BLOCKED" : "BACKOFFICE_EMPLOYEE_ACCESS_UNBLOCKED",
+                "BACKOFFICE",
+                "EMPLOYEE_PROFILE",
+                profile.getId(),
+                auditMetadata(profile, "blocked", blocked)
+        );
 
         return toDetailResponse(profile);
     }
@@ -215,6 +236,15 @@ public class BackofficeEmployeesService {
         passwordUpdateService.updatePassword(iamUser, randomPassword, Channel.BACKOFFICE, true);
         sessionRevocationService.revokeAllActiveSessionsForUser(iamUser, "BACKOFFICE_EMPLOYEE_PASSWORD_RESET");
         sendPasswordResetNotification(iamUser, profile.getStaffNo(), randomPassword);
+        auditTrailService.recordUserAudit(
+                iamUser,
+                "EMPLOYEE",
+                "BACKOFFICE_EMPLOYEE_PASSWORD_RESET",
+                "BACKOFFICE",
+                "EMPLOYEE_PROFILE",
+                profile.getId(),
+                auditMetadata(profile)
+        );
 
         return toDetailResponse(profile);
     }
@@ -236,6 +266,15 @@ public class BackofficeEmployeesService {
         auth.setMfaSecret(null);
         auth.setMfaLastVerifiedAt(null);
         employeeAuthRepository.save(auth);
+        auditTrailService.recordUserAudit(
+                iamUser,
+                "EMPLOYEE",
+                "BACKOFFICE_EMPLOYEE_MFA_RESET",
+                "BACKOFFICE",
+                "EMPLOYEE_PROFILE",
+                profile.getId(),
+                auditMetadata(profile)
+        );
 
         return toDetailResponse(profile);
     }
@@ -263,6 +302,15 @@ public class BackofficeEmployeesService {
 
         upsertPrimaryContact(iamUser, ContactType.EMAIL, trimToNull(coreDetails.getEmail()));
         upsertPrimaryContact(iamUser, ContactType.PHONE, trimToNull(coreDetails.getMobile()));
+        auditTrailService.recordUserAudit(
+                iamUser,
+                "EMPLOYEE",
+                "BACKOFFICE_EMPLOYEE_KYC_SYNCED",
+                "BACKOFFICE",
+                "EMPLOYEE_PROFILE",
+                profile.getId(),
+                auditMetadata(profile)
+        );
 
         return toDetailResponse(profile);
     }
@@ -278,6 +326,7 @@ public class BackofficeEmployeesService {
         return BackofficeEmployeeSummaryResponse.builder()
                 .iamUserId(iamUser != null ? iamUser.getId() : null)
                 .clientId(party != null ? party.getCoreCustomerId() : null)
+                .username(resolveUsername(iamUser, Channel.BACKOFFICE))
                 .fullName(person != null ? person.getFullName() : null)
                 .staffNo(profile.getStaffNo())
                 .mobile(mobile)
@@ -306,6 +355,7 @@ public class BackofficeEmployeesService {
         return BackofficeEmployeeDetailResponse.builder()
                 .iamUserId(iamUser != null ? iamUser.getId() : null)
                 .clientId(party != null ? party.getCoreCustomerId() : null)
+                .username(resolveUsername(iamUser, Channel.BACKOFFICE))
                 .fullName(person != null ? person.getFullName() : null)
                 .firstName(person != null ? person.getFirstName() : null)
                 .lastName(person != null ? person.getLastName() : null)
@@ -329,21 +379,6 @@ public class BackofficeEmployeesService {
                 .lastLoginAt(iamUser != null ? iamUser.getLastLoginAt() : null)
                 .createdAt(profile.getCreatedAt())
                 .updatedAt(profile.getUpdatedAt())
-                .build();
-    }
-
-    private BackofficeAuditTrailResponse toAuditTrailResponse(IamAuditLogEntity entry) {
-        return BackofficeAuditTrailResponse.builder()
-                .id(entry.getId())
-                .eventType(entry.getEventType())
-                .userCategory(entry.getUserCategory())
-                .channel(entry.getChannel())
-                .ipAddress(entry.getIpAddress())
-                .deviceId(entry.getDeviceId())
-                .entityType(entry.getEntityType())
-                .entityId(entry.getEntityId())
-                .createdAt(entry.getCreatedAt())
-                .metadata(entry.getMetadata())
                 .build();
     }
 
@@ -407,6 +442,16 @@ public class BackofficeEmployeesService {
         }
         return userContactRepository.findByIamUserAndContactTypeAndPrimaryIsTrue(iamUser, type)
                 .map(UserContact::getContactValue)
+                .orElse(null);
+    }
+
+    private String resolveUsername(IamUserEntity iamUser, Channel channel) {
+        if (iamUser == null || channel == null) {
+            return null;
+        }
+        return loginIdentifierRepository
+                .findByIamUserAndChannelAndIdentifierType(iamUser, channel, "username")
+                .map(LoginIdentifierEntity::getIdentifier)
                 .orElse(null);
     }
 
@@ -633,6 +678,34 @@ public class BackofficeEmployeesService {
             builder.append(lastName.trim());
         }
         return builder.toString();
+    }
+
+    private Map<String, Object> auditMetadata(EmployeeProfileEntity profile, Object... keyValues) {
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        String clientId = resolveProfileClientId(profile);
+        if (clientId != null) {
+            metadata.put("client_id", clientId);
+        }
+        String staffNo = trimToNull(profile != null ? profile.getStaffNo() : null);
+        if (staffNo != null) {
+            metadata.put("staff_no", staffNo);
+        }
+        if (keyValues != null) {
+            for (int i = 0; i + 1 < keyValues.length; i += 2) {
+                Object key = keyValues[i];
+                Object value = keyValues[i + 1];
+                if (key instanceof String keyText && StringUtils.hasText(keyText) && value != null) {
+                    metadata.put(keyText, value);
+                }
+            }
+        }
+        return metadata;
+    }
+
+    private String resolveProfileClientId(EmployeeProfileEntity profile) {
+        IamUserEntity iamUser = profile != null ? profile.getIamUser() : null;
+        PartyEntity party = iamUser != null ? iamUser.getParty() : null;
+        return trimToNull(party != null ? party.getCoreCustomerId() : null);
     }
 
     private String trimToNull(String value) {

@@ -6,6 +6,8 @@ import jakarta.validation.Valid;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeMfaPolicyUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficePasswordPolicyUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeSecurityQuestionPolicyUpdateRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeSessionPolicyUpdateRequest;
+import ke.shiva.sbs_iam.modules.iam.api.response.SessionPolicyResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeMfaPolicyDetailsResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficePasswordPolicyResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeSecurityQuestionPolicyDetailsResponse;
@@ -64,5 +66,14 @@ public class BackofficeSecuritySettingsController {
             @Valid @RequestBody BackofficeSecurityQuestionPolicyUpdateRequest request
     ) {
         return ResponseBuilder.success(backofficeSecuritySettingsService.updateSecurityQuestionPolicy(channel, request));
+    }
+
+    @PutMapping("/{channel}/session-policy")
+    @Operation(summary = "Update session policy for channel")
+    public ResponseEntity<ApiResponse<SessionPolicyResponse>> updateSessionPolicy(
+            @PathVariable Channel channel,
+            @Valid @RequestBody BackofficeSessionPolicyUpdateRequest request
+    ) {
+        return ResponseBuilder.success(backofficeSecuritySettingsService.updateSessionPolicy(channel, request));
     }
 }

@@ -51,12 +51,13 @@ public class BackofficeCustomersController {
 
     @Operation(summary = "Get customer audit trail", description = "Returns audit events for a customer profile")
     @GetMapping("/{clientId}/audit-trail")
-    public ResponseEntity<ApiResponse<List<BackofficeAuditTrailResponse>>> getCustomerAuditTrail(
-            @PathVariable String clientId
+    public ResponseEntity<ApiResponse<PaginatedResponse<BackofficeAuditTrailResponse>>> getCustomerAuditTrail(
+            @PathVariable String clientId,
+            HttpServletRequest request
     ) {
         return ResponseBuilder.success(
                 "Customer audit trail retrieved",
-                backofficeCustomersService.getCustomerAuditTrail(clientId)
+                backofficeCustomersService.getCustomerAuditTrail(clientId, request)
         );
     }
 

@@ -9,6 +9,7 @@ import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizatio
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserOnboardNonBankRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserRoleUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserSearchRequest;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeAuditTrailResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationPermissionResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationRoleDetailsResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationSummaryResponse;
@@ -106,6 +107,7 @@ public class BackofficeOrganizationsService {
     private final NotificationService notificationService;
     private final GeneratedPasswordService generatedPasswordService;
     private final BackofficeOnboardingService onboardingService;
+    private final BackofficeAuditTrailService auditTrailService;
     private final EncryptionUtil encryptionUtil;
     @Autowired
     @Qualifier("accountRestClient")
@@ -170,6 +172,18 @@ public class BackofficeOrganizationsService {
     }
 
     @Transactional(readOnly = true)
+    public PaginatedResponse<BackofficeAuditTrailResponse> getOrganizationAuditTrail(
+            String clientId,
+            HttpServletRequest request
+    ) {
+        String normalizedClientId = normalizeClientId(clientId);
+        OrganizationEntity organization = getRequiredOrganization(normalizedClientId);
+        List<OrganizationUserEntity> organizationUsers =
+                organizationUserRepository.findByOrganizationParty_CoreCustomerIdOrderByCreatedAtDesc(normalizedClientId);
+        return auditTrailService.getOrganizationAuditTrail(organization, organizationUsers, normalizedClientId, request);
+    }
+
+    @Transactional(readOnly = true)
     public List<BackofficeOrganizationRoleResponse> getOrganizationRoles(String clientId) {
         OrganizationEntity organization = getRequiredOrganization(clientId);
         PartyEntity organizationParty = requireOrganizationParty(organization);
@@ -231,6 +245,12 @@ public class BackofficeOrganizationsService {
         role = orgRoleRepository.save(role);
 
         replaceRolePermissions(role, selectedFeatures);
+        auditTrailService.recordEntityAudit(
+                "BACKOFFICE_ORGANIZATION_ROLE_CREATED",
+                "ORGANIZATION",
+                organization.getId(),
+                organizationAuditMetadata(organization, "role_id", role.getId(), "role_name", role.getName())
+        );
         return toOrganizationRoleDetailsResponse(role, sortFeatures(selectedFeatures));
     }
 
@@ -265,6 +285,12 @@ public class BackofficeOrganizationsService {
         role = orgRoleRepository.save(role);
 
         replaceRolePermissions(role, selectedFeatures);
+        auditTrailService.recordEntityAudit(
+                "BACKOFFICE_ORGANIZATION_ROLE_UPDATED",
+                "ORGANIZATION",
+                organization.getId(),
+                organizationAuditMetadata(organization, "role_id", role.getId(), "role_name", role.getName())
+        );
         return toOrganizationRoleDetailsResponse(role, sortFeatures(selectedFeatures));
     }
 
@@ -447,6 +473,12 @@ public class BackofficeOrganizationsService {
                 sessionRevocationService.revokeAllActiveSessionsForUser(iamUser, "BACKOFFICE_ORGANIZATION_BLOCKED");
             }
         }
+        auditTrailService.recordEntityAudit(
+                blocked ? "BACKOFFICE_ORGANIZATION_ACCESS_BLOCKED" : "BACKOFFICE_ORGANIZATION_ACCESS_UNBLOCKED",
+                "ORGANIZATION",
+                organization.getId(),
+                organizationAuditMetadata(organization, "blocked", blocked)
+        );
 
         return toResponse(organization);
     }
@@ -474,6 +506,12 @@ public class BackofficeOrganizationsService {
         organization.setCountryCode(resolveCountry(coreDetails.getCountryId(), coreDetails.getCountryName()));
         organization.setUpdatedAt(OffsetDateTime.now());
         organizationRepository.save(organization);
+        auditTrailService.recordEntityAudit(
+                "BACKOFFICE_ORGANIZATION_KYC_SYNCED",
+                "ORGANIZATION",
+                organization.getId(),
+                organizationAuditMetadata(organization)
+        );
 
         return toResponse(organization);
     }
@@ -1279,6 +1317,32 @@ public class BackofficeOrganizationsService {
                 .createdAt(organization.getCreatedAt())
                 .updatedAt(organization.getUpdatedAt())
                 .build();
+    }
+
+    private Map<String, Object> organizationAuditMetadata(OrganizationEntity organization, Object... keyValues) {
+        Map<String, Object> metadata = new LinkedHashMap<>();
+        PartyEntity party = organization != null ? organization.getParty() : null;
+        String clientId = trimToNull(party != null ? party.getCoreCustomerId() : null);
+        if (clientId != null) {
+            metadata.put("client_id", clientId);
+        }
+        String displayName = trimToNull(organization != null ? organization.getDisplayName() : null);
+        if (displayName == null) {
+            displayName = trimToNull(organization != null ? organization.getLegalName() : null);
+        }
+        if (displayName != null) {
+            metadata.put("display_name", displayName);
+        }
+        if (keyValues != null) {
+            for (int i = 0; i + 1 < keyValues.length; i += 2) {
+                Object key = keyValues[i];
+                Object value = keyValues[i + 1];
+                if (key instanceof String keyText && StringUtils.hasText(keyText) && value != null) {
+                    metadata.put(keyText, value);
+                }
+            }
+        }
+        return metadata;
     }
 
     private BackofficeOrganizationUserResponse toOrganizationUserResponse(OrganizationUserEntity entity) {
