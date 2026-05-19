@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeAccessLockRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeChannelAccessRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeIamUserStatusUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeAuditTrailResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeCustomerDetailResponse;
@@ -70,6 +71,18 @@ public class BackofficeCustomersController {
         return ResponseBuilder.success(
                 "Customer status updated",
                 backofficeCustomersService.updateCustomerStatus(clientId, request.getStatus())
+        );
+    }
+
+    @Operation(summary = "Enable/disable customer internet banking access")
+    @PatchMapping("/{clientId}/internet-access")
+    public ResponseEntity<ApiResponse<BackofficeCustomerDetailResponse>> updateCustomerInternetAccess(
+            @PathVariable String clientId,
+            @Valid @RequestBody BackofficeChannelAccessRequest request
+    ) {
+        return ResponseBuilder.success(
+                request.getEnabled() ? "Customer internet banking enabled" : "Customer internet banking disabled",
+                backofficeCustomersService.updateCustomerInternetAccess(clientId, request.getEnabled())
         );
     }
 

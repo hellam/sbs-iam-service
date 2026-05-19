@@ -29,6 +29,11 @@ public interface LoginIdentifierRepository extends JpaRepository<LoginIdentifier
             String identifierType
     );
 
+    Optional<LoginIdentifierEntity> findFirstByIamUserAndChannelOrderByIdAsc(
+            IamUserEntity iamUser,
+            Channel channel
+    );
+
     //find by identifier and channel, regardless of status
     Optional<LoginIdentifierEntity> findByIdentifierAndChannel(String identifier, Channel channel);
 

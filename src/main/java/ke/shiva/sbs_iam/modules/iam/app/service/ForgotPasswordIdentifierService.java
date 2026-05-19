@@ -37,17 +37,20 @@ public class ForgotPasswordIdentifierService {
     private final ForgotPasswordFlowService flowService;
     private final IamUserSecurityQuestionRepository iamUserSecurityQuestionRepository;
     private final EncryptionUtil encryptionUtil;
+    private final ChannelIdentifierNormalizer identifierNormalizer;
 
     @Value("${shiva.security.spa.public-key}")
     private String spaPublicKey;
 
     @Transactional
     public ForgotPasswordIdentifierResponse handle(ForgotPasswordIdentifierRequest request, String deviceId) {
+        String lookupIdentifier = identifierNormalizer.normalize(request.getIdentifier(), request.getChannel());
+
         // Lookup user by identifier
         LoginIdentifierEntity identifier = identifierRepo
-                .findByIdentifierAndChannelAndStatus(request.getIdentifier(), request.getChannel(), IamStatus.ACTIVE)
+                .findByIdentifierAndChannelAndStatus(lookupIdentifier, request.getChannel(), IamStatus.ACTIVE)
                 .orElseThrow(() -> {
-                    log.warn("Forgot password attempt for non-existent identifier: {}", request.getIdentifier());
+                    log.warn("Forgot password attempt for non-existent identifier: {}", lookupIdentifier);
                     // Don't reveal if user exists or not for security reasons
                     return BaseException.badRequest();
                 });
@@ -56,7 +59,7 @@ public class ForgotPasswordIdentifierService {
 
         // Check if account is active
         if (user.getStatus() != IamStatus.ACTIVE) {
-            log.warn("Forgot password attempt for inactive account: {}", request.getIdentifier());
+            log.warn("Forgot password attempt for inactive account: {}", lookupIdentifier);
             throw BaseException.unauthorized("Account is inactive. Please contact support.");
         }
 
@@ -69,7 +72,7 @@ public class ForgotPasswordIdentifierService {
                 user,
                 request.getChannel(),
                 requirements,
-                request.getIdentifier(),
+                lookupIdentifier,
                 deviceId
         );
 
@@ -80,7 +83,7 @@ public class ForgotPasswordIdentifierService {
         List<IamUserSecurityQuestionEntity> userSecurityQuestion =
                 iamUserSecurityQuestionRepository.findAllByIamUserId(user.getId());
         if (userSecurityQuestion.isEmpty()) {
-            log.warn("Forgot password attempt but no security questions set for user: {}", request.getIdentifier());
+            log.warn("Forgot password attempt but no security questions set for user: {}", lookupIdentifier);
             throw BaseException.badRequest("Security questions are required but not set for this user.");
         }
 

@@ -35,6 +35,7 @@ public class IdentifierService {
     private final LoginHistoryService loginHistoryService;
     private final CustomerAuthRepository customerAuthRepo;
     private final EmployeeAuthRepository employeeAuthRepo;
+    private final ChannelIdentifierNormalizer identifierNormalizer;
 
     @Value("${shiva.security.spa.public-key}")
     private String spaPublicKey;
@@ -45,13 +46,14 @@ public class IdentifierService {
 //        loginFlowService.verifyDeviceId(deviceId);
 
         Channel channel = req.getChannel();
+        String lookupIdentifier = identifierNormalizer.normalize(req.getIdentifier(), channel);
 
         LoginIdentifierEntity identifier = identifierRepo
-                .findByIdentifierAndChannelAndStatus(req.getIdentifier(), channel, IamStatus.ACTIVE)
+                .findByIdentifierAndChannelAndStatus(lookupIdentifier, channel, IamStatus.ACTIVE)
                 .orElseThrow(() -> {
                     // Log failed identifier verification
                     loginHistoryService.logIdentifierFailure(
-                            req.getIdentifier(),
+                            lookupIdentifier,
                             channel.name(),
                             "IDENTIFIER_NOT_FOUND"
                     );
@@ -66,7 +68,7 @@ public class IdentifierService {
         if (user.getStatus() != IamStatus.ACTIVE) {
             // Log failed identifier verification due to inactive user
             loginHistoryService.logIdentifierFailure(
-                    req.getIdentifier(),
+                    lookupIdentifier,
                     channel.name(),
                     "USER_INACTIVE"
             );
@@ -74,16 +76,16 @@ public class IdentifierService {
         }
 
         // Check if account is locked before proceeding
-        checkAccountLockout(user, channel, req.getIdentifier());
+        checkAccountLockout(user, channel, lookupIdentifier);
 
         // evaluate policy requirements
         LoginRequirements requirements = policyService.evaluateLoginRequirements(user, channel);
 
         // create temp session (flow)
-        var session = loginFlowService.start(user, channel, requirements, req.getIdentifier(), deviceId);
+        var session = loginFlowService.start(user, channel, requirements, lookupIdentifier, deviceId);
 
         // Log successful identifier verification
-        loginHistoryService.logIdentifierSuccess(user, req.getIdentifier(), session);
+        loginHistoryService.logIdentifierSuccess(user, lookupIdentifier, session);
 
         IdentifierResponse resp = new IdentifierResponse();
         resp.setFlowId(UUID.fromString(session.getSessionId()));
@@ -114,7 +116,26 @@ public class IdentifierService {
             return; // No auth record means no lockout
         }
 
-        if (auth.getInternetLocked()) {
+        if (channel == Channel.MOBILE_BANKING) {
+            if (!Boolean.TRUE.equals(auth.getMobileLocked())) {
+                return;
+            }
+            if (auth.getMobileLockoutUntil() == null || auth.getMobileLockoutUntil().isAfter(OffsetDateTime.now())) {
+                loginHistoryService.logIdentifierFailure(
+                        identifier,
+                        channel.name(),
+                        "ACCOUNT_LOCKED"
+                );
+                throw BaseException.accountLocked("Account is locked. Please try again later or contact support.");
+            }
+            auth.setMobileLocked(false);
+            auth.setMobileLockoutUntil(null);
+            auth.setMobileFailedAttempts((short) 0);
+            customerAuthRepo.save(auth);
+            return;
+        }
+
+        if (Boolean.TRUE.equals(auth.getInternetLocked())) {
             if (auth.getInternetLockoutUntil() == null || auth.getInternetLockoutUntil().isAfter(OffsetDateTime.now())) {
                 // Log failed attempt due to account being locked
                 loginHistoryService.logIdentifierFailure(

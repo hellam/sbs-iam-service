@@ -29,6 +29,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class NotificationService {
 
+    private static final String WHATSAPP_OTP_TEMPLATE_CODE = "otp_custom_mobile";
+
     private final NotificationClientV1 notificationClient;
     private final Environment environment;
 
@@ -98,7 +100,7 @@ public class NotificationService {
         SendNotificationRequest request = SendNotificationRequest.builder()
                 .channel(ChannelType.WHATSAPP)
                 .recipient(phoneNumber)
-                .templateCode("otp_verification")
+                .templateCode(WHATSAPP_OTP_TEMPLATE_CODE)
                 .language("en")
                 .parameters(Map.of(
                         "param1", otp,

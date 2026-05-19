@@ -30,6 +30,7 @@ import ke.shiva.sbs_iam.modules.reference.infra.repository.CountryRepository;
 import ke.shiva.shivacorestarter.dto.PaginatedResponse;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.PaginationUtil;
+import ke.shiva.shivacorestarter.util.UsernameGeneratorUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -137,6 +138,66 @@ public class BackofficeCustomersService {
                 "CUSTOMER_PROFILE",
                 profile.getId(),
                 auditMetadata(profile.getCoreCustomerId(), "status", status.name())
+        );
+
+        return toDetailResponse(profile);
+    }
+
+    @Transactional
+    public BackofficeCustomerDetailResponse updateCustomerInternetAccess(String clientId, boolean enabled) {
+        CustomerProfileEntity profile = getRequiredCustomerProfile(clientId);
+        IamUserEntity iamUser = profile.getIamUser();
+        if (iamUser == null || iamUser.getId() == null) {
+            throw BaseException.notFound("IAM user not found for customer.");
+        }
+
+        if (enabled && iamUser.getStatus() != IamStatus.ACTIVE) {
+            throw BaseException.badRequest("Activate the customer profile before enabling internet banking.");
+        }
+
+        LoginIdentifierEntity identifier = getOrCreateInternetIdentifier(iamUser);
+        CustomerAuthEntity auth = getOrCreateCustomerAuth(iamUser);
+        boolean generatedPassword = false;
+        String temporaryPassword = null;
+
+        if (enabled) {
+            identifier.setStatus(IamStatus.ACTIVE);
+            auth.setInternetLocked(false);
+            auth.setInternetLockoutUntil(null);
+            auth.setInternetFailedAttempts((short) 0);
+
+            if (!StringUtils.hasText(auth.getInternetPasswordHash())) {
+                temporaryPassword = generatedPasswordService.generateTemporaryPassword(Channel.INTERNET_BANKING, 16);
+                customerAuthRepository.save(auth);
+                passwordUpdateService.updatePassword(iamUser, temporaryPassword, Channel.INTERNET_BANKING, true);
+                generatedPassword = true;
+            }
+        } else {
+            identifier.setStatus(IamStatus.INACTIVE);
+            sessionRevocationService.revokeAllActiveSessionsForUser(iamUser, "BACKOFFICE_CUSTOMER_INTERNET_DISABLED");
+        }
+
+        identifier.setUpdatedAt(OffsetDateTime.now());
+        loginIdentifierRepository.save(identifier);
+        customerAuthRepository.save(auth);
+
+        if (generatedPassword) {
+            sendPasswordResetNotification(iamUser, profile.getCoreCustomerId(), temporaryPassword);
+        }
+
+        auditTrailService.recordUserAudit(
+                iamUser,
+                "CUSTOMER",
+                enabled ? "BACKOFFICE_CUSTOMER_INTERNET_ENABLED" : "BACKOFFICE_CUSTOMER_INTERNET_DISABLED",
+                "BACKOFFICE",
+                "CUSTOMER_PROFILE",
+                profile.getId(),
+                auditMetadata(
+                        profile.getCoreCustomerId(),
+                        "enabled", enabled,
+                        "password_generated", generatedPassword,
+                        "username", identifier.getIdentifier()
+                )
         );
 
         return toDetailResponse(profile);
@@ -276,16 +337,26 @@ public class BackofficeCustomersService {
 
         String mobile = resolvePrimaryContact(iamUser, ContactType.PHONE);
         String email = resolvePrimaryContact(iamUser, ContactType.EMAIL);
+        ChannelAccessState internetAccess = resolveChannelAccess(iamUser, Channel.INTERNET_BANKING);
+        ChannelAccessState mobileAccess = resolveChannelAccess(iamUser, Channel.MOBILE_BANKING);
 
         return BackofficeCustomerSummaryResponse.builder()
                 .iamUserId(iamUser != null ? iamUser.getPublicId() : null)
                 .clientId(profile.getCoreCustomerId())
-                .username(resolveUsername(iamUser, Channel.INTERNET_BANKING))
+                .username(internetAccess.username())
                 .fullName(person != null ? person.getFullName() : null)
                 .mobile(mobile)
                 .email(email)
                 .status(iamUser != null && iamUser.getStatus() != null ? iamUser.getStatus().name() : null)
-                .accessLocked(isAccessLocked(iamUser))
+                .accessLocked(internetAccess.locked())
+                .internetAccessStatus(internetAccess.status())
+                .internetAccessActive(internetAccess.active())
+                .internetPasswordSet(internetAccess.credentialSet())
+                .internetLocked(internetAccess.locked())
+                .mobileAccessStatus(mobileAccess.status())
+                .mobileAccessActive(mobileAccess.active())
+                .mobilePinSet(mobileAccess.credentialSet())
+                .mobileLocked(mobileAccess.locked())
                 .verified(profile.getIsVerified())
                 .createdAt(profile.getCreatedAt())
                 .build();
@@ -295,11 +366,13 @@ public class BackofficeCustomersService {
         IamUserEntity iamUser = profile.getIamUser();
         PartyEntity party = iamUser != null ? iamUser.getParty() : null;
         PersonEntity person = party != null ? party.getPerson() : null;
+        ChannelAccessState internetAccess = resolveChannelAccess(iamUser, Channel.INTERNET_BANKING);
+        ChannelAccessState mobileAccess = resolveChannelAccess(iamUser, Channel.MOBILE_BANKING);
 
         return BackofficeCustomerDetailResponse.builder()
                 .iamUserId(iamUser != null ? iamUser.getPublicId() : null)
                 .clientId(profile.getCoreCustomerId())
-                .username(resolveUsername(iamUser, Channel.INTERNET_BANKING))
+                .username(internetAccess.username())
                 .fullName(person != null ? person.getFullName() : null)
                 .firstName(person != null ? person.getFirstName() : null)
                 .lastName(person != null ? person.getLastName() : null)
@@ -312,7 +385,15 @@ public class BackofficeCustomersService {
                 .mobile(resolvePrimaryContact(iamUser, ContactType.PHONE))
                 .email(resolvePrimaryContact(iamUser, ContactType.EMAIL))
                 .status(iamUser != null && iamUser.getStatus() != null ? iamUser.getStatus().name() : null)
-                .accessLocked(isAccessLocked(iamUser))
+                .accessLocked(internetAccess.locked())
+                .internetAccessStatus(internetAccess.status())
+                .internetAccessActive(internetAccess.active())
+                .internetPasswordSet(internetAccess.credentialSet())
+                .internetLocked(internetAccess.locked())
+                .mobileAccessStatus(mobileAccess.status())
+                .mobileAccessActive(mobileAccess.active())
+                .mobilePinSet(mobileAccess.credentialSet())
+                .mobileLocked(mobileAccess.locked())
                 .mfaTotpEnabled(isMfaTotpEnabled(iamUser))
                 .verified(profile.getIsVerified())
                 .segment(profile.getSegment())
@@ -401,6 +482,80 @@ public class BackofficeCustomersService {
                 .findByIamUserAndChannelAndIdentifierType(iamUser, channel, "username")
                 .map(LoginIdentifierEntity::getIdentifier)
                 .orElse(null);
+    }
+
+    private ChannelAccessState resolveChannelAccess(IamUserEntity iamUser, Channel channel) {
+        if (iamUser == null || iamUser.getId() == null || channel == null) {
+            return ChannelAccessState.empty();
+        }
+
+        LoginIdentifierEntity identifier = loginIdentifierRepository
+                .findFirstByIamUserAndChannelOrderByIdAsc(iamUser, channel)
+                .orElse(null);
+        CustomerAuthEntity auth = customerAuthRepository.findByIamUserId(iamUser.getId()).orElse(null);
+        boolean credentialSet = switch (channel) {
+            case INTERNET_BANKING -> auth != null && StringUtils.hasText(auth.getInternetPasswordHash());
+            case MOBILE_BANKING -> auth != null && StringUtils.hasText(auth.getMobilePinHash());
+            default -> false;
+        };
+        boolean locked = switch (channel) {
+            case INTERNET_BANKING -> auth != null && Boolean.TRUE.equals(auth.getInternetLocked());
+            case MOBILE_BANKING -> auth != null && Boolean.TRUE.equals(auth.getMobileLocked());
+            default -> false;
+        };
+        String status = identifier != null && identifier.getStatus() != null ? identifier.getStatus().name() : "NOT_CONFIGURED";
+        boolean active = identifier != null && identifier.getStatus() == IamStatus.ACTIVE && credentialSet && !locked;
+        return new ChannelAccessState(
+                identifier != null ? identifier.getIdentifier() : null,
+                status,
+                active,
+                credentialSet,
+                locked
+        );
+    }
+
+    private LoginIdentifierEntity getOrCreateInternetIdentifier(IamUserEntity iamUser) {
+        return loginIdentifierRepository
+                .findByIamUserAndChannelAndIdentifierType(iamUser, Channel.INTERNET_BANKING, "username")
+                .orElseGet(() -> {
+                    LoginIdentifierEntity identifier = new LoginIdentifierEntity();
+                    identifier.setIamUser(iamUser);
+                    identifier.setChannel(Channel.INTERNET_BANKING);
+                    identifier.setIdentifierType("username");
+                    identifier.setIdentifier(generateUniqueInternetUsername());
+                    identifier.setCreatedAt(OffsetDateTime.now());
+                    return identifier;
+                });
+    }
+
+    private String generateUniqueInternetUsername() {
+        return UsernameGeneratorUtil.generateUniqueNumericUsername(
+                8,
+                username -> loginIdentifierRepository.existsByChannelAndIdentifierTypeAndIdentifier(
+                        Channel.INTERNET_BANKING,
+                        "username",
+                        username
+                )
+        );
+    }
+
+    private CustomerAuthEntity getOrCreateCustomerAuth(IamUserEntity iamUser) {
+        return customerAuthRepository.findByIamUserId(iamUser.getId()).orElseGet(() -> {
+            CustomerAuthEntity auth = new CustomerAuthEntity();
+            auth.setIamUser(iamUser);
+            auth.setInternetPasswordAlgo("bcrypt");
+            auth.setInternetFirstTimeLogin(true);
+            auth.setInternetFailedAttempts((short) 0);
+            auth.setInternetLocked(false);
+            auth.setMobilePinAlgo("bcrypt");
+            auth.setMobileFirstTimeLogin(true);
+            auth.setMobileFailedAttempts((short) 0);
+            auth.setMobileLocked(false);
+            auth.setMfaEnabled(false);
+            auth.setCreatedAt(OffsetDateTime.now());
+            auth.setUpdatedAt(OffsetDateTime.now());
+            return customerAuthRepository.save(auth);
+        });
     }
 
     private boolean isAccessLocked(IamUserEntity iamUser) {
@@ -563,5 +718,17 @@ public class BackofficeCustomersService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private record ChannelAccessState(
+            String username,
+            String status,
+            boolean active,
+            boolean credentialSet,
+            boolean locked
+    ) {
+        static ChannelAccessState empty() {
+            return new ChannelAccessState(null, "NOT_CONFIGURED", false, false, false);
+        }
     }
 }
