@@ -248,14 +248,17 @@ public class NotificationService {
             String email,
             String userName,
             String reference,
+            String username,
             String temporaryPassword
     ) {
         String recipient = resolveEmailRecipient(email);
         log.info("Sending admin password reset notice to: {}", recipient);
         String safeReference = reference == null || reference.isBlank() ? "-" : reference;
+        String safeUsername = username == null || username.isBlank() ? "-" : username.trim();
         String safePassword = temporaryPassword == null ? "" : temporaryPassword.trim();
         String message = "Hello " + (userName == null || userName.isBlank() ? "Customer" : userName)
                 + ", your login password was reset by support. "
+                + "Username: " + safeUsername + ". "
                 + "Temporary password: " + safePassword + ". "
                 + "Please log in and change it immediately. Ref: " + safeReference;
         return notificationClient.sendDirectMessage(ChannelType.EMAIL, recipient, message);

@@ -623,9 +623,10 @@ public class BackofficeCustomersService {
         String fullName = iamUser.getParty() != null && iamUser.getParty().getPerson() != null
                 ? iamUser.getParty().getPerson().getFullName()
                 : "Customer";
+        String username = resolveUsername(iamUser, Channel.INTERNET_BANKING);
 
         try {
-            notificationService.sendAdminPasswordResetNotice(email, fullName, clientId, temporaryPassword);
+            notificationService.sendAdminPasswordResetNotice(email, fullName, clientId, username, temporaryPassword);
         } catch (Exception exception) {
             log.warn("Password reset notification failed for customer {}: {}", clientId, exception.getMessage());
         }
