@@ -1,9 +1,13 @@
 package ke.shiva.sbs_iam.modules.iam.app.service.backoffice;
 
 import jakarta.servlet.http.HttpServletRequest;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import ke.shiva.client.account.dto.response.BackofficeCustomerDetailsResponse;
+import ke.shiva.client.account.dto.response.GeneralClientAccountsResponse;
 import ke.shiva.client.iam.enums.TaskRole;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationRoleCreateRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserAccountsUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserAddRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserBasicKycUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserOnboardNonBankRequest;
@@ -15,6 +19,7 @@ import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizati
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationSummaryResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationRoleResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationRolesPermissionsResponse;
+import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserAccountResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserOnboardResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserResponse;
 import ke.shiva.sbs_iam.modules.iam.api.response.backoffice.BackofficeOrganizationUserSearchItemResponse;
@@ -54,6 +59,7 @@ import ke.shiva.sbs_iam.modules.iam.infra.repository.PersonRepository;
 import ke.shiva.sbs_iam.modules.iam.infra.repository.UserContactRepository;
 import ke.shiva.sbs_iam.modules.reference.domain.entity.CountryEntity;
 import ke.shiva.sbs_iam.modules.reference.infra.repository.CountryRepository;
+import ke.shiva.shivacorestarter.dto.ApiResponse;
 import ke.shiva.shivacorestarter.dto.PaginatedResponse;
 import ke.shiva.shivacorestarter.exception.BaseException;
 import ke.shiva.shivacorestarter.util.EncryptionUtil;
@@ -64,6 +70,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.ClientHttpResponse;
@@ -109,6 +116,7 @@ public class BackofficeOrganizationsService {
     private final BackofficeOnboardingService onboardingService;
     private final BackofficeAuditTrailService auditTrailService;
     private final EncryptionUtil encryptionUtil;
+    private final ObjectMapper objectMapper;
     @Autowired
     @Qualifier("accountRestClient")
     private RestClient accountRestClient;
@@ -518,7 +526,7 @@ public class BackofficeOrganizationsService {
 
     @Transactional(readOnly = true)
     public BackofficeOrganizationUserResponse getOrganizationUser(String clientId, String organizationUserRef) {
-        return toOrganizationUserResponse(getRequiredOrganizationUser(clientId, organizationUserRef));
+        return toOrganizationUserResponse(getRequiredOrganizationUser(clientId, organizationUserRef), true);
     }
 
     @Transactional
@@ -654,6 +662,27 @@ public class BackofficeOrganizationsService {
         organizationUserRepository.save(organizationUser);
 
         return toOrganizationUserResponse(organizationUser);
+    }
+
+    @Transactional
+    public BackofficeOrganizationUserResponse updateOrganizationUserAccounts(
+            String clientId,
+            String organizationUserRef,
+            BackofficeOrganizationUserAccountsUpdateRequest request
+    ) {
+        OrganizationUserEntity organizationUser = getRequiredOrganizationUser(clientId, organizationUserRef);
+        IamUserEntity iamUser = requireOrganizationUserIamUser(organizationUser);
+        PartyEntity organizationParty = organizationUser.getOrganizationParty();
+        String organizationClientId = organizationParty != null && StringUtils.hasText(organizationParty.getCoreCustomerId())
+                ? organizationParty.getCoreCustomerId()
+                : clientId;
+
+        List<String> selectedAccountIds = request != null ? request.getClientAccountIds() : List.of();
+        linkAccountsToOrganizationUser(iamUser.getId(), organizationClientId, selectedAccountIds, false);
+        organizationUser.setUpdatedAt(OffsetDateTime.now());
+        organizationUserRepository.save(organizationUser);
+
+        return toOrganizationUserResponse(organizationUser, true);
     }
 
     private SearchCriteria normalizeSearchCriteria(BackofficeOrganizationUserSearchRequest request) {
@@ -1170,6 +1199,15 @@ public class BackofficeOrganizationsService {
     }
 
     private void linkAccountsToOrganizationUser(Long iamUserId, String clientId, List<String> clientAccountIds) {
+        linkAccountsToOrganizationUser(iamUserId, clientId, clientAccountIds, true);
+    }
+
+    private void linkAccountsToOrganizationUser(
+            Long iamUserId,
+            String clientId,
+            List<String> clientAccountIds,
+            boolean requireAccountSelection
+    ) {
         if (iamUserId == null || iamUserId <= 0) {
             throw BaseException.badRequest("Invalid IAM user ID.");
         }
@@ -1186,7 +1224,7 @@ public class BackofficeOrganizationsService {
         }
 
         List<String> selectedAccountIds = sanitizeClientAccountIds(clientAccountIds);
-        if (selectedAccountIds.isEmpty()) {
+        if (selectedAccountIds.isEmpty() && requireAccountSelection) {
             throw BaseException.badRequest("Select at least one account to link.");
         }
 
@@ -1220,6 +1258,84 @@ public class BackofficeOrganizationsService {
         }
     }
 
+    private List<BackofficeOrganizationUserAccountResponse> loadAllocatedAccountsForOrganizationUser(
+            Long iamUserId,
+            String clientId
+    ) {
+        if (iamUserId == null || iamUserId <= 0 || !StringUtils.hasText(clientId)) {
+            return List.of();
+        }
+
+        Long customerId;
+        try {
+            customerId = Long.parseLong(clientId.trim());
+        } catch (NumberFormatException exception) {
+            return List.of();
+        }
+
+        try {
+            ApiResponse<List<GeneralClientAccountsResponse>> response = accountRestClient.get()
+                    .uri("/internal/accounts/allocation/client/{clientId}/user/{iamUserId}", customerId, iamUserId)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, (request, accountResponse) -> {
+                        String body = readBody(accountResponse);
+                        throw BaseException.badRequest(buildAccountAllocationLoadError(body));
+                    })
+                    .onStatus(HttpStatusCode::is5xxServerError, (request, accountResponse) -> {
+                        String body = readBody(accountResponse);
+                        throw BaseException.badRequest(buildAccountAllocationLoadError(body));
+                    })
+                    .body(new ParameterizedTypeReference<>() {
+                    });
+
+            if (response == null || !response.status()) {
+                throw BaseException.badRequest(buildAccountAllocationLoadError(response != null ? response.message() : null));
+            }
+
+            return toOrganizationUserAccountResponses(response.data());
+        } catch (RestClientResponseException exception) {
+            throw BaseException.badRequest(buildAccountAllocationLoadError(exception.getResponseBodyAsString()));
+        } catch (BaseException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            log.error("Unable to load allocated accounts for org user iamUserId={} customerId={}: {}",
+                    iamUserId, customerId, exception.getMessage(), exception);
+            throw BaseException.badRequest("Unable to load selected accounts at the moment.");
+        }
+    }
+
+    private List<BackofficeOrganizationUserAccountResponse> toOrganizationUserAccountResponses(Object data) {
+        if (data == null) {
+            return List.of();
+        }
+
+        if (data instanceof Object[] array && array.length == 0) {
+            return List.of();
+        }
+
+        List<GeneralClientAccountsResponse> accounts =
+                objectMapper.convertValue(data, new TypeReference<List<GeneralClientAccountsResponse>>() {
+                });
+
+        if (accounts == null || accounts.isEmpty()) {
+            return List.of();
+        }
+
+        return accounts.stream()
+                .filter(Objects::nonNull)
+                .map(account -> BackofficeOrganizationUserAccountResponse.builder()
+                        .clientAccountId(trimToNull(account.getId()))
+                        .accountNumber(trimToNull(account.getAccountNumber()))
+                        .accountName(trimToNull(account.getAccountName()))
+                        .currency(trimToNull(account.getCurrency()))
+                        .productName(trimToNull(account.getProductName()))
+                        .iban(trimToNull(account.getIban()))
+                        .allowCredit(account.getAllowCredit())
+                        .allowDebit(account.getAllowDebit())
+                        .build())
+                .toList();
+    }
+
     private List<String> sanitizeClientAccountIds(List<String> clientAccountIds) {
         if (clientAccountIds == null) {
             return List.of();
@@ -1234,6 +1350,20 @@ public class BackofficeOrganizationsService {
 
     private String buildAccountLinkError(String responseBody) {
         String fallback = "Unable to link selected accounts.";
+        String body = trimToNull(responseBody);
+        if (body == null) {
+            return fallback;
+        }
+
+        String normalized = body.replace("\n", " ").trim();
+        if (normalized.length() > 220) {
+            normalized = normalized.substring(0, 220);
+        }
+        return fallback + " " + normalized;
+    }
+
+    private String buildAccountAllocationLoadError(String responseBody) {
+        String fallback = "Unable to load selected accounts.";
         String body = trimToNull(responseBody);
         if (body == null) {
             return fallback;
@@ -1346,20 +1476,37 @@ public class BackofficeOrganizationsService {
     }
 
     private BackofficeOrganizationUserResponse toOrganizationUserResponse(OrganizationUserEntity entity) {
+        return toOrganizationUserResponse(entity, false);
+    }
+
+    private BackofficeOrganizationUserResponse toOrganizationUserResponse(
+            OrganizationUserEntity entity,
+            boolean includeAccounts
+    ) {
         IamUserEntity iamUser = entity.getIamUser();
         PartyEntity party = iamUser != null ? iamUser.getParty() : null;
         PersonEntity person = party != null ? party.getPerson() : null;
+        PartyEntity organizationParty = entity.getOrganizationParty();
 
         String roleName = entity.getOrgRole() != null ? entity.getOrgRole().getName() : null;
         String taskRole = entity.getOrgRole() != null && entity.getOrgRole().getTaskRole() != null
                 ? entity.getOrgRole().getTaskRole().name()
                 : null;
+        List<BackofficeOrganizationUserAccountResponse> accounts =
+                includeAccounts && iamUser != null && organizationParty != null
+                        ? loadAllocatedAccountsForOrganizationUser(iamUser.getId(), organizationParty.getCoreCustomerId())
+                        : List.of();
+        List<String> accountNumbers = accounts.stream()
+                .map(BackofficeOrganizationUserAccountResponse::getAccountNumber)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .toList();
 
         return BackofficeOrganizationUserResponse.builder()
                 .organizationUserRef(encryptPositiveLongId(entity.getId(), "organizationUserId"))
                 .iamUserRef(iamUser != null ? encryptPositiveLongId(iamUser.getId(), "iamUserId") : null)
                 .individualClientId(party != null ? party.getCoreCustomerId() : null)
-                .clientId(entity.getOrganizationParty() != null ? entity.getOrganizationParty().getCoreCustomerId() : null)
+                .clientId(organizationParty != null ? organizationParty.getCoreCustomerId() : null)
                 .fullName(person != null ? person.getFullName() : null)
                 .mobile(resolvePrimaryContact(iamUser, ContactType.PHONE))
                 .email(resolvePrimaryContact(iamUser, ContactType.EMAIL))
@@ -1373,6 +1520,8 @@ public class BackofficeOrganizationsService {
                 .taskRole(taskRole)
                 .primary(entity.getIsPrimary())
                 .status(entity.getStatus())
+                .accountNumbers(accountNumbers)
+                .accounts(accounts)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -1635,13 +1784,24 @@ public class BackofficeOrganizationsService {
         String reference = organizationUser.getOrganizationParty() != null
                 ? organizationUser.getOrganizationParty().getCoreCustomerId()
                 : null;
+        String username = resolveUsername(iamUser, Channel.INTERNET_BANKING);
 
         try {
-            notificationService.sendAdminPasswordResetNotice(email, fullName, reference, temporaryPassword);
+            notificationService.sendAdminPasswordResetNotice(email, fullName, reference, username, temporaryPassword);
         } catch (Exception exception) {
             log.warn("Password reset notification failed for org user {}: {}",
                     organizationUser.getId(), exception.getMessage());
         }
+    }
+
+    private String resolveUsername(IamUserEntity iamUser, Channel channel) {
+        if (iamUser == null || channel == null) {
+            return null;
+        }
+        return loginIdentifierRepository
+                .findByIamUserAndChannelAndIdentifierType(iamUser, channel, "username")
+                .map(LoginIdentifierEntity::getIdentifier)
+                .orElse(null);
     }
 
     private CountryEntity resolveCountry(String countryCode, String countryName) {

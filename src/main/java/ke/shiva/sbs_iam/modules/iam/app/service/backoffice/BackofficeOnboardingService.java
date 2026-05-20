@@ -488,22 +488,22 @@ public class BackofficeOnboardingService {
         OrgRoleEntity makerRole = upsertOrganizationRole(
                 organizationParty,
                 TaskRole.MAKER,
-                "Maker",
-                "Initiates and submits corporate transactions.",
+                TaskRole.MAKER.getLabel(),
+                TaskRole.MAKER.getDescription(),
                 true
         );
         OrgRoleEntity checkerRole = upsertOrganizationRole(
                 organizationParty,
                 TaskRole.CHECKER,
-                "Checker",
-                "Reviews and verifies submitted corporate transactions.",
+                TaskRole.CHECKER.getLabel(),
+                TaskRole.CHECKER.getDescription(),
                 false
         );
         OrgRoleEntity approverRole = upsertOrganizationRole(
                 organizationParty,
                 TaskRole.APPROVER,
-                "Approver",
-                "Performs final transaction approval.",
+                TaskRole.APPROVER.getLabel(),
+                TaskRole.APPROVER.getDescription(),
                 false
         );
 

@@ -609,9 +609,10 @@ public class BackofficeEmployeesService {
         String fullName = iamUser.getParty() != null && iamUser.getParty().getPerson() != null
                 ? iamUser.getParty().getPerson().getFullName()
                 : "Employee";
+        String username = resolveUsername(iamUser, Channel.BACKOFFICE);
 
         try {
-            notificationService.sendAdminPasswordResetNotice(email, fullName, staffNo, temporaryPassword);
+            notificationService.sendAdminPasswordResetNotice(email, fullName, staffNo, username, temporaryPassword);
         } catch (Exception exception) {
             log.warn("Password reset notification failed for employee {}: {}", staffNo, exception.getMessage());
         }

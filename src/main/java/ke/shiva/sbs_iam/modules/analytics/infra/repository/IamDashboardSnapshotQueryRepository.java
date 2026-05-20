@@ -86,6 +86,41 @@ public class IamDashboardSnapshotQueryRepository {
         return result == null ? 0L : result;
     }
 
+    public List<AccessMetricRow> findPlatformAccessMetrics(OffsetDateTime now) {
+        return List.of(
+                channelAccessMetric(
+                        "EBANKING",
+                        "eBanking Users",
+                        "INTERNET_BANKING",
+                        "internet_password_hash",
+                        "internet_locked",
+                        "internet_lockout_until",
+                        "Active access",
+                        "Configured",
+                        "Password set",
+                        "Locked",
+                        "monitor",
+                        now
+                ),
+                channelAccessMetric(
+                        "MBANKING",
+                        "mBanking Users",
+                        "MOBILE_BANKING",
+                        "mobile_pin_hash",
+                        "mobile_locked",
+                        "mobile_lockout_until",
+                        "Active access",
+                        "Configured",
+                        "PIN set",
+                        "Locked",
+                        "phone",
+                        now
+                ),
+                employeeAccessMetric(now),
+                organizationAccessMetric()
+        );
+    }
+
     public List<WeeklyTrendRow> findWeeklyLoggedInUsers(LocalDate startDate, LocalDate endDate) {
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("startDate", startDate)
@@ -97,6 +132,180 @@ public class IamDashboardSnapshotQueryRepository {
         ));
     }
 
+    private AccessMetricRow channelAccessMetric(String key,
+                                                String label,
+                                                String channel,
+                                                String credentialColumn,
+                                                String lockedColumn,
+                                                String lockoutColumn,
+                                                String activeLabel,
+                                                String configuredLabel,
+                                                String credentialsLabel,
+                                                String lockedLabel,
+                                                String icon,
+                                                OffsetDateTime now) {
+        String baseFrom = """
+                FROM iam_service.customer_profile cp
+                JOIN iam_service.iam_user iu ON iu.id = cp.iam_user_id
+                LEFT JOIN iam_service.customer_auth ca ON ca.iam_user_id = cp.iam_user_id
+                WHERE COALESCE(cp.is_verified, false) = true
+                """;
+        String hasChannelIdentifier = """
+                AND EXISTS (
+                    SELECT 1
+                    FROM iam_service.login_identifier li
+                    WHERE li.iam_user_id = cp.iam_user_id
+                      AND li.channel = :channel
+                )
+                """;
+        String hasActiveChannelIdentifier = """
+                AND EXISTS (
+                    SELECT 1
+                    FROM iam_service.login_identifier li
+                    WHERE li.iam_user_id = cp.iam_user_id
+                      AND li.channel = :channel
+                      AND li.status = 'ACTIVE'
+                )
+                """;
+        String credentialSet = " AND TRIM(COALESCE(ca." + credentialColumn + ", '')) <> ''";
+        String locked = " AND (COALESCE(ca." + lockedColumn + ", false) = true OR ca." + lockoutColumn + " > :now)";
+        String notLocked = " AND COALESCE(ca." + lockedColumn + ", false) = false"
+                + " AND (ca." + lockoutColumn + " IS NULL OR ca." + lockoutColumn + " <= :now)";
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("channel", channel)
+                .addValue("now", now);
+
+        long configured = scalar("SELECT COUNT(DISTINCT cp.iam_user_id) " + baseFrom + hasChannelIdentifier, params);
+        long credentialsSet = scalar("SELECT COUNT(DISTINCT cp.iam_user_id) " + baseFrom + credentialSet, params);
+        long lockedCount = scalar("SELECT COUNT(DISTINCT cp.iam_user_id) " + baseFrom + locked, params);
+        long active = scalar(
+                "SELECT COUNT(DISTINCT cp.iam_user_id) " + baseFrom
+                        + " AND iu.status = 'ACTIVE'"
+                        + hasActiveChannelIdentifier
+                        + credentialSet
+                        + notLocked,
+                params
+        );
+
+        return new AccessMetricRow(
+                key,
+                label,
+                active,
+                activeLabel,
+                configured,
+                configuredLabel,
+                credentialsSet,
+                credentialsLabel,
+                lockedCount,
+                lockedLabel,
+                icon
+        );
+    }
+
+    private AccessMetricRow employeeAccessMetric(OffsetDateTime now) {
+        String baseFrom = """
+                FROM iam_service.employee_profile ep
+                JOIN iam_service.iam_user iu ON iu.id = ep.iam_user_id
+                LEFT JOIN iam_service.employee_auth ea ON ea.iam_user_id = ep.iam_user_id
+                WHERE 1 = 1
+                """;
+        String credentialSet = " AND TRIM(COALESCE(ea.staff_password_hash, '')) <> ''";
+        String lockedOrDisabled = """
+                AND (
+                    COALESCE(ea.staff_locked, false) = true
+                    OR ea.staff_lockout_until > :now
+                    OR COALESCE(ep.employment_status, '') <> 'ACTIVE'
+                    OR COALESCE(iu.status, '') <> 'ACTIVE'
+                )
+                """;
+        String activeAccess = """
+                AND COALESCE(iu.status, '') = 'ACTIVE'
+                AND COALESCE(ep.employment_status, '') = 'ACTIVE'
+                AND COALESCE(ea.staff_locked, false) = false
+                AND (ea.staff_lockout_until IS NULL OR ea.staff_lockout_until <= :now)
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource().addValue("now", now);
+
+        long configured = scalar("SELECT COUNT(DISTINCT ep.iam_user_id) " + baseFrom, params);
+        long credentialsSet = scalar("SELECT COUNT(DISTINCT ep.iam_user_id) " + baseFrom + credentialSet, params);
+        long locked = scalar("SELECT COUNT(DISTINCT ep.iam_user_id) " + baseFrom + lockedOrDisabled, params);
+        long active = scalar(
+                "SELECT COUNT(DISTINCT ep.iam_user_id) " + baseFrom + credentialSet + activeAccess,
+                params
+        );
+
+        return new AccessMetricRow(
+                "EMPLOYEES",
+                "Employees",
+                active,
+                "Active access",
+                configured,
+                "Staff total",
+                credentialsSet,
+                "Password set",
+                locked,
+                "Locked/disabled",
+                "briefcase"
+        );
+    }
+
+    private AccessMetricRow organizationAccessMetric() {
+        long configured = scalar("""
+                SELECT COUNT(1)
+                FROM iam_service.organization org
+                """, new MapSqlParameterSource());
+        long active = scalar("""
+                SELECT COUNT(1)
+                FROM iam_service.organization org
+                WHERE COALESCE(org.account_locked, false) = false
+                """, new MapSqlParameterSource());
+        long companyUsers = scalar("""
+                SELECT COUNT(1)
+                FROM iam_service.organization_user ou
+                WHERE COALESCE(ou.status, '') = 'ACTIVE'
+                """, new MapSqlParameterSource());
+        long locked = scalar("""
+                SELECT COUNT(1)
+                FROM iam_service.organization org
+                WHERE COALESCE(org.account_locked, false) = true
+                """, new MapSqlParameterSource());
+
+        return new AccessMetricRow(
+                "ORGANIZATIONS",
+                "Organizations",
+                active,
+                "Active orgs",
+                configured,
+                "Total orgs",
+                companyUsers,
+                "Company users",
+                locked,
+                "Locked orgs",
+                "building"
+        );
+    }
+
+    private long scalar(String sql, MapSqlParameterSource params) {
+        Long result = jdbcTemplate.queryForObject(sql, params, Long.class);
+        return result == null ? 0L : result;
+    }
+
     public record WeeklyTrendRow(LocalDate day, long value) {
+    }
+
+    public record AccessMetricRow(
+            String key,
+            String label,
+            long active,
+            String activeLabel,
+            long configured,
+            String configuredLabel,
+            long credentialsSet,
+            String credentialsLabel,
+            long locked,
+            String lockedLabel,
+            String icon
+    ) {
     }
 }

@@ -91,16 +91,16 @@ public class CorporateSeeder implements CommandLineRunner {
     @Value("${seeder.corporate.organization.company-phone:+254700101058}")
     private String organizationPhone;
 
-    @Value("${seeder.corporate.roles.maker.name:Maker}")
+    @Value("${seeder.corporate.roles.maker.name:Inputter}")
     private String makerRoleName;
 
-    @Value("${seeder.corporate.roles.maker.description:Initiates and submits corporate transactions.}")
+    @Value("${seeder.corporate.roles.maker.description:Creates and submits transaction instructions for review.}")
     private String makerRoleDescription;
 
-    @Value("${seeder.corporate.roles.checker.name:Checker}")
+    @Value("${seeder.corporate.roles.checker.name:Verifier}")
     private String checkerRoleName;
 
-    @Value("${seeder.corporate.roles.checker.description:Reviews and verifies submitted corporate transactions.}")
+    @Value("${seeder.corporate.roles.checker.description:Reviews and verifies submitted transaction instructions.}")
     private String checkerRoleDescription;
 
     @Value("${seeder.corporate.roles.approver.name:Approver}")

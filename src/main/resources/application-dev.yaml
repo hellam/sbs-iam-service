@@ -62,7 +62,7 @@ seeder:
         name: "Verifier"
         description: "Reviews and verifies submitted corporate transactions."
       approver:
-        name: "Authorizer"
+        name: "Approver"
         description: "Performs final transaction approval."
 
 security:

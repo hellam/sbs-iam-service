@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeAccessLockRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationRoleCreateRequest;
+import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserAccountsUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserAddRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserBasicKycUpdateRequest;
 import ke.shiva.sbs_iam.modules.iam.api.request.backoffice.BackofficeOrganizationUserOnboardNonBankRequest;
@@ -269,6 +270,19 @@ public class BackofficeOrganizationsController {
         return ResponseBuilder.success(
                 "Organization user role updated",
                 backofficeOrganizationsService.updateOrganizationUserRole(clientId, organizationUserRef, request)
+        );
+    }
+
+    @Operation(summary = "Update organization user account access")
+    @PutMapping("/{clientId}/users/{organizationUserRef}/accounts")
+    public ResponseEntity<ApiResponse<BackofficeOrganizationUserResponse>> updateOrganizationUserAccounts(
+            @PathVariable String clientId,
+            @PathVariable String organizationUserRef,
+            @Valid @RequestBody BackofficeOrganizationUserAccountsUpdateRequest request
+    ) {
+        return ResponseBuilder.success(
+                "Organization user account access updated",
+                backofficeOrganizationsService.updateOrganizationUserAccounts(clientId, organizationUserRef, request)
         );
     }
 }

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -27,6 +28,8 @@ public class BackofficeOrganizationUserResponse {
     private String taskRole;
     private Boolean primary;
     private String status;
+    private List<String> accountNumbers;
+    private List<BackofficeOrganizationUserAccountResponse> accounts;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }

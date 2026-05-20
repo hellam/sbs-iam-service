@@ -67,6 +67,7 @@ public class IamAnalyticsSnapshotProducer {
             payload.put("failedLogins24h", queryRepository.countFailedLoginsSince(now.minusHours(24)));
             payload.put("lockedAccounts", queryRepository.countLockedAccounts());
             payload.put("weeklyLoggedInUsers", weeklyTrend(startDate, endDate));
+            payload.put("platformAccess", platformAccess(now));
 
             Map<String, Object> event = new LinkedHashMap<>();
             event.put("source", SOURCE);
@@ -86,6 +87,26 @@ public class IamAnalyticsSnapshotProducer {
                     Map<String, Object> row = new LinkedHashMap<>();
                     row.put("day", point.day().toString());
                     row.put("value", point.value());
+                    return row;
+                })
+                .toList();
+    }
+
+    private List<Map<String, Object>> platformAccess(OffsetDateTime now) {
+        return queryRepository.findPlatformAccessMetrics(now).stream()
+                .map(metric -> {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("key", metric.key());
+                    row.put("label", metric.label());
+                    row.put("active", metric.active());
+                    row.put("activeLabel", metric.activeLabel());
+                    row.put("configured", metric.configured());
+                    row.put("configuredLabel", metric.configuredLabel());
+                    row.put("credentialsSet", metric.credentialsSet());
+                    row.put("credentialsLabel", metric.credentialsLabel());
+                    row.put("locked", metric.locked());
+                    row.put("lockedLabel", metric.lockedLabel());
+                    row.put("icon", metric.icon());
                     return row;
                 })
                 .toList();
