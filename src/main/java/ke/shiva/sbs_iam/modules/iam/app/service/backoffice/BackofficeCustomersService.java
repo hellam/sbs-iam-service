@@ -34,6 +34,9 @@ import ke.shiva.shivacorestarter.util.UsernameGeneratorUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -64,10 +67,22 @@ public class BackofficeCustomersService {
     public PaginatedResponse<BackofficeCustomerSummaryResponse> getCustomers(HttpServletRequest request) {
         validateFilters(request);
 
+        String search = trimToNull(request.getParameter("search"));
+        if (search != null) {
+            Page<CustomerProfileEntity> page = customerProfileRepository.searchBackofficeCustomers(
+                    search,
+                    PartyType.PERSON,
+                    resolveStatusFilter(request),
+                    resolveVerifiedFilter(request),
+                    buildCustomerPageable(request)
+            );
+            Page<BackofficeCustomerSummaryResponse> dtoPage = page.map(this::toResponse);
+            return PaginationUtil.toPaginatedResponse(dtoPage);
+        }
+
         List<String> searchableColumns = List.of(
                 "coreCustomerId",
                 "iamUser.party.person.fullName",
-                "iamUser.loginIdentifiers.identifier",
                 "iamUser.contacts.contactValue"
         );
         List<String> sortableColumns = List.of(
@@ -457,6 +472,59 @@ public class BackofficeCustomersService {
             }
         }
         return null;
+    }
+
+    private IamStatus resolveStatusFilter(HttpServletRequest request) {
+        String status = firstNonBlank(
+                request.getParameter("status"),
+                request.getParameter("iamUser.status"),
+                request.getParameter("iamUser_status")
+        );
+        if (!StringUtils.hasText(status)) {
+            return null;
+        }
+        return IamStatus.valueOf(status.trim().toUpperCase());
+    }
+
+    private Boolean resolveVerifiedFilter(HttpServletRequest request) {
+        String isVerified = firstNonBlank(request.getParameter("isVerified"));
+        if (!StringUtils.hasText(isVerified)) {
+            return null;
+        }
+        return Boolean.valueOf(isVerified.trim());
+    }
+
+    private Pageable buildCustomerPageable(HttpServletRequest request) {
+        int page = parsePositiveInt(request.getParameter("page"), 1) - 1;
+        int perPage = parsePositiveInt(
+                firstNonBlank(request.getParameter("per_page"), request.getParameter("perPage")),
+                10
+        );
+        String sortBy = firstNonBlank(request.getParameter("sort_by"), "createdAt");
+        String sortField = switch (sortBy) {
+            case "clientId", "coreCustomerId" -> "coreCustomerId";
+            case "fullName" -> "iamUser.party.person.fullName";
+            case "status" -> "iamUser.status";
+            case "isVerified" -> "isVerified";
+            case "updatedAt" -> "updatedAt";
+            default -> "createdAt";
+        };
+        Sort.Direction direction = "asc".equalsIgnoreCase(request.getParameter("sort_dir"))
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+        return PageRequest.of(Math.max(page, 0), Math.max(perPage, 1), Sort.by(direction, sortField));
+    }
+
+    private int parsePositiveInt(String rawValue, int defaultValue) {
+        if (!StringUtils.hasText(rawValue)) {
+            return defaultValue;
+        }
+        try {
+            int value = Integer.parseInt(rawValue.trim());
+            return value > 0 ? value : defaultValue;
+        } catch (NumberFormatException ignored) {
+            return defaultValue;
+        }
     }
 
     private String normalizeClientId(String clientId) {

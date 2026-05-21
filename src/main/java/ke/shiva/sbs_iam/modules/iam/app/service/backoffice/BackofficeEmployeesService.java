@@ -42,6 +42,9 @@ import ke.shiva.shivacorestarter.util.PaginationUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -79,10 +82,22 @@ public class BackofficeEmployeesService {
     public PaginatedResponse<BackofficeEmployeeSummaryResponse> getEmployees(HttpServletRequest request) {
         validateFilters(request);
 
+        String search = trimToNull(request.getParameter("search"));
+        if (search != null) {
+            Page<EmployeeProfileEntity> page = employeeProfileRepository.searchBackofficeEmployees(
+                    search,
+                    PartyType.PERSON,
+                    resolveStatusFilter(request),
+                    buildEmployeePageable(request)
+            );
+            Map<Long, String> branchNamesById = loadBranchNames(page);
+            Page<BackofficeEmployeeSummaryResponse> dtoPage = page.map(entity -> toResponse(entity, branchNamesById));
+            return PaginationUtil.toPaginatedResponse(dtoPage);
+        }
+
         List<String> searchableColumns = List.of(
                 "iamUser.party.coreCustomerId",
                 "iamUser.party.person.fullName",
-                "iamUser.loginIdentifiers.identifier",
                 "staffNo",
                 "jobTitle",
                 "department",
@@ -115,12 +130,7 @@ public class BackofficeEmployeesService {
                 10
         );
 
-        Set<Long> branchIds = page.getContent().stream()
-                .map(EmployeeProfileEntity::getBranch)
-                .filter(id -> id != null)
-                .collect(Collectors.toSet());
-        Map<Long, String> branchNamesById = branchRepository.findAllById(branchIds).stream()
-                .collect(Collectors.toMap(BranchEntity::getId, BranchEntity::getBranchName, (existing, ignored) -> existing));
+        Map<Long, String> branchNamesById = loadBranchNames(page);
 
         Page<BackofficeEmployeeSummaryResponse> dtoPage = page.map(entity -> toResponse(entity, branchNamesById));
         return PaginationUtil.toPaginatedResponse(dtoPage);
@@ -417,6 +427,64 @@ public class BackofficeEmployeesService {
             }
         }
         return null;
+    }
+
+    private IamStatus resolveStatusFilter(HttpServletRequest request) {
+        String status = firstNonBlank(
+                request.getParameter("status"),
+                request.getParameter("iamUser.status"),
+                request.getParameter("iamUser_status")
+        );
+        if (!StringUtils.hasText(status)) {
+            return null;
+        }
+        return IamStatus.valueOf(status.trim().toUpperCase());
+    }
+
+    private Pageable buildEmployeePageable(HttpServletRequest request) {
+        int page = parsePositiveInt(request.getParameter("page"), 1) - 1;
+        int perPage = parsePositiveInt(
+                firstNonBlank(request.getParameter("per_page"), request.getParameter("perPage")),
+                10
+        );
+        String sortBy = firstNonBlank(request.getParameter("sort_by"), "createdAt");
+        String sortField = switch (sortBy) {
+            case "clientId", "coreCustomerId" -> "iamUser.party.coreCustomerId";
+            case "fullName" -> "iamUser.party.person.fullName";
+            case "status" -> "iamUser.status";
+            case "staffNo" -> "staffNo";
+            case "jobTitle" -> "jobTitle";
+            case "department" -> "department";
+            case "employmentStatus" -> "employmentStatus";
+            case "branch" -> "branch";
+            case "updatedAt" -> "updatedAt";
+            default -> "createdAt";
+        };
+        Sort.Direction direction = "asc".equalsIgnoreCase(request.getParameter("sort_dir"))
+                ? Sort.Direction.ASC
+                : Sort.Direction.DESC;
+        return PageRequest.of(Math.max(page, 0), Math.max(perPage, 1), Sort.by(direction, sortField));
+    }
+
+    private int parsePositiveInt(String rawValue, int defaultValue) {
+        if (!StringUtils.hasText(rawValue)) {
+            return defaultValue;
+        }
+        try {
+            int value = Integer.parseInt(rawValue.trim());
+            return value > 0 ? value : defaultValue;
+        } catch (NumberFormatException ignored) {
+            return defaultValue;
+        }
+    }
+
+    private Map<Long, String> loadBranchNames(Page<EmployeeProfileEntity> page) {
+        Set<Long> branchIds = page.getContent().stream()
+                .map(EmployeeProfileEntity::getBranch)
+                .filter(id -> id != null)
+                .collect(Collectors.toSet());
+        return branchRepository.findAllById(branchIds).stream()
+                .collect(Collectors.toMap(BranchEntity::getId, BranchEntity::getBranchName, (existing, ignored) -> existing));
     }
 
     private EmployeeProfileEntity getRequiredEmployeeProfile(String clientId) {
