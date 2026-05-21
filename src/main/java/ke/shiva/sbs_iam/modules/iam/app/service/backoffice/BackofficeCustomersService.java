@@ -67,6 +67,7 @@ public class BackofficeCustomersService {
         List<String> searchableColumns = List.of(
                 "coreCustomerId",
                 "iamUser.party.person.fullName",
+                "iamUser.loginIdentifiers.identifier",
                 "iamUser.contacts.contactValue"
         );
         List<String> sortableColumns = List.of(

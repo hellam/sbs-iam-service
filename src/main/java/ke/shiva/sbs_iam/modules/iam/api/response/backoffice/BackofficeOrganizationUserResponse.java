@@ -17,6 +17,7 @@ public class BackofficeOrganizationUserResponse {
     private String iamUserRef;
     private String individualClientId;
     private String clientId;
+    private String username;
     private String fullName;
     private String mobile;
     private String email;

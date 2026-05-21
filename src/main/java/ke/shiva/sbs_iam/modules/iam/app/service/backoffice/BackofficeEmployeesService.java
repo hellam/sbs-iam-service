@@ -82,6 +82,7 @@ public class BackofficeEmployeesService {
         List<String> searchableColumns = List.of(
                 "iamUser.party.coreCustomerId",
                 "iamUser.party.person.fullName",
+                "iamUser.loginIdentifiers.identifier",
                 "staffNo",
                 "jobTitle",
                 "department",
@@ -497,6 +498,7 @@ public class BackofficeEmployeesService {
                 .iamUserRef(iamUser != null ? encryptPositiveLongId(iamUser.getId(), "iamUserId") : null)
                 .individualClientId(party != null ? party.getCoreCustomerId() : null)
                 .clientId(entity.getOrganizationParty() != null ? entity.getOrganizationParty().getCoreCustomerId() : null)
+                .username(resolveUsername(iamUser, Channel.INTERNET_BANKING))
                 .fullName(person != null ? person.getFullName() : null)
                 .mobile(mobile)
                 .email(email)

@@ -1507,6 +1507,7 @@ public class BackofficeOrganizationsService {
                 .iamUserRef(iamUser != null ? encryptPositiveLongId(iamUser.getId(), "iamUserId") : null)
                 .individualClientId(party != null ? party.getCoreCustomerId() : null)
                 .clientId(organizationParty != null ? organizationParty.getCoreCustomerId() : null)
+                .username(resolveUsername(iamUser, Channel.INTERNET_BANKING))
                 .fullName(person != null ? person.getFullName() : null)
                 .mobile(resolvePrimaryContact(iamUser, ContactType.PHONE))
                 .email(resolvePrimaryContact(iamUser, ContactType.EMAIL))
