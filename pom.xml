@@ -34,6 +34,9 @@
         <java.version>21</java.version>
         <spring-cloud.version>2025.0.0</spring-cloud.version>
         <lombok.version>1.18.34</lombok.version>
+        <jib-maven-plugin.version>3.5.1</jib-maven-plugin.version>
+        <jib.from.image>ghcr.io/hellam/shiva/java-runtime-base:21</jib.from.image>
+        <jib.to.image>shiva/${project.artifactId}:latest</jib.to.image>
     </properties>
     <repositories>
         <repository>
@@ -206,6 +209,47 @@
                     <driver>org.postgresql.Driver</driver>
                     <defaultSchemaName>iam_service</defaultSchemaName>
                     <changelogSchemaName>public</changelogSchemaName>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>${jib-maven-plugin.version}</version>
+                <configuration>
+                    <from>
+                        <image>${jib.from.image}</image>
+                    </from>
+                    <to>
+                        <image>${jib.to.image}</image>
+                    </to>
+                    <container>
+                        <appRoot>/app</appRoot>
+                        <entrypoint>
+                            <entry>/usr/local/bin/java-entrypoint.sh</entry>
+                        </entrypoint>
+                        <user>10001:10001</user>
+                        <workingDirectory>/app</workingDirectory>
+                        <environment>
+                            <SHIVA_SECRETS_DIR>/run/shiva-secrets</SHIVA_SECRETS_DIR>
+                        </environment>
+                    </container>
+                    <extraDirectories>
+                        <paths>
+                            <path>
+                                <from>${project.basedir}/../../deployment/docker</from>
+                                <into>/usr/local/bin</into>
+                                <includes>
+                                    <include>java-entrypoint.sh</include>
+                                </includes>
+                            </path>
+                        </paths>
+                        <permissions>
+                            <permission>
+                                <file>/usr/local/bin/java-entrypoint.sh</file>
+                                <mode>755</mode>
+                            </permission>
+                        </permissions>
+                    </extraDirectories>
                 </configuration>
             </plugin>
         </plugins>
